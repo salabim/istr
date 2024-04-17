@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "istr-python"
+authors = [
+    {name = "Ruud van der Ham", email = "rt.van.der.ham@gmail.com"}
+]
+description = "istr is a module to use strings as if they were integers."
+version = "0.0.3"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+]
