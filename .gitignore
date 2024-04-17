@@ -5,5 +5,4 @@ __pycache__/
 dist/*
 build/*
 build_and_upload.bat
-istr_python*
-
+toml_versioner.py

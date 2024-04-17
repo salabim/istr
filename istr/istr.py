@@ -2,6 +2,13 @@ from functools import partial
 import math
 import contextlib
 
+#   _       _
+#  (_) ___ | |_  _ __
+#  | |/ __|| __|| '__|
+#  | |\__ \| |_ | |
+#  |_||___/ \__||_|    use strings as integers
+
+__version__ = "0.0.6"
 
 class istr(str):
     """
