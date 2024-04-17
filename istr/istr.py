@@ -382,9 +382,7 @@ class istr(str):
 
 
 def main():
-    zero=istr("0")
-    print(bool(zero))
-
+    ...
 
 if __name__ == "__main__":
     main()
