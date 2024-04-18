@@ -8,7 +8,7 @@ import contextlib
 #  | |\__ \| |_ | |
 #  |_||___/ \__||_|    use strings as integers
 
-__version__ = "0.0.6"
+__version__ = "0.0.8"
 
 class istr(str):
     """
@@ -18,27 +18,28 @@ class istr(str):
     ----------
     value : any
         if str the value will to be interpreted as an int
-            istr('8') ==> istr('8')
+            istr("8") ==> istr("8")
         if numeric, the value will be interpreted as an int
-            istr(8) ==> istr('8')
-        if a dict (or subtype of dict), the same type dict will be returned with all values istr'ed
-            istr({0: 0, 1: 1, 2: 4}) ==> {0: istr('0'), 1: istr('1'), 2: istr('4')}
+            istr(8) ==> istr("8")
+        if a dict (or subtype of dict), the same type dict will be returned with all values istr"ed
+            istr({0: 0, 1: 1, 2: 4}) ==> {0: istr("0"), 1: istr("1"), 2: istr("4")}
         if an iterator, the iterator will be mapped with istr
             istr(i * i for i in range(3)) ==> <map object>
-            list(istr(i * i for i in range(3))) ==> [istr('0'), istr('1'), istr('4')]
-        if an iterable, the same type will be returned with all elements istr'ed
-            istr([0, 1, 4]) ==> [istr('0'), istr('1'), istr('4')]
-            istr((0, 1, 4)) ==> (istr('0'), istr('1'), istr('4'))
-            istr({0, 1, 4}) ==> {istr('4'), istr('0'), istr('1')} # or similar
+            list(istr(i * i for i in range(3))) ==> [istr("0"), istr("1"), istr("4")]
+        if an iterable, the same type will be returned with all elements istr"ed
+            istr([0, 1, 4]) ==> [istr("0"), istr("1"), istr("4")]
+            istr((0, 1, 4)) ==> (istr("0"), istr("1"), istr("4"))
+            istr({0, 1, 4}) ==> {istr("4"), istr("0"), istr("1")} # or similar
         if a range, an istr.range instance will be returned
             istr(range(3)) ==> istr.range(3)
-            list(istr(range(3))) ==> [istr('0'), istr('1'), istr('2')]
+            list(istr(range(3))) ==> [istr("0"), istr("1"), istr("2")]
             len(istr(range(3))) ==> 3
 
         it is possible to give more than one parameter, in which case a tuple
         of the istrs of the parameters will be returned, which can be handy
         to multiple assign, e.g.
-            a, b, c = istr(5, 6, 7) ==> a=istr("5') , b=istr("6"), c=istr("7")"""
+            a, b, c = istr(5, 6, 7) ==> a=istr("5") , b=istr("6"), c=istr("7")
+"""
 
     _format = ""
 
@@ -389,7 +390,8 @@ class istr(str):
 
 
 def main():
-    ...
+    for i,c in istr.enumerate("abc"):
+        print(f"{i!r} {c}")
 
 if __name__ == "__main__":
     main()
