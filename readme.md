@@ -63,7 +63,7 @@ And now we can do
 print(x == 20)
 print(x == "20")
 ```
-resulting in two times `True`. That's because istr instances are treated as int, although they are strings.
+resulting in two times `True`. That's because istrs instances are treated as int, although they are strings.
 
 That means that we can also say
 ```
@@ -115,13 +115,14 @@ abs(four)
 The bool operator works on the integer value of an istr. So
 `bool("0")` ==> `False`
 `bool("1")` ==> `True`
+The code
 ```
 if istr("0"):
     print("True")
 else:
     print("False")
 ```
-this will print `False`
+will print `False`
 
 For the in operator, an istr is treated as an ordinary string, although it is possible to use ints as well:
 ```
@@ -245,6 +246,6 @@ print(repr(jstr(4) * jstr(5)))
 will print `jstr('20')`
 
 # Test script
-There's an extensive pytest script in the \test directory.
+There's an extensive pytest script in the `\tests` directory.
 
 This script also shows clearly the ways istr can be used.

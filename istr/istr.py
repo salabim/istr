@@ -390,8 +390,7 @@ class istr(str):
 
 
 def main():
-    for i,c in istr.enumerate("abc"):
-        print(f"{i!r} {c}")
+    ...
 
 if __name__ == "__main__":
     main()
