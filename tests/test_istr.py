@@ -266,11 +266,11 @@ def test_format():
             ...
     with istr.format("0"):
         assert istr(" 3 ") == "3"
-    assert istr.default_format() == ""
-    istr.default_format("03")
-    assert istr.default_format() == "03"
+    assert istr.format() == ""
+    istr.format("03")
+    assert istr.format() == "03"
     assert istr("  8 ") == "008"
-    istr.default_format("")
+    istr.format("")
     assert istr(" 8 ") == " 8 "
 
 
@@ -322,6 +322,7 @@ def test_matmul():
         three @ "5"
     with pytest.raises(TypeError):
         "3" @ five
+
 
 def test_str():
     assert repr(str(five)) == "'5'"
@@ -378,6 +379,60 @@ def test_unpacking():
     assert z.equals(istr(3))
 
 
+def test_repr_mode():
+    hundred = istr(100)
+    assert repr(hundred) == "istr('100')"
+
+    with istr.repr_mode("istr"):
+        hundred = istr(100)
+    assert repr(hundred) == "istr('100')"
+
+    with istr.repr_mode("int"):
+        hundred = istr(100)
+    assert repr(hundred) == "100"
+    with istr.repr_mode("str"):
+        hundred = istr(100)
+    assert repr(hundred) == "'100'"
+    hundred = istr(100)
+    assert repr(hundred) == "istr('100')"
+
+    assert istr.repr_mode() == "istr"
+
+    with pytest.raises(TypeError):
+        istr.repr_mode("no")
+
+
+def test_base():
+    assert istr.base() == 10
+    with istr.base(16):
+        a = istr("7fff")
+        assert a == 32767
+        assert a == "7fff"
+        b = istr("3fff")
+        c = a - b
+        assert c == istr("4000")
+        assert c == 2**14
+    assert istr.base() == 10
+    with istr.base(36):
+        a = istr("PA7")
+        assert a == 32767
+
+    with istr.base(2):
+        a = istr("111")
+        assert a == 7
+        b = a - istr("110")
+        assert repr(b) == "istr('1')"
+
+    with pytest.raises(ValueError):
+        istr.base(1)
+    with pytest.raises(ValueError):
+        istr.base(37)
+
+    with pytest.raises(ValueError):
+        with istr.base(16):
+            istr(-1)
+
+
 def test_subclassing():
     class jstr(istr):
         ...
@@ -388,3 +443,4 @@ def test_subclassing():
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
+

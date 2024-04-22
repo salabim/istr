@@ -1,6 +1,5 @@
-from functools import partial
+import functools
 import math
-import contextlib
 
 #   _       _
 #  (_) ___ | |_  _ __
@@ -9,6 +8,31 @@ import contextlib
 #  |_||___/ \__||_|    use strings as integers
 
 __version__ = "0.0.8"
+
+"""
+changelog
+
+version 0.1.0  2024-04-22  
+-------------------------
+Changed the context manager istr.format() to be used directly without the with statement.
+Also, istr.format() without any argument now returns the current format.
+
+istr class now uses __slots__
+
+All internal values and methods now starts with an underscore.
+
+Introduced istr.repr_mode()
+
+Introduced istr.base()
+
+Extended tests for new functionality
+
+
+version 0.0.8  2024-04-18  
+-------------------------
+initial version with changelog
+"""
+
 
 class istr(str):
     """
@@ -38,25 +62,33 @@ class istr(str):
         it is possible to give more than one parameter, in which case a tuple
         of the istrs of the parameters will be returned, which can be handy
         to multiple assign, e.g.
-            a, b, c = istr(5, 6, 7) ==> a=istr("5") , b=istr("6"), c=istr("7")
-"""
+            a, b, c = istr(5, 6, 7) ==> a=istr("5") , b=istr("6"), c=istr("7")"""
+
+    __slots__ = ("_as_int", "_as_repr")
 
     _format = ""
+    _mode = "istr"
+    _base = 10
+
+    @staticmethod
+    def _to_base(number, base):
+        if number < 0:
+            raise ValueError(f"negative numbers are not allowed for base {base}")
+        result = ""
+        while number:
+            result += "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[number % base]
+            number //= base
+        return result[::-1] or "0"
 
     @classmethod
-    def toint(cls, value):
+    def _to_int(cls, value):
         try:
-            return int(value)
+            if cls._base != 10 and isinstance(value, str):
+                return int(value, cls._base)
+            else:
+                return int(value)
         except (ValueError, TypeError):
-            raise ValueError(f"unable to convert {repr(value)} to int")
-
-    @classmethod
-    def check_format(cls, format):
-        if format is None:
-            return cls._format
-        if not (isinstance(format, str) and all(x in "0123456789" for x in format)):
-            raise ValueError(f"{repr(format)} is incorrect format")
-        return format
+            raise ValueError(f"unable to convert {repr(value)} to int (base {cls._base})")
 
     def __new__(cls, *value):
         if len(value) == 0:
@@ -69,23 +101,32 @@ class istr(str):
             return type(value)((k, cls(v)) for k, v in value.items())
         if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):
             if hasattr(value, "__next__") or type(value) == range:
-                return map(partial(cls), value)
-            return type(value)(map(partial(cls), value))
+                return map(functoolspartial(cls), value)
+            return type(value)(map(functools.partial(cls), value))
         if value == "":
-            asstr = ""
-            asint = 0
+            as_str = ""
+            as_int = 0
         else:
-            asint = cls.toint(value)
+            as_int = cls._to_int(value)
             if cls._format == "":
                 if isinstance(value, str):
-                    asstr = value
+                    as_str = value
                 else:
-                    asstr = str(asint)
+                    if cls._base == 10:
+                        as_str = str(as_int)
+                    else:
+                        as_str = istr._to_base(as_int, cls._base)
             else:
-                asstr = f"{asint:{cls._format}}"
+                as_str = f"{as_int:{cls._format}}"
 
-        self = super().__new__(cls, asstr)
-        self.asint = asint
+        self = super().__new__(cls, as_str)
+        self._as_int = as_int
+        if self._mode == "istr":
+            self._as_repr = f"{cls.__name__}({repr(as_str)})"
+        elif self._mode == "int":
+            self._as_repr = repr(as_int)
+        else:
+            self._as_repr = repr(as_str)
         return self
 
     def __hash__(self):
@@ -93,11 +134,11 @@ class istr(str):
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self.asint == other.asint
+            return self._as_int == other._as_int
         if isinstance(other, str):
             return super().__eq__(other)
         try:
-            return self.asint == self.toint(other)
+            return self._as_int == self._to_int(other)
         except Exception:
             return False
 
@@ -108,64 +149,64 @@ class istr(str):
         return super().__contains__(str(other))
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({super().__repr__()})"
+        return self._as_repr
 
     def __le__(self, other):
-        return self.asint <= self.toint(other)
+        return self._as_int <= self._to_int(other)
 
     def __lt__(self, other):
-        return self.asint < self.toint(other)
+        return self._as_int < self._to_int(other)
 
     def __ge__(self, other):
-        return self.asint >= self.toint(other)
+        return self._as_int >= self._to_int(other)
 
     def __gt__(self, other):
-        return self.asint > self.toint(other)
+        return self._as_int > self._to_int(other)
 
     def __bool__(self):
-        return bool(self.asint)
+        return bool(self._as_int)
 
     def __add__(self, other):
-        return self.__class__(self.asint + self.toint(other))
+        return self.__class__(self._as_int + self._to_int(other))
 
     def __sub__(self, other):
-        return self.__class__(self.asint - self.toint(other))
+        return self.__class__(self._as_int - self._to_int(other))
 
     def __mul__(self, other):
-        return self.__class__(self.asint * self.toint(other))
+        return self.__class__(self._as_int * self._to_int(other))
 
     def __floordiv__(self, other):
-        return self.__class__(self.asint // self.toint(other))
+        return self.__class__(self._as_int // self._to_int(other))
 
     def __rfloordiv__(self, other):
-        return self.__class__(self.toint(other) // self.asint)
+        return self.__class__(self._to_int(other) // self._as_int)
 
     def __truediv__(self, other):
-        return self.__class__(self.asint // self.toint(other))
+        return self.__class__(self._as_int // self._to_int(other))
 
     def __rtruediv__(self, other):
-        return self.__class__(self.toint(other) // self.asint)
+        return self.__class__(self._to_int(other) // self._as_int)
 
     def __pow__(self, other):
-        return self.__class__(self.asint ** self.toint(other))
+        return self.__class__(self._as_int ** self._to_int(other))
 
     def __rpow__(self, other):
-        return self.__class__(self.toint(other) ** self.asint)
+        return self.__class__(self._to_int(other) ** self._as_int)
 
     def __radd__(self, other):
-        return self.__class__(self.toint(other) + self.asint)
+        return self.__class__(self._to_int(other) + self._as_int)
 
     def __rsub__(self, other):
-        return self.__class__(self.toint(other) - self.asint)
+        return self.__class__(self._to_int(other) - self._as_int)
 
     def __rmul__(self, other):
-        return self.__class__(self.toint(other) * self.asint)
+        return self.__class__(self._to_int(other) * self._as_int)
 
     def __mod__(self, other):
-        return self.__class__(self.asint % self.toint(other))
+        return self.__class__(self._as_int % self._to_int(other))
 
     def __rmod__(self, other):
-        return self.__class__(self.toint(other) % self.asint)
+        return self.__class__(self._to_int(other) % self._as_int)
 
     def __or__(self, other):
         return self.__class__("".join((self, self.__class__(other))))
@@ -174,19 +215,19 @@ class istr(str):
         return self.__class__("".join((self.__class__(other), self)))
 
     def __int__(self):
-        return int(self.asint)
+        return int(self._as_int)
 
     def __round__(self):
-        return self.__class__(round(self.asint))
+        return self.__class__(round(self._as_int))
 
     def __trunc__(self):
-        return self.__class__(math.trunc(self.asint))
+        return self.__class__(math.trunc(self._as_int))
 
     def __floor__(self):
-        return self.__class__(math.floor(self.asint))
+        return self.__class__(math.floor(self._as_int))
 
     def __ceil__(self):
-        return self.__class__(math.ceil(self.asint))
+        return self.__class__(math.ceil(self._as_int))
 
     def __matmul__(self, other):
         return self.__class__(super().__mul__(other))
@@ -195,25 +236,25 @@ class istr(str):
         return self.__class__(super().__rmul__(other))
 
     def __divmod__(self, other):
-        return self.__class__(divmod(self.asint, self.toint(other)))
+        return self.__class__(divmod(self._as_int, self._to_int(other)))
 
     def __rdivmod__(self, other):
-        return self.__class__(divmod(self.toint(other), self.asint))
+        return self.__class__(divmod(self._to_int(other), self._as_int))
 
     def __neg__(self):
-        return self.__class__(-self.asint)
+        return self.__class__(-self._as_int)
 
     def __pos__(self):
         return self
 
     def __abs__(self):
-        return self.__class__(abs(self.asint))
+        return self.__class__(abs(self._as_int))
 
     def is_even(self):
-        return self.asint % 2 == 0
+        return self._as_int % 2 == 0
 
     def is_odd(self):
-        return self.asint % 2 == 1
+        return self._as_int % 2 == 1
 
     def join(self, iterable):
         s = super().join(iterable)
@@ -231,18 +272,65 @@ class istr(str):
             yield cls(i), value
 
     @classmethod
-    @contextlib.contextmanager
-    def format(cls, format):
-        saved_format = cls._format
-        cls._format = cls.check_format(format)
-        yield
-        cls._format = saved_format
+    class format:
+        def __new__(cls, cls_format, format=None):
+            if format is None:
+                return cls_format._format
+            return super().__new__(cls)
+
+        def __init__(self, cls, format):
+            self.saved_format = cls._format
+            self.saved_cls = cls
+            if not (isinstance(format, str) and all(x in "0123456789" for x in format)):
+                raise ValueError(f"{repr(format)} is incorrect format")
+
+            cls._format = format
+
+        def __enter__(self):
+            ...
+
+        def __exit__(self, exc_type, exc_value, exc_tb):
+            self.saved_cls._format = self.saved_format
 
     @classmethod
-    def default_format(cls, format=None):
-        if format is not None:
-            cls._format = cls.check_format(format)
-        return cls._format
+    class repr_mode:
+        def __new__(cls, cls_mode, mode=None):
+            if mode is None:
+                return cls_mode._mode
+            if mode in ("istr", "str", "int"):
+                return super().__new__(cls)
+            raise TypeError(f"mode not 'istr', 'str' or 'int', but {repr(mode)}")
+
+        def __init__(self, cls, mode):
+            self.saved_mode = cls._mode
+            self.saved_cls = cls
+            cls._mode = mode
+
+        def __enter__(self):
+            ...
+
+        def __exit__(self, exc_type, exc_value, exc_tb):
+            self.saved_cls._mode = self.saved_mode
+
+    @classmethod
+    class base:
+        def __new__(cls, cls_base, base=None):
+            if base is None:
+                return cls_base._base
+            if 2 <= base <= 36:
+                return super().__new__(cls)
+            raise ValueError(f"base not between 2 and 36, but {base}")
+
+        def __init__(self, cls, base):
+            self.saved_base = cls._base
+            self.saved_cls = cls
+            cls._base = base
+
+        def __enter__(self):
+            ...
+
+        def __exit__(self, exc_type, exc_value, exc_tb):
+            self.saved_cls._base = self.saved_base
 
     @classmethod
     class range:
@@ -390,7 +478,17 @@ class istr(str):
 
 
 def main():
-    ...
+
+    print(istr.repr_mode())
+
+    istr.repr_mode('int')
+    a=6-abs(istr(5))
+    b=istr(4)
+    s={a,b}
+    print(s)
+
+
 
 if __name__ == "__main__":
     main()
+
