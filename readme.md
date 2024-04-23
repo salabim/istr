@@ -156,17 +156,20 @@ is
 
 `"0 1 2 3 4 5 6 7 8 9 10 11"`
 
-# Using other values for istr than int or str
-Apart from with simple int or str, istr can be initialized with
+# Using other values for istr than numeric value or str
+Apart from with simple numeric (to be interpreted as an int) or str, istr can be initialized with
+several other types:
 
-- if a dict (or subtype of dict), the same type dict will be returned with all values istr"ed
+- if a dict (or subtype of dict), the same type dict will be returned with all values istr'ed
 
     `istr({0: 0, 1: 1, 2: 4})` ==> `{0: istr("0"), 1: istr("1"), 2: istr("4")}`
+
 - if an iterator, the iterator will be mapped with istr
 
     `istr(i * i for i in range(3))` ==> `<map object>`
 
     `list(istr(i * i for i in range(3)))` ==> `[istr("0"), istr("1"), istr("4")]`
+
 - if an iterable, the same type will be returned with all elements istr'ed
 
     `istr([0, 1, 4])` ==> `[istr("0"), istr("1"), istr("4")]`
@@ -174,6 +177,7 @@ Apart from with simple int or str, istr can be initialized with
     `istr((0, 1, 4))` ==> `(istr("0"), istr("1"), istr("4"))`
 
     `istr({0, 1, 4})` ==> `{istr("4"), istr("0"), istr("1")} # or similar`
+
 - if a range, an istr.range instance will be returned
     
     `istr(range(3))` ==> `istr.range(3)`
@@ -181,6 +185,8 @@ Apart from with simple int or str, istr can be initialized with
     `list(istr(range(3)))` ==> `[istr("0"), istr("1"), istr("2")]`
 
     `len(istr(range(3)))` ==> `3`
+
+- if an istr.range instance, the same istr.range will be returned
 
 # More than one parameter for istr
 It is possible to give more than one parameter, in which case a tuple
@@ -232,6 +238,14 @@ istr('0') a
 istr('1') b
 istr('2') c
 ```
+
+# concatenate an iterable
+
+The `istr.concat1 method can be useful to map all items of an iterable
+to `istr` and then concatenate these.
+
+`list(istr.concat(((1,2),(3,4)))` ==> `istr([12,34])`
+'list(istr.concat(itertools.permutations(range(3),2)))' ==> `[istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')]` 
 
 # Subclassing istr
 When a class is derived from istr, all methods will return that newly derived class. 

@@ -1,25 +1,28 @@
 import functools
 import math
 
+
 #   _       _
 #  (_) ___ | |_  _ __
 #  | |/ __|| __|| '__|
 #  | |\__ \| |_ | |
 #  |_||___/ \__||_|    use strings as integers
 
-__version__ = "0.0.8"
+__version__ = "0.1.0"
 
 """
 changelog
 
 version 0.1.0  2024-04-22  
 -------------------------
+Changed the way istr.range is implemenented.
+
 Changed the context manager istr.format() to be used directly without the with statement.
-Also, istr.format() without any argument now returns the current format.
+Also, noww istr.format() works without any argument and then returns the current format.
 
 istr class now uses __slots__
 
-All internal values and methods now starts with an underscore.
+All internal values and methods now start with an underscore.
 
 Introduced istr.repr_mode()
 
@@ -32,6 +35,149 @@ version 0.0.8  2024-04-18
 -------------------------
 initial version with changelog
 """
+
+class _range:
+    """
+    based on https://codereview.stackexchange.com/questions/229073/pure-python-range-implementation
+    """
+
+    def __init__(self, cls, start, stop=None, step=1):
+        if stop is None:
+            start, stop = 0, start
+        self.start, self.stop, self.step = (int(obj) for obj in (start, stop, step))
+        if step == 0:
+            raise ValueError("range() arg 3 must not be zero")
+        if self.step < 0:
+            step_sign = -1
+        else:
+            step_sign = 1
+        self._len = max(1 + (self.stop - self.start - step_sign) // self.step, 0)
+        self.parent_cls = cls
+
+    def __contains__(self, value):
+        if isinstance(value, int):
+            return self._index(value) != -1
+        return any(n == value for n in self)
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        if self._len != len(other):
+            return False
+        if self._len == 0:
+            return True
+        if self.start != other.start:
+            return False
+        if self[-1] == other[-1]:
+            return True
+        return False
+
+    def __getitem__(self, index):
+        def adjust_indices(length, start, stop, step):
+            if step is None:
+                step = 1
+            else:
+                step = int(step)
+
+            if start is None:
+                start = length - 1 if step < 0 else 0
+            else:
+                start = int(start)
+                if start < 0:
+                    start += length
+                    if start < 0:
+                        start = -1 if step < 0 else 0
+                elif start >= length:
+                    start = length - 1 if step < 0 else length
+
+            if stop is None:
+                stop = -1 if step < 0 else length
+            else:
+                stop = int(stop)
+                if stop < 0:
+                    stop += length
+                    if stop < 0:
+                        stop = -1 if step < 0 else 0
+                elif stop >= length:
+                    stop = length - 1 if step < 0 else length
+
+            return start, stop, step
+
+        if isinstance(index, slice):
+            start, stop, step = adjust_indices(self._len, index.start, index.stop, index.step)
+            return self.parent_cls.range(self.start + self.step * start, self.start + self.step * stop, self.step * step)
+        index = int(index)
+        if index < 0:
+            index += self._len
+        if not 0 <= index < self._len:
+            raise IndexError("range object index out of range")
+        return self.parent_cls(self.start + self.step * index)
+
+    def __hash__(self):
+        if self._len == 0:
+            return id(self.parent_cls.range)
+        return hash((self._len, self.start, int(self[-1])))
+
+    def __iter__(self):
+        value = self.start
+        if self.step > 0:
+            while value < self.stop:
+                yield self.parent_cls(value)
+                value += self.step
+        else:
+            while value > self.stop:
+                yield self.parent_cls(value)
+                value += self.step
+
+    def __len__(self):
+        return self._len
+
+    def __repr__(self):
+        if self.step == 1:
+            return f"{self.parent_cls.__name__}.range({self.start}, {self.stop})"
+        return f"{self.parent_cls.__name__}.range({self.start}, {self.stop}, {self.step})"
+
+    def __reversed__(self):
+        return iter(self[::-1])
+
+    def _index(self, value):
+        index_mul_step = value - self.start
+        if index_mul_step % self.step:
+            return -1
+        index = index_mul_step // self.step
+        if 0 <= index < self._len:
+            return index
+        return -1
+
+    def count(self, value):
+        """
+        Rangeobject.count(value) -> integer
+        Return number of occurrences of value.
+        """
+        return sum(1 for n in self if int(n) == int(value))
+
+    def index(self, value, start=0, stop=None):
+        if start < 0:
+            start = max(self._len + start, 0)
+        if stop is None:
+            stop = self._len
+        if stop < 0:
+            stop += self._len
+
+        if isinstance(value, int):
+            index = self._index(value)
+            if start <= index < stop:
+                return index
+            raise ValueError(f"{value} is not in range")
+
+        i = start
+        n = self.start + self.step * i
+        while i < stop:
+            if n == int(value):
+                return i
+            i += 1
+            n += self.step
+        raise ValueError(f"{value} is not in range")
 
 
 class istr(str):
@@ -97,11 +243,13 @@ class istr(str):
             value = value[0]  # normal case of 1 parameter
         if isinstance(value, range):
             return cls.range(value.start, value.stop, value.step)
+        if isinstance(value, _range):
+            return value
         if isinstance(value, dict):
             return type(value)((k, cls(v)) for k, v in value.items())
         if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):
-            if hasattr(value, "__next__") or type(value) == range:
-                return map(functoolspartial(cls), value)
+            if hasattr(value, "__next__"):
+                return map(functools.partial(cls), value)
             return type(value)(map(functools.partial(cls), value))
         if value == "":
             as_str = ""
@@ -267,6 +415,10 @@ class istr(str):
         return self.__class__(super().__getitem__(key))
 
     @classmethod
+    def concat(cls, iterable):
+        return map(lambda x: istr("").join(x), istr(iterable))
+
+    @classmethod
     def enumerate(cls, iterable, start=0):
         for i, value in enumerate(iterable, start):
             yield cls(i), value
@@ -333,160 +485,19 @@ class istr(str):
             self.saved_cls._base = self.saved_base
 
     @classmethod
-    class range:
-        """
-        based on https://codereview.stackexchange.com/questions/229073/pure-python-range-implementation
-        """
+    def range(cls, start,stop=None,step=1):
+        return _range(cls,start,stop,step) 
 
-        def __init__(self, cls, start, stop=None, step=1):
-            if stop is None:
-                start, stop = 0, start
-            self.start, self.stop, self.step = (int(obj) for obj in (start, stop, step))
-            if step == 0:
-                raise ValueError("range() arg 3 must not be zero")
-            if self.step < 0:
-                step_sign = -1
-            else:
-                step_sign = 1
-            self._len = max(1 + (self.stop - self.start - step_sign) // self.step, 0)
-            self.parent_cls = cls
-
-        def __contains__(self, value):
-            if isinstance(value, int):
-                return self._index(value) != -1
-            return any(n == value for n in self)
-
-        def __eq__(self, other):
-            if not isinstance(other, type(self)):
-                return False
-            if self._len != len(other):
-                return False
-            if self._len == 0:
-                return True
-            if self.start != other.start:
-                return False
-            if self[-1] == other[-1]:
-                return True
-            return False
-
-        def __getitem__(self, index):
-            def adjust_indices(length, start, stop, step):
-                if step is None:
-                    step = 1
-                else:
-                    step = int(step)
-
-                if start is None:
-                    start = length - 1 if step < 0 else 0
-                else:
-                    start = int(start)
-                    if start < 0:
-                        start += length
-                        if start < 0:
-                            start = -1 if step < 0 else 0
-                    elif start >= length:
-                        start = length - 1 if step < 0 else length
-
-                if stop is None:
-                    stop = -1 if step < 0 else length
-                else:
-                    stop = int(stop)
-                    if stop < 0:
-                        stop += length
-                        if stop < 0:
-                            stop = -1 if step < 0 else 0
-                    elif stop >= length:
-                        stop = length - 1 if step < 0 else length
-
-                return start, stop, step
-
-            if isinstance(index, slice):
-                start, stop, step = adjust_indices(self._len, index.start, index.stop, index.step)
-                return self.parent_cls.range(self.start + self.step * start, self.start + self.step * stop, self.step * step)
-            index = int(index)
-            if index < 0:
-                index += self._len
-            if not 0 <= index < self._len:
-                raise IndexError("range object index out of range")
-            return self.parent_cls(self.start + self.step * index)
-
-        def __hash__(self):
-            if self._len == 0:
-                return id(self.parent_cls.range)
-            return hash((self._len, self.start, int(self[-1])))
-
-        def __iter__(self):
-            value = self.start
-            if self.step > 0:
-                while value < self.stop:
-                    yield self.parent_cls(value)
-                    value += self.step
-            else:
-                while value > self.stop:
-                    yield self.parent_cls(value)
-                    value += self.step
-
-        def __len__(self):
-            return self._len
-
-        def __repr__(self):
-            if self.step == 1:
-                return f"{self.parent_cls.__name__}.range({self.start}, {self.stop})"
-            return f"{self.parent_cls.__name__}.range({self.start}, {self.stop}, {self.step})"
-
-        def __reversed__(self):
-            return iter(self[::-1])
-
-        def _index(self, value):
-            index_mul_step = value - self.start
-            if index_mul_step % self.step:
-                return -1
-            index = index_mul_step // self.step
-            if 0 <= index < self._len:
-                return index
-            return -1
-
-        def count(self, value):
-            """
-            Rangeobject.count(value) -> integer
-            Return number of occurrences of value.
-            """
-            return sum(1 for n in self if int(n) == int(value))
-
-        def index(self, value, start=0, stop=None):
-            if start < 0:
-                start = max(self._len + start, 0)
-            if stop is None:
-                stop = self._len
-            if stop < 0:
-                stop += self._len
-
-            if isinstance(value, int):
-                index = self._index(value)
-                if start <= index < stop:
-                    return index
-                raise ValueError(f"{value} is not in range")
-
-            i = start
-            n = self.start + self.step * i
-            while i < stop:
-                if n == int(value):
-                    return i
-                i += 1
-                n += self.step
-            raise ValueError(f"{value} is not in range")
 
 
 def main():
-
-    print(istr.repr_mode())
-
-    istr.repr_mode('int')
-    a=6-abs(istr(5))
-    b=istr(4)
-    s={a,b}
-    print(s)
-
+    rng=istr(range(4))
+    for i in rng:
+        print(repr(i))
+    rng1=istr.range(4)
+    for i in rng:
+        print(repr(i))
+    rng2=istr(rng1)
 
 
 if __name__ == "__main__":

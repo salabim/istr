@@ -1,4 +1,5 @@
 import math
+import itertools
 
 if __name__ == "__main__":  # to make the tests run without the pytest cli
     import sys
@@ -135,7 +136,12 @@ def test_order():
     assert " ".join(sorted(istr.range(1, 13))) == "1 2 3 4 5 6 7 8 9 10 11 12"
     assert " ".join(sorted(map(istr, range(1, 13)))) == "1 2 3 4 5 6 7 8 9 10 11 12"
 
-
+def test_concat():
+    c = list(istr.concat(((1,2),(3,4))))
+    assert c == istr(['12','34'])
+    c=list(istr.concat(itertools.permutations(range(3),2)))
+    assert c == [istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')]
+    
 def test_range():
     assert one_to_twelve == istr.range("1", "13")
     assert one_to_twelve == istr.range(one, thirteen, one)
@@ -369,7 +375,8 @@ def test_edge_cases():
     assert istr(istr(one)).equals(istr("1"))
     with pytest.raises(TypeError):
         istr()
-
+    rng=istr.range(5)
+    assert rng is istr(rng)
 
 def test_unpacking():
     a = istr("123")
