@@ -439,6 +439,16 @@ def test_base():
         with istr.base(16):
             istr(-1)
 
+    with istr.base(16):
+        a = istr(15)
+    with istr.base(10):
+        assert a * a == 225
+    with pytest.raises(ValueError):
+        assert a | a # FF can't be converted to base 10
+        
+    
+
+
 
 def test_subclassing():
     class jstr(istr):

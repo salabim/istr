@@ -1,3 +1,5 @@
+<img src="https://www.salabim.org/istr.png" width=500>
+
 # Introduction
 
 The istr module has exactly one class: istr.
@@ -245,7 +247,8 @@ The `istr.concat1 method can be useful to map all items of an iterable
 to `istr` and then concatenate these.
 
 `list(istr.concat(((1,2),(3,4)))` ==> `istr([12,34])`
-'list(istr.concat(itertools.permutations(range(3),2)))' ==> `[istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')]` 
+
+`list(istr.concat(itertools.permutations(range(3),2)))` ==> `[istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')]` 
 
 # Subclassing istr
 When a class is derived from istr, all methods will return that newly derived class. 
@@ -258,6 +261,146 @@ class jstr(istr):
 print(repr(jstr(4) * jstr(5)))
 ```
 will print `jstr('20')`
+
+# Changing the way repr works
+
+It is possible to control the way an `istr` instance will be repr'ed.
+
+By default, the `istr('5')` is represented as `istr('5')`.
+
+With the istr.repr_mode() context manager, that can be changed:
+```
+with istr.repr_mode("str"):
+    five = istr('5')
+    print(repr(five))
+with istr.repr_mode("int"):
+    five = istr('5')
+    print(repr(five))
+with istr.repr_mode("istr"):
+    five = istr('5')
+    print(repr(five))
+```
+This will print
+```
+'5'
+5
+istr('5')
+```
+Note that the way an `istr` is represented is determined at initialization.
+
+It is also possible to set the repr mode without a context manager:
+
+```
+istr.repr_mode("str")
+five = istr('5')
+print(repr(five))
+```
+This will print
+```
+'5'
+```
+Finally, the current repr mode can be queried with `istr.repr_mode()`. So upon start:
+```
+print(repr(istr.repr_mode()))
+```
+will output `istr`.
+
+# Changing the base system
+
+By default, `istr` works in base 10. However it is possible to change the base system with the `istr.base()` context manager / method.
+
+Any base between 2 and 36 may be used.
+
+Note that the integer is always stored in base 10 mode, but the string
+representation will reflect the chosen base (at time of initialization).
+
+Some examples:
+```
+with istr.base(16):
+    a = istr("7fff")
+    print(int(a))
+
+    b = istr(15)
+    print(repr(b))
+```
+This will result in
+```
+32767
+istr('F')
+```
+All calculations are done in the decimal 10 system.
+
+Note that the way an `istr` is interpreted is determined at initialization.
+
+It is also possible to set the repr mode without a context manager:
+```
+istr.base(16)
+print(int(istr("7fff")))
+```
+This will print
+```
+32767
+```
+Finally, the current base can be queried with `istr.base()`, so upon start:
+```
+print(istr.base())
+```
+will result in `10`.
+
+# Changing the format of the string
+
+By default, `istr` does not change the way an istr is stored when a str is to initialize:
+
+`repr('4'))` ==> `istr('4')`
+
+`repr(' 4'))` ==> `istr(' 4')`
+
+`repr('4  '))` ==> `istr('4  ')`
+
+For initializing with an int (or other numeric) value, the string is simply the str representation
+
+`repr(4))` ==> `istr('4')`
+
+With the `istr.format()` context manager this behavior can be changed.
+If the format specifier is a number, most likely a single digit, that
+will be the minimum number of characters in the string:
+```
+with istr.format("3"):
+    print(repr(istr(1)))
+    print(repr(istr(12)))
+    print(repr(istr(123)))
+    print(repr(istr(1234)))
+```
+will print
+```
+istr('  1')
+istr(' 12')
+istr('123')
+istr('1234')
+```
+If the string starts with a `0`, the string will be zero filled:
+```
+with istr.format("03"):
+    print(repr(istr(1)))
+    print(repr(istr(12)))
+    print(repr(istr(123)))
+    print(repr(istr(1234)))
+```
+will print
+```
+istr('001')
+istr('012')
+istr('123')
+istr('1234')
+```
+Note that if a format other than the default `''` is used, the string will reformatted even if the `istr` is specified with a string:
+```
+with istr.format("03"):
+    print(repr(istr("  12 ")))
+```
+will result in `istr('0012')`
+
+Remark: For bases other than 10, the string will never be reformatted!
 
 # Test script
 There's an extensive pytest script in the `\tests` directory.

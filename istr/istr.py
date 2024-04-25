@@ -256,7 +256,7 @@ class istr(str):
             as_int = 0
         else:
             as_int = cls._to_int(value)
-            if cls._format == "":
+            if (cls._format == "" or cls._base != 10) and not isinstance(value,istr):
                 if isinstance(value, str):
                     as_str = value
                 else:
@@ -491,13 +491,12 @@ class istr(str):
 
 
 def main():
-    rng=istr(range(4))
-    for i in rng:
-        print(repr(i))
-    rng1=istr.range(4)
-    for i in rng:
-        print(repr(i))
-    rng2=istr(rng1)
+    with istr.base(16):
+        a = istr(15)
+    b = a * a
+    print(b)
+    c=istr(a)
+    print(repr(c))
 
 
 if __name__ == "__main__":
