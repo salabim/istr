@@ -1,4 +1,4 @@
-<img src="https://www.salabim.org/istr.png" width=500>
+<img src="https://www.salabim.org/istr1.png" width=500>
 
 # Introduction
 

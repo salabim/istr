@@ -1,14 +1,16 @@
 import functools
 import math
 
+#     _       _
+#    (_) ___ | |_  _ __
+#    | |/ __|| __|| '__|
+#    | |\__ \| |_ | |
+#    |_||___/ \__||_|
+# strings you can count on
 
-#   _       _
-#  (_) ___ | |_  _ __
-#  | |/ __|| __|| '__|
-#  | |\__ \| |_ | |
-#  |_||___/ \__||_|    use strings as integers
-
-__version__ = "0.1.0"
+__version__ = "0.1.1"
+import functools
+import math
 
 """
 changelog
@@ -501,4 +503,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
