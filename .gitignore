@@ -6,3 +6,4 @@ dist/*
 build/*
 build_and_upload.bat
 toml_versioner.py
+artwork/*

@@ -408,6 +408,33 @@ def test_repr_mode():
     with pytest.raises(TypeError):
         istr.repr_mode("no")
 
+def test_str_methods():
+    a=istr("   123123 ")
+    b=istr("123123")
+    assert a.capitalize().equals(a)
+    assert a.casefold().equals(a)
+    assert a.center(20).equals(istr('        123123      '))
+    assert a.expandtabs(4).equals(a)
+    assert istr("").join(("0","1","2")).equals(istr("012"))
+    assert a.ljust(20).equals(istr('   123123           '))
+    assert a.lower().equals(a)
+    assert a.lstrip().equals(istr('123123 '))
+    assert a.partition("3")==(istr('   12'), istr('3'), istr('123 '))
+    assert a.removeprefix("   12").equals(istr("3123 "))
+    assert a.removesuffix("23 ").equals(istr("   1231"))
+    assert a.replace("1","9").equals(istr("   923923 "))
+    assert a.rjust(20).equals(istr('             123123 '))
+    assert b.partition("2")==(istr('1'), istr('2'), istr('3123'))
+    assert b.rpartition("2")==(istr('1231'), istr('2'), istr('3'))
+    assert b.rsplit("1")==[istr(''), istr('23'), istr('23')]
+    assert a.rstrip().equals(istr('   123123'))
+    assert b.split("1")==[istr(''), istr('23'), istr('23')]
+    assert a.strip().equals(istr('123123'))
+    assert a.swapcase().equals(a)
+    assert a.title().equals(a)
+    assert a.translate({49:  52}).equals(istr('   423423 '))
+    assert a.upper().equals(a)
+    assert b.zfill(10).equals(istr('0000123123'))
 
 def test_base():
     assert istr.base() == 10

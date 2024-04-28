@@ -1,4 +1,4 @@
-<img src="https://www.salabim.org/istr1.png" width=500>
+<img src="https://www.salabim.org/istr_logo.png" width=500>
 
 # Introduction
 
@@ -406,3 +406,8 @@ Remark: For bases other than 10, the string will never be reformatted!
 There's an extensive pytest script in the `\tests` directory.
 
 This script also shows clearly the ways istr can be used.
+
+![PyPI](https://img.shields.io/pypi/v/istr) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/istr) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/istr)
+
+![PyPI - License](https://img.shields.io/pypi/l/istr) ![Black](https://img.shields.io/badge/code%20style-black-000000.svg) 
+ ![GitHub last commit](https://img.shields.io/github/last-commit/salabim/istr)

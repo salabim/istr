@@ -8,16 +8,21 @@ import math
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "0.1.1"
+__version__ = "0.1" # only x.y here!
 import functools
 import math
 
 """
 changelog
 
+version 0.1.2  2024-04-26  
+-------------------------
+Added all relevant string methods to return istrs or data structures with istrs.
+Added corresponding tests.
+
 version 0.1.0  2024-04-22  
 -------------------------
-Changed the way istr.range is implemenented.
+Changed the way istr.range is implemennted.
 
 Changed the context manager istr.format() to be used directly without the with statement.
 Also, noww istr.format() works without any argument and then returns the current format.
@@ -37,6 +42,7 @@ version 0.0.8  2024-04-18
 -------------------------
 initial version with changelog
 """
+
 
 class _range:
     """
@@ -247,6 +253,8 @@ class istr(str):
             return cls.range(value.start, value.stop, value.step)
         if isinstance(value, _range):
             return value
+        if isinstance(value, cls):
+            return value
         if isinstance(value, dict):
             return type(value)((k, cls(v)) for k, v in value.items())
         if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):
@@ -258,7 +266,7 @@ class istr(str):
             as_int = 0
         else:
             as_int = cls._to_int(value)
-            if (cls._format == "" or cls._base != 10) and not isinstance(value,istr):
+            if (cls._format == "" or cls._base != 10) and not isinstance(value, istr):
                 if isinstance(value, str):
                     as_str = value
                 else:
@@ -406,10 +414,6 @@ class istr(str):
     def is_odd(self):
         return self._as_int % 2 == 1
 
-    def join(self, iterable):
-        s = super().join(iterable)
-        return self.__class__(s)
-
     def reversed(self):
         return self[::-1]
 
@@ -487,19 +491,94 @@ class istr(str):
             self.saved_cls._base = self.saved_base
 
     @classmethod
-    def range(cls, start,stop=None,step=1):
-        return _range(cls,start,stop,step) 
+    def range(cls, start, stop=None, step=1):
+        return _range(cls, start, stop, step)
 
+    def capitalize1(self, *args, **kwargs):
+        return self.__class__(super().capitalize(*args, **kwargs))
+
+    def casefold(self, *args, **kwargs):
+        return self.__class__(super().casefold(*args, **kwargs))
+
+    def center(self, *args, **kwargs):
+        return self.__class__(super().center(*args, **kwargs))
+
+    def expandtabs(self, *args, **kwargs):
+        return self.__class__(super().expandtabs(*args, **kwargs))
+
+    def join(self, *args, **kwargs):
+        return self.__class__(super().join(*args, **kwargs))
+
+    def ljust(self, *args, **kwargs):
+        return self.__class__(super().ljust(*args, **kwargs))
+
+    def lower(self, *args, **kwargs):
+        return self.__class__(super().lower(*args, **kwargs))
+
+    def lstrip(self, *args, **kwargs):
+        return self.__class__(super().lstrip(*args, **kwargs))
+
+    def partition(self, *args, **kwargs):
+        return self.__class__(super().partition(*args, **kwargs))
+
+    def removeprefix(self, *args, **kwargs):
+        return self.__class__(super().removeprefix(*args, **kwargs))
+
+    def removesuffix(self, *args, **kwargs):
+        return self.__class__(super().removesuffix(*args, **kwargs))
+
+    def replace(self, *args, **kwargs):
+        return self.__class__(super().replace(*args, **kwargs))
+
+    def rjust(self, *args, **kwargs):
+        return self.__class__(super().rjust(*args, **kwargs))
+
+    def rpartition(self, *args, **kwargs):
+        return self.__class__(super().rpartition(*args, **kwargs))
+
+    def rsplit(self, *args, **kwargs):
+        return self.__class__(super().rsplit(*args, **kwargs))
+
+    def rstrip(self, *args, **kwargs):
+        return self.__class__(super().rstrip(*args, **kwargs))
+
+    def split(self, *args, **kwargs):
+        return self.__class__(super().split(*args, **kwargs))
+
+    def strip(self, *args, **kwargs):
+        return self.__class__(super().strip(*args, **kwargs))
+
+    def swapcase(self, *args, **kwargs):
+        return self.__class__(super().swapcase(*args, **kwargs))
+
+    def title(self, *args, **kwargs):
+        return self.__class__(super().title(*args, **kwargs))
+
+    def translate(self, *args, **kwargs):
+        return self.__class__(super().translate(*args, **kwargs))
+
+    def upper(self, *args, **kwargs):
+        return self.__class__(super().upper(*args, **kwargs))
+
+    def zfill(self, *args, **kwargs):
+        return self.__class__(super().zfill(*args, **kwargs))
+
+    f = "capitalize"
+    exec(
+        f"""
+def {f}(self, *args, **kwargs):
+        return self.__class__(super(istr,self).{f}(*args, **kwargs)) 
+""",
+        globals(),
+        locals(),
+    )
 
 
 def main():
-    with istr.base(16):
-        a = istr(15)
-    b = a * a
-    print(b)
-    c=istr(a)
-    print(repr(c))
+    a = istr("123123")
+    print(repr(a.capitalize()))
 
 
 if __name__ == "__main__":
     main()
+
