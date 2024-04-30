@@ -1,6 +1,6 @@
 <img src="https://www.salabim.org/istr_logo.png" width=500>
 
-# Introduction
+## Introduction
 
 The istr module has exactly one class: istr.
 
@@ -29,7 +29,7 @@ for s, e, n, d, m, o, r, y in istr(itertools.permutations(range(10), 8)):
 
 And it is a nice demonstration of extending a class (str) with extra and changed functionality.
 
-# Installation
+## Installation
 Installing istr with pip is easy.
 ```
 $ pip install istr-python
@@ -42,7 +42,7 @@ Alternatively, istr.py can be just copied into you current work directory from G
 
 No dependencies!
 
-# Usage
+## Usage
 Just start with
 
 ```
@@ -158,7 +158,7 @@ is
 
 `"0 1 2 3 4 5 6 7 8 9 10 11"`
 
-# Using other values for istr than numeric value or str
+## Using other values for istr than numeric value or str
 Apart from with simple numeric (to be interpreted as an int) or str, istr can be initialized with
 several other types:
 
@@ -178,7 +178,7 @@ several other types:
 
     `istr((0, 1, 4))` ==> `(istr("0"), istr("1"), istr("4"))`
 
-    `istr({0, 1, 4})` ==> `{istr("4"), istr("0"), istr("1")} # or similar`
+    `istr({0, 1, 4})` ==> `{istr("4"), istr("0"), istr("1")} ## or similar`
 
 - if a range, an istr.range instance will be returned
     
@@ -190,14 +190,14 @@ several other types:
 
 - if an istr.range instance, the same istr.range will be returned
 
-# More than one parameter for istr
+## More than one parameter for istr
 It is possible to give more than one parameter, in which case a tuple
 of the istrs of the parameters will be returned, which can be handy
 to unpack multiple values, e.g.
 
 `a, b, c = istr(5, 6, 7)` ==> `a=istr("5") , b=istr("6"), c=istr("7")`
 
-# test for even/odd
+## test for even/odd
 It is possible to test for even/odd with the
 
 `is_even` and `is_odd` method, e.g.
@@ -208,7 +208,7 @@ print(istr(5).is_odd())
 ```
 This will print `True` twice.
 
-# reverse an istr
+## reverse an istr
 The method `istr.reversed()` will return the an istr with the reversed content:
 ```
 print(repr(istr(456).reversed()))
@@ -226,7 +226,7 @@ print(repr(istr("0456")[::-1]))
 ```
 Note that is impossible to reverse a negative istr.
 
-# enumerate with istrs
+## enumerate with istrs
 
 The `istr.enumerate` method can be used just as the builtin enumerate function.
 The iteration counter however is an istr rather than an int. E.g. 
@@ -241,16 +241,16 @@ istr('1') b
 istr('2') c
 ```
 
-# concatenate an iterable
+## concatenate an iterable
 
-The `istr.concat1 method can be useful to map all items of an iterable
+The `istr.concat` method can be useful to map all items of an iterable
 to `istr` and then concatenate these.
 
 `list(istr.concat(((1,2),(3,4)))` ==> `istr([12,34])`
 
 `list(istr.concat(itertools.permutations(range(3),2)))` ==> `[istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')]` 
 
-# Subclassing istr
+## Subclassing istr
 When a class is derived from istr, all methods will return that newly derived class. 
 
 E.g.
@@ -262,7 +262,7 @@ print(repr(jstr(4) * jstr(5)))
 ```
 will print `jstr('20')`
 
-# Changing the way repr works
+## Changing the way repr works
 
 It is possible to control the way an `istr` instance will be repr'ed.
 
@@ -305,7 +305,7 @@ print(repr(istr.repr_mode()))
 ```
 will output `istr`.
 
-# Changing the base system
+## Changing the base system
 
 By default, `istr` works in base 10. However it is possible to change the base system with the `istr.base()` context manager / method.
 
@@ -347,7 +347,7 @@ print(istr.base())
 ```
 will result in `10`.
 
-# Changing the format of the string
+## Changing the format of the string
 
 By default, `istr` does not change the way an istr is stored when a str is to initialize:
 
@@ -402,12 +402,32 @@ will result in `istr('0012')`
 
 Remark: For bases other than 10, the string will never be reformatted!
 
-# Test script
+## Operations
+----------------------------
+operator/function   int  str  Example
+----------------------------
++                    x        istr(20) + 3 ==> istr('23')
+_                    x        istr(20) - 3 ==> istr('17')
+*                    x        istr(20) * 3 ==> istr('60')
+/                    x        istr(20) / 3 ==> istr('6')
+//                   x        istr(20) // 3 ==> istr('6')
+%                    x        istr(20) % 3 ==> istr('2')
+**                   x        istr(2) ** 3 ==> istr('8')
+@                         x   istr(20) @ 3 ==> istr('202020')
+==                   x    x   istr(20) == 20 ==> True | istr(20) == '20' ==> True
+|                         x   istr(20) | 5 ==> istr('205')
+abs                  x
+<=, <, >, >=         x        istr('100') > istr('2') ==> True
+slicing              x        istr(12345)[1:3] ==> istr('23')
+----------------------------
+
+## Test script
 There's an extensive pytest script in the `\tests` directory.
 
 This script also shows clearly the ways istr can be used.
 
-![PyPI](https://img.shields.io/pypi/v/istr) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/istr) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/istr)
+## Badges
+![PyPI](https://img.shields.io/pypi/v/istr-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/istr-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/istr-python)
 
-![PyPI - License](https://img.shields.io/pypi/l/istr) ![Black](https://img.shields.io/badge/code%20style-black-000000.svg) 
+![PyPI - License](https://img.shields.io/pypi/l/istr-python) ![Black](https://img.shields.io/badge/code%20style-black-000000.svg) 
  ![GitHub last commit](https://img.shields.io/github/last-commit/salabim/istr)

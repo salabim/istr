@@ -8,12 +8,33 @@ import math
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "0.1" # only x.y here!
+__version__ = "0.2.0"
 import functools
 import math
 
 """
 changelog
+
+version 0.2.0 2024-04-30
+----------------------
+Added __iter__ method__ .
+    So now,
+        for c in istr('123'):
+            ...
+        results in c values that are istrs 
+
+Added istr.digits method:
+    Examples
+    --------
+    istr.digits() ==> istr('0123456789')
+    istr.digits('') ==> istr('0123456789')
+    istr.digits('1') ==> istr('1')
+    istr.digits('3-') ==> istr('3456789')
+    istr.digits('-3') ==> istr('0123')
+    istr('1-4', '6', '8-9') ==> istr('1234689')
+    istr.digits('1', '1-2', '1-3') ==> istr('112123')
+
+    Note that a digit can occur more than once.
 
 version 0.1.2  2024-04-26  
 -------------------------
@@ -286,6 +307,9 @@ class istr(str):
         else:
             self._as_repr = repr(as_str)
         return self
+              
+    def __iter__(self):
+        yield from self.__class__(super().__iter__())
 
     def __hash__(self):
         return hash((self.__class__, str(self)))
@@ -493,8 +517,65 @@ class istr(str):
     @classmethod
     def range(cls, start, stop=None, step=1):
         return _range(cls, start, stop, step)
+        
+    @classmethod
+    @functools.lru_cache
+    def digits(cls,*args):
+        '''
+        return an istr of istr'ed digits as specified with args
+        
+        if no args, 0-9 will be used
+        
+        all given args will be used
+        each arg has to be either null string, <digit>, <digit>-<digit> or -<digit>
+        
+        examples
+        --------
+        istr.digits() ==> istr('0123456789')
+        istr.digits('') ==> istr('0123456789')
+        istr.digits('1') ==> istr('1')
+        istr.digits('3-') ==> istr('3456789')
+        istr.digits('-3') ==> istr('0123')
+        istr('1-4', '6', '8-9') ==> istr('1234689')
+        istr('1', '1-2', '1-3') ==> istr('11213')
 
-    def capitalize1(self, *args, **kwargs):
+        Note
+        ----
+        A digit can occur more than once.
+
+        '''
+        result=[]
+        if not args:
+            args=['0-9']
+        for arg in args:
+            if arg.strip()=='':
+                arg='0-9'
+            pre,*post=arg.split('-')
+            if pre.strip()=='':
+                pre='0'
+            try:
+                start=int(pre)
+            except ValueError:
+                raise ValueError(f'incorrect specifier: {repr(arg)}')  
+            if not 0<=start<=9:
+                raise ValueError(f'incorrect specifier: {repr(arg)}')                
+            if len(post)>1:
+                raise ValueError(f'incorrect specifier: {repr(arg)}')
+            if post:
+                if post[0].strip()=="":
+                    post="9"
+                try:
+                    stop=int(post[0])
+                except ValueError:
+                    raise ValueError(f'incorrect specifier: {repr(arg)}')                    
+                if (not 0<=start<=9) or start>stop:
+                    raise ValueError(f'incorrect specifier: {repr(arg)}')
+            else:
+                stop=start
+            result.extend(range(start,stop+1))
+        return cls('').join(istr(result))
+
+    def capitalize(self, *args, **kwargs):
         return self.__class__(super().capitalize(*args, **kwargs))
 
     def casefold(self, *args, **kwargs):
@@ -563,21 +644,16 @@ class istr(str):
     def zfill(self, *args, **kwargs):
         return self.__class__(super().zfill(*args, **kwargs))
 
-    f = "capitalize"
-    exec(
-        f"""
-def {f}(self, *args, **kwargs):
-        return self.__class__(super(istr,self).{f}(*args, **kwargs)) 
-""",
-        globals(),
-        locals(),
-    )
-
 
 def main():
-    a = istr("123123")
-    print(repr(a.capitalize()))
-
+    print(repr(istr.digits()))
+    print(istr.digits('1-9'))
+    print(istr.digits('1'))
+    print(istr.digits('1-2', '6'))    
+    print(istr.digits('1-5', '7-9'))        
+    print(istr.digits('-5'))   
+    print(istr.digits('3-'))   
+    a=istr('1-4', '6', '8-9')
 
 if __name__ == "__main__":
     main()

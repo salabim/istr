@@ -474,7 +474,14 @@ def test_base():
         assert a | a # FF can't be converted to base 10
         
     
-
+def test_digits():
+    assert istr.digits().equals(istr('0123456789'))
+    assert istr.digits('').equals(istr('0123456789'))
+    assert istr.digits('1').equals(istr('1'))
+    assert istr.digits('3-').equals(istr('3456789'))
+    assert istr.digits('-3').equals(istr('0123'))
+    assert istr.digits('1-4', '6', '8-9').equals(istr('1234689'))
+    assert istr.digits('1', '1-2', '1-3').equals(istr('112123'))
 
 
 def test_subclassing():
