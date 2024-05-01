@@ -24,15 +24,15 @@ Added __iter__ method__ .
         results in c values that are istrs 
 
 Added istr.digits method:
-    Examples
-    --------
-    istr.digits() ==> istr('0123456789')
-    istr.digits('') ==> istr('0123456789')
-    istr.digits('1') ==> istr('1')
-    istr.digits('3-') ==> istr('3456789')
-    istr.digits('-3') ==> istr('0123')
-    istr('1-4', '6', '8-9') ==> istr('1234689')
-    istr.digits('1', '1-2', '1-3') ==> istr('112123')
+Examples
+--------
+istr.digits() ==> istr('0123456789')
+istr.digits('') ==> istr('0123456789')
+istr.digits('1') ==> istr('1')
+istr.digits('3-') ==> istr('3456789')
+istr.digits('-3') ==> istr('0123')
+istr('1-4', '6', '8-9') ==> istr('1234689')
+istr.digits('1', '1-2', '1-3') ==> istr('112123')
 
     Note that a digit can occur more than once.
 
@@ -653,7 +653,7 @@ def main():
     print(istr.digits('1-5', '7-9'))        
     print(istr.digits('-5'))   
     print(istr.digits('3-'))   
-    a=istr('1-4', '6', '8-9')
+    print(repr(divmod(istr(20),3)))
 
 if __name__ == "__main__":
     main()

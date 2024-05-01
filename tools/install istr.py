@@ -8,6 +8,7 @@ import base64
 from pathlib import Path
 import configparser
 import six
+import os
 from six.moves import urllib
 
 # import urllib.request
@@ -51,6 +52,10 @@ def _install(files, url=None):
 
     Version history
     ---------------
+    version 1.0.6  2024-05-01
+        If the first source file can't be found in the current working directory,
+        the program sill search one level deep
+        
     version 1.0.5  2020-06-24
         Bug with removing the dist-info of packages starting with the same name fixed.
 
@@ -88,6 +93,10 @@ def _install(files, url=None):
     package = Path(files[0]).stem
     sourcefile = files[0]
 
+    if Path(sourcefile).is_file():
+        prefix = Path("")
+    else:
+        prefix = Path(sourcefile).stem # one level deep
     file_contents = {}
     for file in files:
         optional = file[0] == "!"
@@ -105,9 +114,9 @@ def _install(files, url=None):
                 exists = False
 
         else:
-            exists = Path(file).is_file()
+            exists = (prefix / Path(file)).is_file()
             if exists:
-                with open(file, "rb") as f:
+                with open(prefix / Path(file), "rb") as f:
                     file_contents[file] = f.read()
 
         if (not exists) and (not optional):
