@@ -1,7 +1,5 @@
  <img src="https://www.salabim.org/istr_logo.png" width=500>
 
-![image alt <](www.salabim.org/istrsalabim_logo_pay_off.png)
-
 ### Introduction
 
 The istr module has exactly one class: istr.
@@ -299,7 +297,7 @@ several other types:
   istr(range(3))` ==> `istr.range(3)
     list(istr(range(3)))` ==> `[istr('0'), istr('1'), istr('2')]
   len(istr(range(3)))` ==> `3
-    ```
+  ```
 
 - if an istr.range instance, the same istr.range will be returned
 
