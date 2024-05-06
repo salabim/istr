@@ -1,14 +1,16 @@
-<img src="https://www.salabim.org/istr_logo.png" width=500>
+ <img src="https://www.salabim.org/istr_logo.png" width=500>
 
-## Introduction
+![image alt <](www.salabim.org/istrsalabim_logo_pay_off.png)
+
+### Introduction
 
 The istr module has exactly one class: istr.
 
 With this it is possible to interpret strings as if they were integers.
 
-This can be very handy for solving puzzles, but also for other purposes.</br>
-For instance the
-famous send more money puzzle
+This can be very handy for solving puzzles, but also for other purposes.
+For instance the famous send more money puzzle, where each letter has to be replaced by a unique digit (0-9)
+
 ```
   S E N D
   M O R E
@@ -28,9 +30,15 @@ for s, e, n, d, m, o, r, y in istr(itertools.permutations(range(10), 8)):
         print(f'{m|o|n|e|y}')
 ```
 
-And it is a nice demonstration of extending a class (str) with extra and changed functionality.
+Of, if we want to add all the digits in a string:
 
-## Installation
+```
+sum_digits = sum(istr('9282334'))  # answer 31
+```
+
+And the module is a demonstration of extending a class (str) with extra and changed functionality.
+
+### Installation
 Installing istr with pip is easy.
 ```
 $ pip install istr-python
@@ -43,37 +51,80 @@ Alternatively, istr.py can be just copied into you current work directory from G
 
 No dependencies!
 
-## Usage
+### Usage
+#### Start
+
 Just start with
 
 ```
 from istr import istr
 ```
 
-Now we can define some istrs:
+#### Use istrs as if the were int
+
+We can define an istr:
 ```
 four = istr('4')
 five = istr('5')
 ```
-Then we can do
+The variables `four`  and `five` can now be used as if they were int:
+
 ```
-x= four * five
+twenty = four * five
 ```
 , after which x is `istr('20')`
 
-And now we can do
-```
-print(x == 20)
-print(x == '20')
-```
-resulting in two times `True`. That's because istrs instances are treated as int, although they are strings.
+The same can be done with
 
-That means that we can also say
 ```
-print(x < 30)
-print(x >= '10')
+twenty = 4 * five
 ```
-again resulting in two times `True`.
+
+or
+
+```
+twenty = four * 5
+```
+
+And now `twenty` can be used as if it was an int as well. So:
+
+```
+twenty - four
+```
+
+is `istr('16')`
+
+We can do all the usual arithmetic operations on istrs, e.g.
+
+```
+-four + (twenty / 2)
+```
+
+is `istr('6')`
+
+And we can test for equality, So:
+
+```
+twenty == 20
+```
+is True.
+
+But as istrs are also strings. So
+
+```
+twenty == '20'
+```
+
+is also True!
+
+For the order comparisons (<=, <, >, >=), the istr is always interpreted as an int:
+
+That means that  both
+```
+twenty < 30
+twenty >= '10' # here '10' is converted to 10 for the comparison
+```
+are `True`.
 
 In contrast to an ordinary string
 ```
@@ -81,23 +132,34 @@ print(four + five)
 ```
 prints `9`, as istr are treated as ints.
 
-Please note that `four` and `five` could have also be initialized with
+Please note that `four`  could have also been initialized with
 ```
 four = istr(4)
-five = istr(5)
 ```
 or even
 ```
 four, five = istr(4, 5)
 ```
 
-But how can we concatenate istrs? Just use the or operator (|): 
-```
-print(four | five)
-```
-will output `45`.
+> [!NOTE]
+>
+> All calculations are strictly integer calculations. That means that if a float variale is ever produced it will be converted to an int.
+> Also divisions are always floor divisions!
 
-And the result is again an istr.
+#### Use istrs as string
+
+We should realize that istrs are in fact strings.
+
+In order to concatenate two istrs (or an istr and a str), we cannot use the `four + five` operator as
+
+that would be `istr(9)`.
+
+In order to concatenate istrs,  we use the or operator (`|`). So
+
+```
+four | five
+```
+will be `istr(`45`).
 
 That means that
 ```
@@ -105,29 +167,74 @@ That means that
 ```
 is `istr('9')`.
 
-In order to repeat a string in the usual sense, you cannot use `3 * four`, as that woud be `12`. 
+In order to repeat a string in the usual sense, you cannot use `3 * four`, as that would be `12`. 
 
-We use the matrix multiplication operator (@) for this. So `3 @ four` is `444`. As is `four @ 3`.
+In order to repeat we use the matrix multiplication operator (`@`). So
 
-Also allowed are
+ `3 @ four`
+
+ is istr(`444`). As is `four @ 3`.
+
+> [!NOTE]
+>
+> It is not allowed to use the `@` operator for two istrs. So, `four @ five` raises a TypeError.
+
+#### istrs that can't be interpreted as an int
+
+Although usualy, istrs are to be interpreted as an int, that's not a requirement.
+
+So
+
 ```
-abs(four)
--four 
+istr('abc')
 ```
 
-The bool operator works on the integer value of an istr. So
+or
+
+```
+istr(1,2,3)
+```
+
+are accepted.
+
+But, we can't do any arithmetic with them. 
+
+If we try
+
+```
+istr('abc') + 5
+```
+
+a TypeError will be raised.
+
+That holds for any arithmetic we try.
+
+If we want to test if an istr can be interpreted (and thus used in an arithmetic expression). we can use the `is_int()` method. So
+
+```ìstr(20).is_int()```
+
+is `True`, wherea
+
+```ìstr('abc').is_int()```
+
+is `False`.
+
+
+
+The bool operator works normally on the integer value of an istr. So
+
 `bool(istr('0'))` ==> `False`
 `bool(istr('1'))` ==> `True`
-The code
-```
-if istr('0'):
-    print('True')
-else:
-    print('False')
-```
-will print `False`
 
-For the in operator, an istr is treated as an ordinary string, although it is possible to use ints as well:
+If the istr can't be interpreted as an int, the string will be used to test. So
+
+`bool(istr('abc'))` ==> `False`
+`bool(istr(''))` ==> `True`
+
+#### Other operators
+
+For the `in` operator, an istr is treated as an ordinary string, although it is possible to use ints as well:
+
 ```
 '34' in istr(1234)
 34 in istr(1234)
@@ -137,100 +244,113 @@ On the left hand side an istr is always treated as a string:
 istr(1234) in '01234566890ABCDEF'
 ```
 
-Note that all calculations are strictly integer calculations. That means that if a float variale is ever produced it will be converted to an int.
-Also divisions are always floor divisions!
-
-There's a special case for `istr('')`. This is a proper empty string, but also represents the value of 0.
-That is to allow for `istr('').join(i for i in '01234)'`, resulting in `istr('01234')`.
-
 Sorting a list of istrs is based on the integer value, not the string. So
 
-`' '.join(sorted('1 3 2 4 5 6 11 7 9 8 10 12 0'.split()))`
+```
+' '.join(sorted('1 3 2 4 5 6 11 7 9 8 10 12 0'.split()))
+```
 
 is
 
-`'0 1 10 11 2 3 4 5 6 7 8 9'`
+```
+'0 1 10 11 2 3 4 5 6 7 8 9'
+```
 
 ,whereas
 
-`' '.join(sorted(istr('1 3 2 4 5 6 11 7 9 8 10 12 0'.split())))`
+```
+' '.join(sorted(istr('1 3 2 4 5 6 11 7 9 8 10 12 0'.split()))
+```
 
 is 
 
-`'0 1 2 3 4 5 6 7 8 9 10 11'`
+```
+'0 1 2 3 4 5 6 7 8 9 10 11'
+```
 
-## Using other values for istr than numeric value or str
+#### Using other values for istr than numeric value or str
 Apart from with simple numeric (to be interpreted as an int) or str, istr can be initialized with
 several other types:
 
-- if a dict (or subtype of dict), the same type dict will be returned with all values istr'ed
+- if a dict (or subtype of dict), the same type dict will be returned with all *values* istr'ed
 
-    `istr({0: 0, 1: 1, 2: 4})` ==> `{0: istr('0'), 1: istr('1'), 2: istr('4')}`
+    ```
+    istr({0: 0, 1: 1, 2: 4}) ==> {0: istr('0'), 1: istr('1'), 2: istr('4')}
+    ```
 
 - if an iterator, the iterator will be mapped with istr
 
-    `istr(i * i for i in range(3))` ==> `<map object>`
-
-    `list(istr(i * i for i in range(3)))` ==> `[istr('0'), istr('1'), istr('4')]`
+    ```
+    istr(i * i for i in range(3)) ==> <map object>
+    list(istr(i * i for i in range(3))) ==> [istr('0'), istr('1'), istr('4')]
+    ```
 
 - if an iterable, the same type will be returned with all elements istr'ed
 
-    `istr([0, 1, 4])` ==> `[istr('0'), istr('1'), istr('4')]`
-
-    `istr((0, 1, 4))` ==> `(istr('0'), istr('1'), istr('4'))`
-
-    `istr({0, 1, 4})` ==> `{istr('4'), istr('0'), istr('1')} ## or similar`
+    ```
+    istr([0, 1, 4]) ==> [istr('0'), istr('1'), istr('4')]
+    istr((0, 1, 4)) ==> (istr('0'), istr('1'), istr('4'))
+    istr({0, 1, 4}) ==> `{istr('4'), istr('0'), istr('1')}  # or similar
+    ```
 
 - if a range, an istr.range instance will be returned
-    
-    `istr(range(3))` ==> `istr.range(3)`
-
-    `list(istr(range(3)))` ==> `[istr('0'), istr('1'), istr('2')]`
-
-    `len(istr(range(3)))` ==> `3`
+  
+    ```
+  istr(range(3))` ==> `istr.range(3)
+    list(istr(range(3)))` ==> `[istr('0'), istr('1'), istr('2')]
+  len(istr(range(3)))` ==> `3
+    ```
 
 - if an istr.range instance, the same istr.range will be returned
 
-## More than one parameter for istr
+- if an istr, the same istr will be used
+
+    ```
+    istr(istr('4')) ==> istr ('4')
+    ```
+
+#### More than one parameter for istr
 It is possible to give more than one parameter, in which case a tuple
 of the istrs of the parameters will be returned, which can be handy
 to unpack multiple values, e.g.
 
-`a, b, c = istr(5, 6, 7)` ==> `a=istr('5') , b=istr('6'), c=istr('7')`
+```
+a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7') 
+```
 
-## test for even/odd
-It is possible to test for even/odd with the
+#### test for even/odd
+It is possible to test for even/odd (provided the istt can be interpreted as an int) with the
 
 `is_even` and `is_odd` method, e.g.
 
 ```
-print(istr(4).is_even())
-print(istr(5).is_odd())
+istr(4).is_even()) ==> True
+istr(5).is_odd()) ==> True
 ```
-This will print `True` twice.
-
-## reverse an istr
+#### reverse an istr
 The method `istr.reversed()` will return the an istr with the reversed content:
 ```
-print(repr(istr(456).reversed()))
-print(repr(istr('0456').reversed()))
-```
-result:
-```
-istr('654')
-istr('6540')
+istr(456).reversed() ==> istr('654')
+istr('0456').reversed() ==> istr('6540')
 ```
 The same can -of course- be achieved with
 ```
-print(repr(istr(456)[::-1]))
-print(repr(istr('0456')[::-1]))
+istr(456)[::-1] ==> istr('654')
+istr('0456')[::-1] ==> istr('6540')
 ```
-Note that is impossible to reverse a negative istr.
+> [!NOTE]
+>
+> It is possible to reverse a negative istr, but the result can't be interpreted as an int anymore.
+>
+> ```
+> istr(-456) ==> TypeError
+> ```
 
-## enumerate with istrs
+#### enumerate with istrs
 
 The `istr.enumerate` method can be used just as the builtin enumerate function.
 The iteration counter however is an istr rather than an int. E.g. 
+
 ```
     for i,c in istr.enumerate('abc'):
         print(f'{repr(i)} {c}')
@@ -242,16 +362,20 @@ istr('1') b
 istr('2') c
 ```
 
-## concatenate an iterable
+#### concatenate an iterable
 
 The `istr.concat` method can be useful to map all items of an iterable
 to `istr` and then concatenate these.
 
-`list(istr.concat(((1,2),(3,4)))` ==> `istr([12,34])`
+`
 
-`list(istr.concat(itertools.permutations(range(3),2)))` ==> `[istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')]` 
+```
+list(istr.concat(((1,2),(3,4))) ==> istr([12,34])
+list(istr.concat(itertools.permutations(range(3),2))) ==> 
+    [istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')] 
+```
 
-## generate istr with digits
+#### generate istr with digits
 
 The class method `digits` can be used to return an istr of digits according to a given specification.
 The method takes either no or a number of arguments.
@@ -261,27 +385,29 @@ If no arguments are given, the result will be istr('0123456789').
 The given argument(s) result in a range of digits.
 
 - `<n>` ==> n
-- `<n-m> ==> n, n+1, ..., m
+- `<n-m>` ==> n, n+1, ..., m
 - `-n>` ==> 0, 1, ... n
 - `n->` ==> n, n+1, ..., 9
 - `''` ==> 0, 1, ..., 9
 
-(n and m must be digit between 0 and 9)
+(n and m must be digits between 0 and 9)
 
 The final result is an istr composed of the given range(s).
 
 Here are some examples:
 
-- `istr.digits()` ==> `istr('0123456789')`
-- `istr.digits('')` ==> `istr('0123456789')`
-- `istr.digits('1')` ==> `istr('1')`
-- `istr.digits('3-')` ==> `istr('3456789')`
-- `istr.digits('-3')` ==> `istr('0123')`
-- `istr('1-4', '6', '8-9')` ==> `istr('1234689')`
-- `istr('1', '1-2', '1-3')` ==> `istr('11213')`
+```
+istr.digits() ==> istr('0123456789')
+istr.digits('') ==> istr('0123456789')
+istr.digits('1') ==> istr('1')
+istr.digits('3-') ==> istr('3456789')
+istr.digits('-3') ==> istr('0123')
+istr('1-4', '6', '8-9') ==> istr('1234689')
+istr('1', '1-2', '1-3') ==> istr('11213')
+```
 
 
-## Subclassing istr
+#### Subclassing istr
 When a class is derived from istr, all methods will return that newly derived class. 
 
 E.g.
@@ -293,7 +419,7 @@ print(repr(jstr(4) * jstr(5)))
 ```
 will print `jstr('20')`
 
-## Changing the way repr works
+#### Changing the way repr works
 
 It is possible to control the way an `istr` instance will be repr'ed.
 
@@ -317,7 +443,23 @@ This will print
 5
 istr('5')
 ```
-Note that the way an `istr` is represented is determined at initialization.
+If the repr_mode is `'int'` and the istr can't be interpreted as an int the string `nan` (not a number) will be returned:
+
+```
+ with istr.repr_mode('int'):
+    abc = istr('abc')
+    print(repr(abc))
+```
+
+This will print
+
+```
+nan
+```
+
+> [!NOTE]
+>
+> The way an `istr` is represented is determined at initialization.
 
 It is also possible to set the repr mode without a context manager:
 
@@ -336,13 +478,13 @@ print(repr(istr.repr_mode()))
 ```
 will output `istr`.
 
-## Changing the base system
+#### Changing the base system
 
 By default, `istr` works in base 10. However it is possible to change the base system with the `istr.base()` context manager / method.
 
 Any base between 2 and 36 may be used.
 
-Note that the integer is always stored in base 10 mode, but the string
+Note that the integer is **always** stored in base 10 mode, but the string
 representation will reflect the chosen base (at time of initialization).
 
 Some examples:
@@ -378,25 +520,28 @@ print(istr.base())
 ```
 will result in `10`.
 
-## Changing the format of the string
+#### Changing the format of the string
 
-By default, `istr` does not change the way an istr is stored when a str is to initialize:
+When an  istr is initialized with a string the istr will be just stored as such.
 
-`repr('4'))` ==> `istr('4')`
+```
+repr('4')) ==> istr('4')
+repr(' 4')) ==> istr(' 4')
+repr('4  ')) ==> istr('4  ')
+```
 
-`repr(' 4'))` ==> `istr(' 4')`
+For initializing with an int (or other numeric) value, the string is by default simply the str representation
 
-`repr('4  '))` ==> `istr('4  ')`
+```
+repr(4)) ==> istr('4')
+```
 
-For initializing with an int (or other numeric) value, the string is simply the str representation
-
-`repr(4))` ==> `istr('4')`
-
-With the `istr.format()` context manager this behavior can be changed.
+ With the `istr.int_format()` context manager this behavior can be changed.
 If the format specifier is a number, most likely a single digit, that
 will be the minimum number of characters in the string:
+
 ```
-with istr.format('3'):
+with istr.int_format('3'):
     print(repr(istr(1)))
     print(repr(istr(12)))
     print(repr(istr(123)))
@@ -411,7 +556,7 @@ istr('1234')
 ```
 If the string starts with a `0`, the string will be zero filled:
 ```
-with istr.format('03'):
+with istr.int_format('03'):
     print(repr(istr(1)))
     print(repr(istr(12)))
     print(repr(istr(123)))
@@ -424,50 +569,65 @@ istr('012')
 istr('123')
 istr('1234')
 ```
-Note that if a format other than the default `''` is used, the string will reformatted even if the `istr` is specified with a string:
-```
-with istr.format('03'):
-    print(repr(istr('  12 ')))
-```
-will result in `istr('0012')`
+> [!NOTE]
+>
+>  if a string is used to initialize an istr AND that string can be interpreted as an int. the string will reformatted:
+>
+> ```
+> with istr.int_format('03'):
+>     print(repr(istr('  12 ')))
+> ```
+>
+> will result in
+>
+> ```
+> istr('0012')
+> ```
 
-Remark: For bases other than 10, the string will never be reformatted!
+> [!NOTE]
+>
+> For bases other than 10, the string will never be reformatted!
 
-## Operations
-----------------------------
-```
+### Overview of operations
+
 The table below shows whether the string or the int version of istr is applied.
 
-operator/function   int  str  Example
-----------------------------
-+                    x        istr(20) + 3 ==> istr('23')
-_                    x        istr(20) - 3 ==> istr('17')
-*                    x        istr(20) * 3 ==> istr('60')
-/                    x        istr(20) / 3 ==> istr('6')
-//                   x        istr(20) // 3 ==> istr('6')
-%                    x        istr(20) % 3 ==> istr('2')
-divmod               x        divmod(istr(20), 3) ==> (istr('6'), istr('2'))
-**                   x        istr(2) ** 3 ==> istr('8')
-@                         x   istr(20) @ 3 ==> istr('202020')
-==                   x    x   istr(20) == 20 ==> True | istr(20) == '20' ==> True
-|                         x   istr(20) | 5 ==> istr('205')
-abs                  x        abs(istr(-20)) ==> istr('20')
-bool                 x        bool(istr(' 0 ')) ==> False
-<=, <, >, >=         x        istr('100') > istr('2') ==> True
-slicing              x        istr(12345)[1:3] ==> istr('23')
-iterate                   x   [x for x in istr(20)] ==> [istr('2'), istr('0')
-len                       x   len(istr(' 20 ')) ==> 4
-count                     x   istr(100),count('0') ==> 2
-index                     x   istr(' 100 ').index('0') ==> 2
-----------------------------
 ```
-## Test script
+operator/function   int  str   Example
+-----------------------------------------------------------------------------------------
++                    x         istr(20) + 3 ==> istr('23')
+_                    x         istr(20) - 3 ==> istr('17')
+*                    x         istr(20) * 3 ==> istr('60')
+/                    x         istr(20) / 3 ==> istr('6')
+//                   x         istr(20) // 3 ==> istr('6')
+%                    x         istr(20) % 3 ==> istr('2')
+divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
+**                   x         istr(2) ** 3 ==> istr('8')
+@                         x    istr(20) @ 3 ==> istr('202020')
+==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
+|                         x    istr(20) | 5 ==> istr('205')
+abs                  x         abs(istr(-20)) ==> istr('20')
+bool                 x    x *) bool(istr(' 0 ')) ==> False | istr('') ==> False
+<=, <, >, >=         x         istr('100') > istr('2') ==> True
+slicing                   x    istr(12345)[1:3] ==> istr('23')
+iterate                   x    [x for x in istr(20)] ==> [istr('2'), istr('0')
+len                       x    len(istr(' 20 ')) ==> 4
+count                     x    istr(100),count('0') ==> 2
+index                     x    istr(' 100 ').index('0') ==> 2
+split                     x    istr('1 2').split() ==> (istr('1'), istr('2'))
+other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
+                               istr('aAbBcC').islower() ==> False
+                               istr('  abc   ').strip() ==> istr('abc')
+-----------------------------------------------------------------------------------------
+*) str is applied if is_int() is False
+```
+### Test script
 There's an extensive pytest script in the `\tests` directory.
 
-This script also shows clearly the ways istr can be used.
+This script also shows clearly the ways istr can be used, including several edge cases. Highly recommended to have a look at.
 
-## Badges
+### Badges
 ![PyPI](https://img.shields.io/pypi/v/istr-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/istr-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/istr-python)
 
 ![PyPI - License](https://img.shields.io/pypi/l/istr-python) ![Black](https://img.shields.io/badge/code%20style-black-000000.svg) 
- ![GitHub last commit](https://img.shields.io/github/last-commit/salabim/istr)
+![GitHub last commit](https://img.shields.io/github/last-commit/salabim/istr)

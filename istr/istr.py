@@ -1,6 +1,3 @@
-import functools
-import math
-
 #     _       _
 #    (_) ___ | |_  _ __
 #    | |/ __|| __|| '__|
@@ -8,12 +5,42 @@ import math
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "0.2.0"
+__version__ = "1.0.0"
 import functools
 import math
 
 """
 changelog
+
+version 1.0.0 2024-05-06
+------------------------
+With this version, istrs do not have to be interpretable as an int anymore.
+Only when arithmetic and friends are to be carried with an istr, that's a requirement.
+
+So now we can say
+    a = istr('1 2 3')
+    print(a.split())
+and get
+    [istr('1'), istr('2'), istr('3')]
+But
+    a = istr('1 2 3')
+    b = a + 1
+will raise
+    TypeError: unsupported operand for +: istr('1 2 3') and 1
+    
+It is possible to check if an istr can be interpreted as an int with the is_int method:
+    a = istr('1 2 3')
+    print(a.is_int()) 
+will give
+    False 
+    
+This also means that there is no reason for istr('') to be interpretable as 0. So it isn't anymore.
+And reversed() now also works with negative numbers, although the result can't be used in calculations.
+
+The method / context manager format has been renamed to int_format.
+
+The bool method now operates on the string if it can not be interpreted as an int.
+That means that bool(istr('')) is False. For any other istr where is_int() is True, bool will be True.
 
 version 0.2.0 2024-04-30
 ----------------------
@@ -241,9 +268,11 @@ class istr(str):
 
     __slots__ = ("_as_int", "_as_repr")
 
-    _format = ""
-    _mode = "istr"
+    _int_format = ""
+    _repr_mode = "istr"
     _base = 10
+    _nan = "nan"
+    _force_istr_repr = False
 
     @staticmethod
     def _to_base(number, base):
@@ -262,8 +291,30 @@ class istr(str):
                 return int(value, cls._base)
             else:
                 return int(value)
-        except (ValueError, TypeError):
-            raise ValueError(f"unable to convert {repr(value)} to int (base {cls._base})")
+        except:
+            return cls._nan
+
+    def _check_is_int(self, *args, right=False):
+        operator = args[len(args) == 2]
+        if len(args) == 2:
+            other = args[0]
+            if not self.is_int() or self._to_int(other) == self._nan:
+                self.__class__._force_istr_repr = True
+                if right:
+                    message = f"unsupported operand for {operator}: {repr(other)} and {repr(self)}"
+                else:
+                    message = f"unsupported operand for {operator}: {repr(self)} and {repr(other)}"
+                self.__class__._force_istr_repr = False
+                raise TypeError(message)
+        else:
+            if not self.is_int():
+                self.__class__._force_istr_repr = True
+                message = f"unsupported operand for {operator}: {repr(self)}"
+                self.__class__._force_istr_repr = False
+                raise TypeError(message)
+
+    def _rcheck_is_int(self, *args):
+        self._check_is_int(*args, right=True)
 
     def __new__(cls, *value):
         if len(value) == 0:
@@ -282,32 +333,31 @@ class istr(str):
             if hasattr(value, "__next__"):
                 return map(functools.partial(cls), value)
             return type(value)(map(functools.partial(cls), value))
-        if value == "":
-            as_str = ""
-            as_int = 0
+
+        as_int = cls._to_int(value)
+        if isinstance(value, str):
+            as_str = value
         else:
-            as_int = cls._to_int(value)
-            if (cls._format == "" or cls._base != 10) and not isinstance(value, istr):
-                if isinstance(value, str):
-                    as_str = value
+            if as_int == cls._nan:
+                raise TypeError(f"incorrect value for {cls.__name__}: {repr(value)}")
+            if cls._int_format == "" or cls._base != 10:
+                if cls._base == 10:
+                    as_str = str(as_int)
                 else:
-                    if cls._base == 10:
-                        as_str = str(as_int)
-                    else:
-                        as_str = istr._to_base(as_int, cls._base)
+                    as_str = istr._to_base(as_int, cls._base)
             else:
-                as_str = f"{as_int:{cls._format}}"
+                as_str = f"{as_int:{cls._int_format}}"
 
         self = super().__new__(cls, as_str)
         self._as_int = as_int
-        if self._mode == "istr":
+        if self._repr_mode == "istr":
             self._as_repr = f"{cls.__name__}({repr(as_str)})"
-        elif self._mode == "int":
-            self._as_repr = repr(as_int)
+        elif self._repr_mode == "int":
+            self._as_repr = "nan" if as_int == self._nan else repr(as_int)
         else:
             self._as_repr = repr(as_str)
         return self
-              
+
     def __iter__(self):
         yield from self.__class__(super().__iter__())
 
@@ -316,7 +366,8 @@ class istr(str):
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self._as_int == other._as_int
+            if self.is_int() and other.is_int():
+                return self._as_int == other._as_int
         if isinstance(other, str):
             return super().__eq__(other)
         try:
@@ -331,63 +382,85 @@ class istr(str):
         return super().__contains__(str(other))
 
     def __repr__(self):
+        if self._force_istr_repr:
+            return f"{self.__class__.__name__}({super().__repr__()})"
         return self._as_repr
 
     def __le__(self, other):
+        self._check_is_int(other, "<=")
         return self._as_int <= self._to_int(other)
 
     def __lt__(self, other):
+        self._check_is_int(other, "<")
         return self._as_int < self._to_int(other)
 
     def __ge__(self, other):
+        self._check_is_int(other, ">=")
         return self._as_int >= self._to_int(other)
 
     def __gt__(self, other):
+        self._check_is_int(other, ">")
         return self._as_int > self._to_int(other)
 
     def __bool__(self):
-        return bool(self._as_int)
+        if self.is_int():
+            return bool(self._as_int)
+        return bool(str(self))
 
     def __add__(self, other):
+        self._check_is_int(other, "+")
         return self.__class__(self._as_int + self._to_int(other))
 
+    def __radd__(self, other):
+        self._rcheck_is_int(other, "+")
+        return self.__class__(self._to_int(other) + self._as_int)
+
     def __sub__(self, other):
+        self._check_is_int(other, "-")
         return self.__class__(self._as_int - self._to_int(other))
 
+    def __rsub__(self, other):
+        self._rcheck_is_int(other, "-")
+        return self.__class__(self._to_int(other) - self._as_int)
+
     def __mul__(self, other):
+        self._check_is_int(other, "*")
         return self.__class__(self._as_int * self._to_int(other))
 
+    def __rmul__(self, other):
+        self._rcheck_is_int(other, "*")
+        return self.__class__(self._to_int(other) * self._as_int)
+
     def __floordiv__(self, other):
+        self._check_is_int(other, "//")
         return self.__class__(self._as_int // self._to_int(other))
 
     def __rfloordiv__(self, other):
+        self._rcheck_is_int(other, "//")
         return self.__class__(self._to_int(other) // self._as_int)
 
     def __truediv__(self, other):
+        self._check_is_int(other, "/")
         return self.__class__(self._as_int // self._to_int(other))
 
     def __rtruediv__(self, other):
+        self._rcheck_is_int(other, "/")
         return self.__class__(self._to_int(other) // self._as_int)
 
     def __pow__(self, other):
+        self._check_is_int(other, "**")
         return self.__class__(self._as_int ** self._to_int(other))
 
     def __rpow__(self, other):
+        self._rcheck_is_int(other, "**")
         return self.__class__(self._to_int(other) ** self._as_int)
 
-    def __radd__(self, other):
-        return self.__class__(self._to_int(other) + self._as_int)
-
-    def __rsub__(self, other):
-        return self.__class__(self._to_int(other) - self._as_int)
-
-    def __rmul__(self, other):
-        return self.__class__(self._to_int(other) * self._as_int)
-
     def __mod__(self, other):
+        self._check_is_int(other, "%")
         return self.__class__(self._as_int % self._to_int(other))
 
     def __rmod__(self, other):
+        self._rcheck_is_int(other, "%")
         return self.__class__(self._to_int(other) % self._as_int)
 
     def __or__(self, other):
@@ -396,19 +469,25 @@ class istr(str):
     def __ror__(self, other):
         return self.__class__("".join((self.__class__(other), self)))
 
-    def __int__(self):
-        return int(self._as_int)
-
     def __round__(self):
+        self._check_is_int("round")
         return self.__class__(round(self._as_int))
 
+    def __int__(self):
+        if not self.is_int():
+            raise ValueError(f"invalid literal for int() with base 10: {repr(self)}")
+        return int(self._as_int)
+
     def __trunc__(self):
+        self._check_is_int("trunc")
         return self.__class__(math.trunc(self._as_int))
 
     def __floor__(self):
+        self._check_is_int("floor")
         return self.__class__(math.floor(self._as_int))
 
     def __ceil__(self):
+        self._check_is_int("ceil")
         return self.__class__(math.ceil(self._as_int))
 
     def __matmul__(self, other):
@@ -418,25 +497,35 @@ class istr(str):
         return self.__class__(super().__rmul__(other))
 
     def __divmod__(self, other):
+        self._check_is_int(other, "divmod")
         return self.__class__(divmod(self._as_int, self._to_int(other)))
 
     def __rdivmod__(self, other):
+        self._rcheck_is_int(other, "divmod")
         return self.__class__(divmod(self._to_int(other), self._as_int))
 
     def __neg__(self):
+        self._check_is_int("-")
         return self.__class__(-self._as_int)
 
     def __pos__(self):
+        self._check_is_int("+")
         return self
 
     def __abs__(self):
+        self._check_is_int("abs")
         return self.__class__(abs(self._as_int))
 
     def is_even(self):
+        self._check_is_int("is_even")
         return self._as_int % 2 == 0
 
     def is_odd(self):
+        self._check_is_int("is_odd")
         return self._as_int % 2 == 1
+
+    def is_int(self):
+        return self._as_int != self._nan
 
     def reversed(self):
         return self[::-1]
@@ -454,45 +543,45 @@ class istr(str):
             yield cls(i), value
 
     @classmethod
-    class format:
-        def __new__(cls, cls_format, format=None):
-            if format is None:
-                return cls_format._format
+    class int_format:
+        def __new__(cls, cls_int_format, int_format=None):
+            if int_format is None:
+                return cls_int_format._int_format
             return super().__new__(cls)
 
-        def __init__(self, cls, format):
-            self.saved_format = cls._format
+        def __init__(self, cls, int_format):
+            self.saved_int_format = cls._int_format
             self.saved_cls = cls
-            if not (isinstance(format, str) and all(x in "0123456789" for x in format)):
-                raise ValueError(f"{repr(format)} is incorrect format")
+            if not (isinstance(int_format, str) and all(x in "0123456789" for x in int_format)):
+                raise ValueError(f"{repr(int_format)} is incorrect int_format")
 
-            cls._format = format
+            cls._int_format = int_format
 
         def __enter__(self):
             ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
-            self.saved_cls._format = self.saved_format
+            self.saved_cls._int_format = self.saved_int_format
 
     @classmethod
     class repr_mode:
-        def __new__(cls, cls_mode, mode=None):
+        def __new__(cls, cls_repr_mode, mode=None):
             if mode is None:
-                return cls_mode._mode
-            if mode in ("istr", "str", "int"):
+                return cls_repr_mode._repr_mode
+            if mode in ("istr", "str", "int"):  # _istr is used only for TypeErrors
                 return super().__new__(cls)
             raise TypeError(f"mode not 'istr', 'str' or 'int', but {repr(mode)}")
 
         def __init__(self, cls, mode):
-            self.saved_mode = cls._mode
+            self.saved_repr_mode = cls._repr_mode
             self.saved_cls = cls
-            cls._mode = mode
+            cls._repr_mode = mode
 
         def __enter__(self):
             ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
-            self.saved_cls._mode = self.saved_mode
+            self.saved_cls._repr_mode = self.saved_repr_mode
 
     @classmethod
     class base:
@@ -517,18 +606,18 @@ class istr(str):
     @classmethod
     def range(cls, start, stop=None, step=1):
         return _range(cls, start, stop, step)
-        
+
     @classmethod
     @functools.lru_cache
-    def digits(cls,*args):
-        '''
+    def digits(cls, *args):
+        """
         return an istr of istr'ed digits as specified with args
-        
+
         if no args, 0-9 will be used
-        
+
         all given args will be used
         each arg has to be either null string, <digit>, <digit>-<digit> or -<digit>
-        
+
         examples
         --------
         istr.digits() ==> istr('0123456789')
@@ -543,37 +632,37 @@ class istr(str):
         ----
         A digit can occur more than once.
 
-        '''
-        result=[]
+        """
+        result = []
         if not args:
-            args=['0-9']
+            args = ["0-9"]
         for arg in args:
-            if arg.strip()=='':
-                arg='0-9'
-            pre,*post=arg.split('-')
-            if pre.strip()=='':
-                pre='0'
+            if arg.strip() == "":
+                arg = "0-9"
+            pre, *post = arg.split("-")
+            if pre.strip() == "":
+                pre = "0"
             try:
-                start=int(pre)
+                start = int(pre)
             except ValueError:
-                raise ValueError(f'incorrect specifier: {repr(arg)}')  
-            if not 0<=start<=9:
-                raise ValueError(f'incorrect specifier: {repr(arg)}')                
-            if len(post)>1:
-                raise ValueError(f'incorrect specifier: {repr(arg)}')
+                raise ValueError(f"incorrect specifier: {repr(arg)}")
+            if not 0 <= start <= 9:
+                raise ValueError(f"incorrect specifier: {repr(arg)}")
+            if len(post) > 1:
+                raise ValueError(f"incorrect specifier: {repr(arg)}")
             if post:
-                if post[0].strip()=="":
-                    post="9"
+                if post[0].strip() == "":
+                    post = "9"
                 try:
-                    stop=int(post[0])
+                    stop = int(post[0])
                 except ValueError:
-                    raise ValueError(f'incorrect specifier: {repr(arg)}')                    
-                if (not 0<=start<=9) or start>stop:
-                    raise ValueError(f'incorrect specifier: {repr(arg)}')
+                    raise ValueError(f"incorrect specifier: {repr(arg)}")
+                if (not 0 <= start <= 9) or start > stop:
+                    raise ValueError(f"incorrect specifier: {repr(arg)}")
             else:
-                stop=start
-            result.extend(range(start,stop+1))
-        return cls('').join(istr(result))
+                stop = start
+            result.extend(range(start, stop + 1))
+        return cls("").join(istr(result))
 
     def capitalize(self, *args, **kwargs):
         return self.__class__(super().capitalize(*args, **kwargs))
@@ -586,6 +675,9 @@ class istr(str):
 
     def expandtabs(self, *args, **kwargs):
         return self.__class__(super().expandtabs(*args, **kwargs))
+
+    def format(self, *args, **kwargs):
+        return self.__class__(super().format(*args, **kwargs))
 
     def join(self, *args, **kwargs):
         return self.__class__(super().join(*args, **kwargs))
@@ -646,15 +738,7 @@ class istr(str):
 
 
 def main():
-    print(repr(istr.digits()))
-    print(istr.digits('1-9'))
-    print(istr.digits('1'))
-    print(istr.digits('1-2', '6'))    
-    print(istr.digits('1-5', '7-9'))        
-    print(istr.digits('-5'))   
-    print(istr.digits('3-'))   
-    print(repr(divmod(istr(20),3)))
+    ...
 
 if __name__ == "__main__":
     main()
-

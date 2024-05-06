@@ -52,9 +52,6 @@ def _install(files, url=None):
 
     Version history
     ---------------
-    version 1.0.8  2024-05-06
-        Changed the way the package is found (again)
-
     version 1.0.7  2024-05-04
         Changed the way the package is found (again)
 
@@ -230,6 +227,6 @@ def _install(files, url=None):
 
 
 if __name__ == "__main__":
-    info = _install(files="istr.py !changelog.txt".split())
+    info = _install(files="istr.py !changelog.txt".split(), url="https://raw.githubusercontent.com/salabim/istr/master/istr/")
     print(info.package + " " + info.version + " successfully installed in " + info.path)
     print("files copied: ", ", ".join(info.files_copied))

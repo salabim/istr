@@ -1,10 +1,15 @@
 import math
 import itertools
+import os
+import sys
+import re
+from pathlib import Path
 
 if __name__ == "__main__":  # to make the tests run without the pytest cli
-    import sys
-
-    sys.path = ["../istr"] + sys.path
+    file_folder = Path(__file__).parent
+    top_folder = (file_folder / "..").resolve()
+    sys.path.insert(0, str(top_folder))
+    os.chdir(file_folder)
 
 import pytest
 
@@ -133,15 +138,17 @@ def test_ne():
 
 
 def test_order():
-    assert " ".join(sorted(istr.range(1, 13))) == "1 2 3 4 5 6 7 8 9 10 11 12"
-    assert " ".join(sorted(map(istr, range(1, 13)))) == "1 2 3 4 5 6 7 8 9 10 11 12"
+    assert " ".join(sorted(("1 2 5 4 100 10").split())) == "1 10 100 2 4 5"  # just to see the difference
+    assert " ".join(sorted(istr(("1 2 5 4 100 10").split()))) == "1 2 4 5 10 100"
+
 
 def test_concat():
-    c = list(istr.concat(((1,2),(3,4))))
-    assert c == istr(['12','34'])
-    c=list(istr.concat(itertools.permutations(range(3),2)))
-    assert c == [istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')]
-    
+    c = list(istr.concat(((1, 2), (3, 4))))
+    assert c == istr(["12", "34"])
+    c = list(istr.concat(itertools.permutations(range(3), 2)))
+    assert c == [istr("01"), istr("02"), istr("10"), istr("12"), istr("20"), istr("21")]
+
+
 def test_range():
     assert one_to_twelve == istr.range("1", "13")
     assert one_to_twelve == istr.range(one, thirteen, one)
@@ -168,13 +175,12 @@ def test_range():
 
 def test_misc():
     assert istr("") == ""
-    assert istr("") == 0
-    with pytest.raises(ValueError):
-        istr(" ")
+    assert istr("") != 0
+
     assert istr(istr(6)) == "6"
     assert istr(" 12 ") == " 12 "
-    with istr.format("03"):
-        assert istr("   12  ") == "012"
+    with istr.int_format("03"):
+        assert istr("   12  ") == "   12  "
         assert istr("") == ""
 
 
@@ -244,48 +250,51 @@ def test_hash():
     assert hash(istr.range(1, 12)) != hash(one_to_twelve)
 
 
-def test_format():
+def test_int_format():
     assert istr(" 1 ") == " 1 "
-    with istr.format("0"):
-        assert istr(" 1 ") == "1"
-    with istr.format("03"):
+    with istr.int_format("0"):
+        assert istr(" 1 ") == " 1 "
+    with istr.int_format("03"):
         assert istr(1) == "001"
         assert istr(1234) == "1234"
-    with istr.format("3"):
+    with istr.int_format("3"):
         assert istr(1) == "  1"
         assert istr(1234) == "1234"
-    with istr.format(""):
+    with istr.int_format(""):
         assert istr(1234) == "1234"
-    with istr.format("003"):
+    with istr.int_format("003"):
         assert istr(1) == "001"
     with pytest.raises(ValueError):
-        with istr.format(" 1"):
+        with istr.int_format(" 1"):
             ...
     with pytest.raises(ValueError):
-        with istr.format("1 "):
+        with istr.int_format("1 "):
             ...
     with pytest.raises(ValueError):
-        with istr.format("a"):
+        with istr.int_format("a"):
             ...
     with pytest.raises(ValueError):
-        with istr.format(1):
+        with istr.int_format(1):
             ...
-    with istr.format("0"):
-        assert istr(" 3 ") == "3"
-    assert istr.format() == ""
-    istr.format("03")
-    assert istr.format() == "03"
-    assert istr("  8 ") == "008"
-    istr.format("")
+    with istr.int_format("0"):
+        assert istr(" 3 ") == " 3 "
+    assert istr.int_format() == ""
+    istr.int_format("03")
+    assert istr.int_format() == "03"
+    assert istr("  8 ") == "  8 "
+    istr.int_format("")
     assert istr(" 8 ") == " 8 "
 
 
-def test_range_format():
+#    assert repr(istr('a')) == "istr('a')"
+
+
+def test_range_int_format():
     r = istr.range(11)
     assert repr(r) == "istr.range(0, 11)"
     assert " ".join(r) == "0 1 2 3 4 5 6 7 8 9 10"
     r = istr.range(11)
-    with istr.format("02"):
+    with istr.int_format("02"):
         assert " ".join(r) == "00 01 02 03 04 05 06 07 08 09 10"
 
 
@@ -330,8 +339,63 @@ def test_matmul():
         "3" @ five
 
 
+def test_is_int():
+    for operator in "+ - * / // % **".split():
+        with pytest.raises(TypeError, match=re.escape(f"unsupported operand for {operator}: istr('a') and 1")):
+            eval(f"istr('a'){operator}1")
+        with pytest.raises(TypeError, match=re.escape(f"unsupported operand for {operator}: 1 and istr('a')")):
+            eval(f"1{operator}istr('a')")
+    for operator in "<= < > >=".split():
+        with pytest.raises(TypeError, match=re.escape(f"unsupported operand for {operator}: istr('a') and 1")):
+            eval(f"istr('a'){operator}1")
+        roperator = {"<": ">", ">": "<"}[operator[0]] + operator[1:]
+        with pytest.raises(TypeError, match=re.escape(f"unsupported operand for {roperator}: istr('a') and 1")):
+            eval(f"1{operator}istr('a')")
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for divmod: istr('a') and 2")):
+        divmod(istr("a"), 2)
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for divmod: 2 and istr('a')")):
+        divmod(2, istr("a"))
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for round: istr('a')")):
+        round(istr("a"))
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for trunc: istr('a')")):
+        math.trunc(istr("a"))
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for floor: istr('a')")):
+        math.floor(istr("a"))
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for ceil: istr('a')")):
+        math.ceil(istr("a"))
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for abs: istr('a')")):
+        abs(istr("a"))
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for +: istr('a')")):
+        +istr("a")
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for -: istr('a')")):
+        -istr("a")
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for is_odd: istr('a')")):
+        istr("a").is_odd()
+    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for is_even: istr('a')")):
+        istr("a").is_even()
+    assert istr(1).is_int()
+    assert not istr("a").is_int()
+
+    with pytest.raises(TypeError, match=f"istr"):
+        istr("a") + 1
+    with pytest.raises(TypeError, match=f"istr"):
+        with istr.repr_mode("int"):  # error message should not use the standard repr
+            istr("a") + 1
+    with pytest.raises(TypeError, match=f"istr"):
+        with istr.repr_mode("str"):  # error message should not use the standard repr
+            istr("a") + 1
+
+
 def test_str():
     assert repr(str(five)) == "'5'"
+
+
+def test_bool():
+    assert bool(istr(0)) is False
+    assert bool(istr(1)) is True
+    assert bool(istr("0")) is False
+    assert bool(istr("a")) is True
+    assert bool(istr("")) is False
 
 
 def test_trunc_and_friends():
@@ -365,18 +429,19 @@ def test_indexing():
 def test_reverse():
     a = istr(12345)
     assert a.reversed(), same(istr(54321))
+    a = istr(-120)
+    assert a.reversed(), same(istr("-210"))
 
 
 def test_edge_cases():
-    with pytest.raises(ValueError):
-        istr("ab")
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         istr(istr)
     assert istr(istr(one)).equals(istr("1"))
     with pytest.raises(TypeError):
         istr()
-    rng=istr.range(5)
+    rng = istr.range(5)
     assert rng is istr(rng)
+
 
 def test_unpacking():
     a = istr("123")
@@ -395,6 +460,7 @@ def test_repr_mode():
     assert repr(hundred) == "istr('100')"
 
     with istr.repr_mode("int"):
+        assert istr.repr_mode() == "int"
         hundred = istr(100)
     assert repr(hundred) == "100"
     with istr.repr_mode("str"):
@@ -403,38 +469,40 @@ def test_repr_mode():
     hundred = istr(100)
     assert repr(hundred) == "istr('100')"
 
+    with istr.repr_mode("int"):
+        a = istr("a")
+    assert repr(a) == "nan"
+
     assert istr.repr_mode() == "istr"
 
     with pytest.raises(TypeError):
         istr.repr_mode("no")
 
+
 def test_str_methods():
-    a=istr("   123123 ")
-    b=istr("123123")
-    assert a.capitalize().equals(a)
-    assert a.casefold().equals(a)
-    assert a.center(20).equals(istr('        123123      '))
-    assert a.expandtabs(4).equals(a)
-    assert istr("").join(("0","1","2")).equals(istr("012"))
-    assert a.ljust(20).equals(istr('   123123           '))
-    assert a.lower().equals(a)
-    assert a.lstrip().equals(istr('123123 '))
-    assert a.partition("3")==(istr('   12'), istr('3'), istr('123 '))
-    assert a.removeprefix("   12").equals(istr("3123 "))
-    assert a.removesuffix("23 ").equals(istr("   1231"))
-    assert a.replace("1","9").equals(istr("   923923 "))
-    assert a.rjust(20).equals(istr('             123123 '))
-    assert b.partition("2")==(istr('1'), istr('2'), istr('3123'))
-    assert b.rpartition("2")==(istr('1231'), istr('2'), istr('3'))
-    assert b.rsplit("1")==[istr(''), istr('23'), istr('23')]
-    assert a.rstrip().equals(istr('   123123'))
-    assert b.split("1")==[istr(''), istr('23'), istr('23')]
-    assert a.strip().equals(istr('123123'))
-    assert a.swapcase().equals(a)
-    assert a.title().equals(a)
-    assert a.translate({49:  52}).equals(istr('   423423 '))
-    assert a.upper().equals(a)
-    assert b.zfill(10).equals(istr('0000123123'))
+    a = " abcABC "
+    assert istr(a).capitalize().equals(istr(a.capitalize()))
+    assert istr(a).casefold().equals(istr(a.casefold()))
+    assert istr(a).center(20).equals(istr(a.center(20)))
+    assert istr(a).expandtabs(4).equals(istr(a.expandtabs(4)))
+    assert istr("{:4}").format(2).equals(istr("   2"))
+    assert istr("").join(("0", "1", "2")).equals(istr("012"))
+    assert istr(a.ljust(20)).equals(istr(a).ljust(20))
+    assert istr(a.lower()).equals(istr(a).lower())
+    assert istr(a.lstrip()).equals(istr(a).lstrip())
+    assert istr(a).partition("a") == istr(a.partition("a"))
+    assert istr(a.removeprefix(" ab")).equals(istr(a).removeprefix(" ab"))
+    assert istr(a.removesuffix("BC ")).equals(istr(a).removesuffix("BC "))
+    assert istr(a.rjust(20)).equals(istr(a).rjust(20))
+    assert istr(a).rpartition("a") == istr(a.rpartition("a"))
+    assert istr(a.rsplit("b")) == istr(a).rsplit("b")
+    assert istr(a.rstrip()).equals(istr(a).rstrip())
+    assert istr(a).swapcase().equals(istr(a.swapcase()))
+    assert istr(a).title().equals(istr(a.title()))
+    assert istr(a).translate({65: 66}).equals(istr(a.translate({65: 66})))
+    assert istr(a.upper()).equals(istr(a).upper())
+    assert istr(a.zfill(10)).equals(istr(a).zfill(10))
+
 
 def test_base():
     assert istr.base() == 10
@@ -470,18 +538,16 @@ def test_base():
         a = istr(15)
     with istr.base(10):
         assert a * a == 225
-    with pytest.raises(ValueError):
-        assert a | a # FF can't be converted to base 10
-        
-    
+
+
 def test_digits():
-    assert istr.digits().equals(istr('0123456789'))
-    assert istr.digits('').equals(istr('0123456789'))
-    assert istr.digits('1').equals(istr('1'))
-    assert istr.digits('3-').equals(istr('3456789'))
-    assert istr.digits('-3').equals(istr('0123'))
-    assert istr.digits('1-4', '6', '8-9').equals(istr('1234689'))
-    assert istr.digits('1', '1-2', '1-3').equals(istr('112123'))
+    assert istr.digits().equals(istr("0123456789"))
+    assert istr.digits("").equals(istr("0123456789"))
+    assert istr.digits("1").equals(istr("1"))
+    assert istr.digits("3-").equals(istr("3456789"))
+    assert istr.digits("-3").equals(istr("0123"))
+    assert istr.digits("1-4", "6", "8-9").equals(istr("1234689"))
+    assert istr.digits("1", "1-2", "1-3").equals(istr("112123"))
 
 
 def test_subclassing():
@@ -494,4 +560,3 @@ def test_subclassing():
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
-
