@@ -5,104 +5,14 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 import functools
 import math
 
 """
-changelog
+Note: the changelog is now in changelog.md
 
-version 1.0.1 2024-05-07
-------------------------
-istr.digits now also supports the letters from A through Z, making it possible
-to generate digits for bases >10.
-
-   istr.digits('-z') ==> istr('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-   istr.digits('A-F') ==> istr('ABCDEF')
-   istr.digits('C') ==> istr('C')
-
-Note that the default stop value is still 9 or the start is a numeric digit.
-If start is a letter, the default stop is Z. So
-    istr.digits('3-') ==> istr('34567879').
-    istr.digits('X-') ==> istr('XYZ').
-
-version 1.0.0 2024-05-06
-------------------------
-With this version, istrs do not have to be interpretable as an int anymore.
-Only when arithmetic and friends are to be carried with an istr, that's a requirement.
-
-So now we can say
-    a = istr('1 2 3')
-    print(a.split())
-and get
-    [istr('1'), istr('2'), istr('3')]
-But
-    a = istr('1 2 3')
-    b = a + 1
-will raise
-    TypeError: unsupported operand for +: istr('1 2 3') and 1
-    
-It is possible to check if an istr can be interpreted as an int with the is_int method:
-    a = istr('1 2 3')
-    print(a.is_int()) 
-will give
-    False 
-    
-This also means that there is no reason for istr('') to be interpretable as 0. So it isn't anymore.
-And reversed() now also works with negative numbers, although the result can't be used in calculations.
-
-The method / context manager format has been renamed to int_format.
-
-The bool method now operates on the string if it can not be interpreted as an int.
-That means that bool(istr('')) is False. For any other istr where is_int() is True, bool will be True.
-
-version 0.2.0 2024-04-30
-----------------------
-Added __iter__ method__ .
-    So now,
-        for c in istr('123'):
-            ...
-        results in c values that are istrs 
-
-Added istr.digits method:
-Examples
---------
-istr.digits() ==> istr('0123456789')
-istr.digits('') ==> istr('0123456789')
-istr.digits('1') ==> istr('1')
-istr.digits('3-') ==> istr('3456789')
-istr.digits('-3') ==> istr('0123')
-istr('1-4', '6', '8-9') ==> istr('1234689')
-istr.digits('1', '1-2', '1-3') ==> istr('112123')
-
-    Note that a digit can occur more than once.
-
-version 0.1.2  2024-04-26  
--------------------------
-Added all relevant string methods to return istrs or data structures with istrs.
-Added corresponding tests.
-
-version 0.1.0  2024-04-22  
--------------------------
-Changed the way istr.range is implemennted.
-
-Changed the context manager istr.format() to be used directly without the with statement.
-Also, noww istr.format() works without any argument and then returns the current format.
-
-istr class now uses __slots__
-
-All internal values and methods now start with an underscore.
-
-Introduced istr.repr_mode()
-
-Introduced istr.base()
-
-Extended tests for new functionality
-
-
-version 0.0.8  2024-04-18  
--------------------------
-initial version with changelog
+You can view the changelog on www.salabim/istr_changelog.html
 """
 
 
@@ -287,6 +197,7 @@ class istr(str):
     _base = 10
     _nan = "nan"
     _force_istr_repr = False
+    _digits_cache = {}
 
     @staticmethod
     def _to_base(number, base):
@@ -538,6 +449,9 @@ class istr(str):
         self._check_is_int("is_odd")
         return self._as_int % 2 == 1
 
+    def all_distinct(self):
+        return len(self) == len(set(self))
+
     def is_int(self):
         return self._as_int != self._nan
 
@@ -622,7 +536,6 @@ class istr(str):
         return _range(cls, start, stop, step)
 
     @classmethod
-    @functools.lru_cache
     def digits(cls, *args):
         """
         return an istr of istr'ed digits as specified with args
@@ -653,38 +566,44 @@ class istr(str):
         ----
         A digit can occur more than once.
         """
-        sequence="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        key = (args, cls._base, cls._int_format, cls._repr_mode)
+        if key in cls._digits_cache:
+            return cls.digits_cache[key]
+        sequence = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         result = []
         if not args:
             args = ["0-9"]
         for arg in args:
             if arg.strip() == "":
                 arg = "0-9"
-            pre, *post = arg.split("-",1)
+            pre, *post = arg.split("-", 1)
             if pre.strip() == "":
                 pre = "0"
-            pre=pre.upper()
-            if len(pre)>1 or pre not in sequence:
+            pre = pre.upper()
+            if len(pre) > 1 or pre not in sequence:
                 raise ValueError(f"incorrect specifier: {repr(arg)}")
-            start=sequence.index(pre)
-            
+            start = sequence.index(pre)
+
             if post:
-                post=post[0]
+                post = post[0]
                 if post.strip() == "":
                     if pre in "0123456789":
                         post = "9"
                     else:
-                        post="Z"
-                post=post.upper()
-                if len(post)>1 or post not in sequence:
+                        post = "Z"
+                post = post.upper()
+                if len(post) > 1 or post not in sequence:
                     raise ValueError(f"incorrect specifier: {repr(arg)}")
-                stop=sequence.index(post)
+                stop = sequence.index(post)
                 if start > stop:
                     raise ValueError(f"incorrect specifier: {repr(arg)}")
             else:
                 stop = start
             result.extend(sequence[i] for i in range(start, stop + 1))
-        return istr("".join(result))
+
+        result = istr("".join(result))
+        cls._digits_cache[key] = result
+        return result
 
     def capitalize(self, *args, **kwargs):
         return self.__class__(super().capitalize(*args, **kwargs))
@@ -760,21 +679,8 @@ class istr(str):
 
 
 def main():
-    print(istr.digits('8-8'))
-    print(istr.digits('-8'))
-    print(istr.digits('8-'))
-    print(istr.digits('c-c'))
-    print(istr.digits('-z'))
-    print(istr.digits('a-b'))
-    print(istr.digits('C-y'))
-    print(istr.digits('9-'))
-    with (istr.base(16)):
-        x=istr.digits('a-b')
-        x1=istr('AB')
-        print(istr.base())
-        print(repr(x),repr(x1))
-        a=istr(x1)
-        print(a+1)
+    ...
+
 
 if __name__ == "__main__":
     main()

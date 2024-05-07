@@ -548,7 +548,26 @@ def test_digits():
     assert istr.digits("-3").equals(istr("0123"))
     assert istr.digits("1-4", "6", "8-9").equals(istr("1234689"))
     assert istr.digits("1", "1-2", "1-3").equals(istr("112123"))
+    a= istr.digits("a")
+    assert a.equals(istr("A"))
+    assert not a.is_int()
+    with istr.base(36): 
+        a=istr.digits("a")
+        assert a == 10
+        assert a =="A"
+        assert istr.digits("-a").equals(istr("0123456789A"))
+        assert istr.digits("x-").equals(istr("XYZ"))
+        assert istr.digits("B-d").equals(istr("BCD"))
+        assert istr.digits("-").equals(istr("0123456789"))
+    with istr.base(16):
+        ef = istr.digits("e-f")
+        assert (ef+1).equals(istr("F0"))
+        assert ef == 239
 
+def test_all_distinct():
+    assert istr("abcdef").all_distinct()
+    assert not istr("aabcdef").all_distinct()
+    assert istr("").all_distinct()
 
 def test_subclassing():
     class jstr(istr):

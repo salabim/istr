@@ -137,10 +137,10 @@ or even
 four, five = istr(4, 5)
 ```
 
-> [!NOTE]
->
-> All calculations are strictly integer calculations. That means that if a float or decimal variable is ever produced it will be converted to an int.
-> Also divisions are always floor divisions!
+> > [!IMPORTANT]
+> >
+> > All calculations are strictly integer calculations. That means that if a float or decimal variable is ever produced it will be converted to an int.
+> > Also divisions are always floor divisions!
 
 #### Use istrs as string
 
@@ -175,7 +175,7 @@ And
 
 is also `istr('444')`
 
-> [!NOTE]
+> Note:
 >
 > It is not allowed to use the `@` operator for two istrs. So, `four @ five` raises a TypeError.
 
@@ -205,7 +205,7 @@ If we try
 istr('abc') + 5
 ```
 
-a TypeError will be raised.
+a `TypeError` will be raised.
 
 That holds for any arithmetic we try.
 
@@ -327,7 +327,21 @@ It is possible to test for even/odd (provided the istr can be interpreted as an 
 istr(4).is_even()) ==> True
 istr(5).is_odd()) ==> True
 ```
+#### test whether all characters are distinct
+
+With the `all_distinct` method, it is possible to test whether all characters are distinct (i.e. no character appearts more than once).
+
+```
+istr('01234').all_distict() ==> True
+istr('012340').all_distict() ==> False
+n98 = istr(98)
+n100 = n98 + 2
+istr(n98).all_distinct() ==> True
+istr(n100).all_distinct() ==> False
+```
+
 #### reverse an istr
+
 The method `istr.reversed()` will return the an istr with the reversed content:
 ```
 istr(456).reversed() ==> istr('654')
@@ -338,13 +352,13 @@ The same can -of course- be achieved with
 istr(456)[::-1] ==> istr('654')
 istr('0456')[::-1] ==> istr('6540')
 ```
-> [!NOTE]
->
-> It is possible to reverse a negative istr, but the result can't be interpreted as an int anymore.
->
-> ```
-> istr(-456) ==> TypeError
-> ```
+> > [!NOTE]
+> >
+> > It is possible to reverse a negative istr, but the result can't be interpreted as an int anymore.
+> >
+> > ```
+> > istr(-456) ==> TypeError
+> > ```
 
 #### enumerate with istrs
 
@@ -390,7 +404,12 @@ The given argument(s) result in a range of digits.
 - `n->` ==> n, n+1, ..., 9
 - `''` ==> 0, 1, ..., 9
 
-(n and m must be digits between 0 and 9)
+(n and m must be digits between 0 and 9 or letters letters between A and Z)
+
+When no stop value is specified, it will be
+
+* 9 if the start value is between 0 and 9
+* Z if the start value is between A and Z 
 
 The final result is an istr composed of the given range(s).
 
@@ -404,6 +423,11 @@ istr.digits('3-') ==> istr('3456789')
 istr.digits('-3') ==> istr('0123')
 istr('1-4', '6', '8-9') ==> istr('1234689')
 istr('1', '1-2', '1-3') ==> istr('11213')
+istr.digits('-z') ==> istr('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+istr.digits('A-F') ==> istr('ABCDEF')
+istr.digits('C') ==> istr('C')
+istr.digits('3-') ==> istr('34567879')
+istr.digits('X-') ==> istr('XYZ')
 ```
 
 
@@ -457,9 +481,9 @@ This will print
 nan
 ```
 
-> [!NOTE]
->
-> The way an `istr` is represented is determined at initialization.
+> > [!NOTE]
+> >
+> > The way an `istr` is represented is determined at initialization.
 
 It is also possible to set the repr mode without a context manager:
 
@@ -569,24 +593,24 @@ istr('012')
 istr('123')
 istr('1234')
 ```
-> [!NOTE]
+> > [!NOTE]
+> >
+> > if a string is used to initialize an istr AND that string can be interpreted as an int. the string will reformatted:
+> >
+> > ```
+> > with istr.int_format('03'):
+> >    print(repr(istr(12)))
+> > ```
+> >
+> > will result in
+> >
+> > ```
+> > istr('0012')
+> > ```
 >
->  if a string is used to initialize an istr AND that string can be interpreted as an int. the string will reformatted:
->
-> ```
-> with istr.int_format('03'):
->       print(repr(istr(12)))
-> ```
->
-> will result in
->
-> ```
-> istr('0012')
-> ```
-
-> [!NOTE]
->
-> For bases other than 10, the string will never be reformatted!
+> > [!NOTE]
+> >
+> > For bases other than 10, the string will never be reformatted!
 
 ### Overview of operations
 
