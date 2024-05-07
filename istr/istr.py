@@ -12,6 +12,20 @@ import math
 """
 changelog
 
+version 1.0.1 2024-05-07
+------------------------
+istr.digits now also supports the letters from A through Z, making it possible
+to generate digits for bases >10.
+
+   istr.digits('-z') ==> istr('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+   istr.digits('A-F') ==> istr('ABCDEF')
+   istr.digits('C') ==> istr('C')
+
+Note that the default stop value is still 9 or the start is a numeric digit.
+If start is a letter, the default stop is Z. So
+    istr.digits('3-') ==> istr('34567879').
+    istr.digits('X-') ==> istr('XYZ').
+
 version 1.0.0 2024-05-06
 ------------------------
 With this version, istrs do not have to be interpretable as an int anymore.
@@ -618,7 +632,10 @@ class istr(str):
         all given args will be used
         each arg has to be either null string, <digit>, <digit>-<digit> or -<digit>
 
-        examples
+        the digits may be '0' through '9' and 'A' through 'Z' (not case sensitive)
+        The returned value will always be in uppercase (if applicable).
+
+        Examples
         --------
         istr.digits() ==> istr('0123456789')
         istr.digits('') ==> istr('0123456789')
@@ -627,42 +644,47 @@ class istr(str):
         istr.digits('-3') ==> istr('0123')
         istr('1-4', '6', '8-9') ==> istr('1234689')
         istr('1', '1-2', '1-3') ==> istr('11213')
+        istr.digits('-z') ==> istr('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+        istr.digits('C') ==> istr('C')
+        istr.digits('A-F') ==> istr('ABCDEF')
+        istr.digits('X-') ==> istr('XYZ')
 
         Note
         ----
         A digit can occur more than once.
-
         """
+        sequence="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         result = []
         if not args:
             args = ["0-9"]
         for arg in args:
             if arg.strip() == "":
                 arg = "0-9"
-            pre, *post = arg.split("-")
+            pre, *post = arg.split("-",1)
             if pre.strip() == "":
                 pre = "0"
-            try:
-                start = int(pre)
-            except ValueError:
+            pre=pre.upper()
+            if len(pre)>1 or pre not in sequence:
                 raise ValueError(f"incorrect specifier: {repr(arg)}")
-            if not 0 <= start <= 9:
-                raise ValueError(f"incorrect specifier: {repr(arg)}")
-            if len(post) > 1:
-                raise ValueError(f"incorrect specifier: {repr(arg)}")
+            start=sequence.index(pre)
+            
             if post:
-                if post[0].strip() == "":
-                    post = "9"
-                try:
-                    stop = int(post[0])
-                except ValueError:
+                post=post[0]
+                if post.strip() == "":
+                    if pre in "0123456789":
+                        post = "9"
+                    else:
+                        post="Z"
+                post=post.upper()
+                if len(post)>1 or post not in sequence:
                     raise ValueError(f"incorrect specifier: {repr(arg)}")
-                if (not 0 <= start <= 9) or start > stop:
+                stop=sequence.index(post)
+                if start > stop:
                     raise ValueError(f"incorrect specifier: {repr(arg)}")
             else:
                 stop = start
-            result.extend(range(start, stop + 1))
-        return cls("").join(istr(result))
+            result.extend(sequence[i] for i in range(start, stop + 1))
+        return istr("".join(result))
 
     def capitalize(self, *args, **kwargs):
         return self.__class__(super().capitalize(*args, **kwargs))
@@ -738,7 +760,21 @@ class istr(str):
 
 
 def main():
-    ...
+    print(istr.digits('8-8'))
+    print(istr.digits('-8'))
+    print(istr.digits('8-'))
+    print(istr.digits('c-c'))
+    print(istr.digits('-z'))
+    print(istr.digits('a-b'))
+    print(istr.digits('C-y'))
+    print(istr.digits('9-'))
+    with (istr.base(16)):
+        x=istr.digits('a-b')
+        x1=istr('AB')
+        print(istr.base())
+        print(repr(x),repr(x1))
+        a=istr(x1)
+        print(a+1)
 
 if __name__ == "__main__":
     main()

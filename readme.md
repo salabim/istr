@@ -2,9 +2,7 @@
 
 ### Introduction
 
-The istr module has exactly one class: istr.
-
-With this it is possible to interpret strings as if they were integers.
+With  `istr` is possible to interpret strings as if they were integers.
 
 This can be very handy for solving puzzles, but also for other purposes.
 For instance the famous send more money puzzle, where each letter has to be replaced by a unique digit (0-9)
@@ -84,7 +82,7 @@ or
 twenty = four * 5
 ```
 
-And now `twenty` can be used as if it was an int as well. So:
+And now `twenty` can be used as if it was an int as well. So
 
 ```
 twenty - four
@@ -100,14 +98,14 @@ We can do all the usual arithmetic operations on istrs, e.g.
 
 is `istr('6')`
 
-And we can test for equality, So:
+And we can test for equality. So:
 
 ```
 twenty == 20
 ```
 is True.
 
-But as istrs are also strings. So
+But istrs are also strings. So
 
 ```
 twenty == '20'
@@ -128,7 +126,7 @@ In contrast to an ordinary string
 ```
 print(four + five)
 ```
-prints `9`, as istr are treated as ints.
+prints `9`, as istr are treated as ints (if possible).
 
 Please note that `four`  could have also been initialized with
 ```
@@ -141,16 +139,14 @@ four, five = istr(4, 5)
 
 > [!NOTE]
 >
-> All calculations are strictly integer calculations. That means that if a float variale is ever produced it will be converted to an int.
+> All calculations are strictly integer calculations. That means that if a float or decimal variable is ever produced it will be converted to an int.
 > Also divisions are always floor divisions!
 
 #### Use istrs as string
 
 We should realize that istrs are in fact strings.
 
-In order to concatenate two istrs (or an istr and a str), we cannot use the `four + five` operator as
-
-that would be `istr(9)`.
+In order to concatenate two istrs (or an istr and a str), we cannot use the `+` operator (remember `four + five` is `istr('9')`).
 
 In order to concatenate istrs,  we use the or operator (`|`). So
 
@@ -159,19 +155,25 @@ four | five
 ```
 will be `istr(`45`).
 
-That means that
+And
 ```
 (four | five) / 3
 ```
 is `istr('9')`.
 
-In order to repeat a string in the usual sense, you cannot use `3 * four`, as that would be `12`. 
+In order to repeat a string in the usual sense, you cannot use the `*` operator (remember `3 * four` is `istr(12)`. 
 
 In order to repeat we use the matrix multiplication operator (`@`). So
 
  `3 @ four`
 
- is istr(`444`). As is `four @ 3`.
+ is `istr('444')`
+
+And 
+
+```four @ 3```
+
+is also `istr('444')`
 
 > [!NOTE]
 >
@@ -190,7 +192,7 @@ istr('abc')
 or
 
 ```
-istr(1,2,3)
+istr('1,2,3')
 ```
 
 are accepted.
@@ -211,7 +213,7 @@ If we want to test if an istr can be interpreted (and thus used in an arithmetic
 
 ```ìstr(20).is_int()```
 
-is `True`, wherea
+is `True`, whereas
 
 ```ìstr('abc').is_int()```
 
@@ -224,10 +226,10 @@ The bool operator works normally on the integer value of an istr. So
 `bool(istr('0'))` ==> `False`
 `bool(istr('1'))` ==> `True`
 
-If the istr can't be interpreted as an int, the string will be used to test. So
+If the istr can't be interpreted as an int, the string value will be used to test. So
 
-`bool(istr('abc'))` ==> `False`
-`bool(istr(''))` ==> `True`
+`bool(istr('abc'))` ==> `True`
+`bool(istr(''))` ==> `False`
 
 #### Other operators
 
@@ -266,7 +268,7 @@ is
 '0 1 2 3 4 5 6 7 8 9 10 11'
 ```
 
-#### Using other values for istr than numeric value or str
+#### Using values to inialitize istr other than numeric value or str
 Apart from with simple numeric (to be interpreted as an int) or str, istr can be initialized with
 several other types:
 
@@ -295,7 +297,7 @@ several other types:
   
     ```
   istr(range(3))` ==> `istr.range(3)
-    list(istr(range(3)))` ==> `[istr('0'), istr('1'), istr('2')]
+  list(istr(range(3)))` ==> `[istr('0'), istr('1'), istr('2')]
   len(istr(range(3)))` ==> `3
   ```
 
@@ -317,7 +319,7 @@ a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7')
 ```
 
 #### test for even/odd
-It is possible to test for even/odd (provided the istt can be interpreted as an int) with the
+It is possible to test for even/odd (provided the istr can be interpreted as an int) with the
 
 `is_even` and `is_odd` method, e.g.
 
@@ -350,7 +352,7 @@ The `istr.enumerate` method can be used just as the builtin enumerate function.
 The iteration counter however is an istr rather than an int. E.g. 
 
 ```
-    for i,c in istr.enumerate('abc'):
+    for i, c in istr.enumerate('abc'):
         print(f'{repr(i)} {c}')
 ```
 prints
@@ -378,7 +380,7 @@ list(istr.concat(itertools.permutations(range(3),2))) ==>
 The class method `digits` can be used to return an istr of digits according to a given specification.
 The method takes either no or a number of arguments.
 
-If no arguments are given, the result will be istr('0123456789').
+If no arguments are given, the result will be `istr('0123456789')`.
 
 The given argument(s) result in a range of digits.
 
@@ -421,18 +423,18 @@ will print `jstr('20')`
 
 It is possible to control the way an `istr` instance will be repr'ed.
 
-By default, the `istr('5')` is represented as `istr('5')`.
+By default, the `istr(5)` is represented as `istr('5')`.
 
 With the istr.repr_mode() context manager, that can be changed:
 ```
 with istr.repr_mode('str'):
-    five = istr('5')
+    five = istr(5)
     print(repr(five))
 with istr.repr_mode('int'):
-    five = istr('5')
+    five = istr(5)
     print(repr(five))
 with istr.repr_mode('istr'):
-    five = istr('5')
+    five = istr(5)
     print(repr(five))
 ```
 This will print
@@ -573,7 +575,7 @@ istr('1234')
 >
 > ```
 > with istr.int_format('03'):
->     print(repr(istr('  12 ')))
+>       print(repr(istr(12)))
 > ```
 >
 > will result in
