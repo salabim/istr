@@ -6,7 +6,6 @@ dist/*
 build/*
 build_and_upload.bat
 toml_versioner.py
-upload_changelog.html.py
-changelog.html
-readme.html
+upload_html.py
+*.html
 artwork/*
