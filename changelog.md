@@ -1,5 +1,21 @@
 ## changelog
 
+### version 1.0.2 | 2024-05-08
+
+When a string that can't be interpreted as an istr is created when istr.repr_mode is 'int', the repr of that file will be `?` (was: `nan`):
+
+```
+with istr.repr_mode('int'):
+    a = istr('abc')
+print(a)
+```
+
+will print
+
+```
+?
+```
+
 ### version 1.0.1 | 2024-05-07
 
 From now on, the changelog is not anymore part of the istr.py file, but is in a separate `changelog.md` file.

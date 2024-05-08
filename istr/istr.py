@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 import functools
 import math
 
