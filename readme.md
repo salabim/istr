@@ -137,10 +137,10 @@ or even
 four, five = istr(4, 5)
 ```
 
-> > [!IMPORTANT]
-> >
-> > All calculations are strictly integer calculations. That means that if a float or decimal variable is ever produced it will be converted to an int.
-> > Also divisions are always floor divisions!
+##### Important
+>
+> All calculations are strictly integer calculations. That means that if a float or decimal variable is ever produced it will be converted to an int.
+> Also divisions are always floor divisions!
 
 #### Use istrs as string
 
@@ -175,11 +175,12 @@ And
 
 is also `istr('444')`
 
-> Note:
+##### Note
+
 >
 > It is not allowed to use the `@` operator for two istrs. So, `four @ five` raises a TypeError.
-
 #### istrs that can't be interpreted as an int
+
 
 Although usualy, istrs are to be interpreted as an int, that's not a requirement.
 
@@ -221,7 +222,7 @@ is `False`.
 
 
 
-The bool operator works normally on the integer value of an istr. So
+The `bool` operator works normally on the integer value of an istr. So
 
 `bool(istr('0'))` ==> `False`
 `bool(istr('1'))` ==> `True`
@@ -238,6 +239,7 @@ For the `in` operator, an istr is treated as an ordinary string, although it is 
 ```
 '34' in istr(1234)
 34 in istr(1234)
+
 ```
 On the left hand side an istr is always treated as a string:
 ```
@@ -267,47 +269,39 @@ is
 ```
 '0 1 2 3 4 5 6 7 8 9 10 11'
 ```
+#### Using values that are neither string or numeric to initialize istr
 
-#### Using values to inialitize istr other than numeric value or str
-Apart from with simple numeric (to be interpreted as an int) or str, istr can be initialized with
+Apart from with numeric (to be interpreted as an int) or str, istr can be initialized with
 several other types:
+
 
 - if a dict (or subtype of dict), the same type dict will be returned with all *values* istr'ed
 
-    ```
-    istr({0: 0, 1: 1, 2: 4}) ==> {0: istr('0'), 1: istr('1'), 2: istr('4')}
-    ```
-
 - if an iterator, the iterator will be mapped with istr
-
-    ```
-    istr(i * i for i in range(3)) ==> <map object>
-    list(istr(i * i for i in range(3))) ==> [istr('0'), istr('1'), istr('4')]
-    ```
 
 - if an iterable, the same type will be returned with all elements istr'ed
 
-    ```
+```
     istr([0, 1, 4]) ==> [istr('0'), istr('1'), istr('4')]
     istr((0, 1, 4)) ==> (istr('0'), istr('1'), istr('4'))
-    istr({0, 1, 4}) ==> `{istr('4'), istr('0'), istr('1')}  # or similar
-    ```
+    istr({0, 1, 4}) ==> `{istr('4'), istr('0'), istr('1')}  # or similar  
+```
 
 - if a range, an istr.range instance will be returned
   
-    ```
-  istr(range(3))` ==> `istr.range(3)
-  list(istr(range(3)))` ==> `[istr('0'), istr('1'), istr('2')]
-  len(istr(range(3)))` ==> `3
-  ```
+```
+  istr(range(3)) ==> istr.range(3)
+  list(istr(range(3))) ==> [istr('0'), istr('1'), istr('2')]
+  len(istr(range(3))) ==> 3
+```
 
 - if an istr.range instance, the same istr.range will be returned
 
 - if an istr, the same istr will be used
 
-    ```
+  ```
     istr(istr('4')) ==> istr ('4')
-    ```
+  ```
 
 #### More than one parameter for istr
 It is possible to give more than one parameter, in which case a tuple
@@ -342,7 +336,7 @@ istr(n100).all_distinct() ==> False
 
 #### reverse an istr
 
-The method `istr.reversed()` will return the an istr with the reversed content:
+The method `istr.reversed()` will return an istr with the reversed content:
 ```
 istr(456).reversed() ==> istr('654')
 istr('0456').reversed() ==> istr('6540')
@@ -352,13 +346,13 @@ The same can -of course- be achieved with
 istr(456)[::-1] ==> istr('654')
 istr('0456')[::-1] ==> istr('6540')
 ```
-> > [!NOTE]
-> >
-> > It is possible to reverse a negative istr, but the result can't be interpreted as an int anymore.
-> >
-> > ```
-> > istr(-456) ==> TypeError
-> > ```
+##### Note
+>
+> It is possible to reverse a negative istr, but the result can't be interpreted as an int anymore.
+>
+> ```
+> istr(-456).reversed() ==> TypeError
+> ```
 
 #### enumerate with istrs
 
@@ -366,8 +360,8 @@ The `istr.enumerate` method can be used just as the builtin enumerate function.
 The iteration counter however is an istr rather than an int. E.g. 
 
 ```
-    for i, c in istr.enumerate('abc'):
-        print(f'{repr(i)} {c}')
+for i, c in istr.enumerate('abc'):
+    print(f'{repr(i)} {c}')
 ```
 prints
 ```
@@ -401,7 +395,8 @@ The given argument(s) result in a range of digits.
 - `<n>` ==> n
 - `<n-m>` ==> n, n+1, ..., m
 - `-n>` ==> 0, 1, ... n
-- `n->` ==> n, n+1, ..., 9
+- `n->` ==> n, n+1, ..., 9 if n is numeric (0-9), n, n+1, ... Z if n is a letter
+- `'-'` ==> 0, 1, ..., 9
 - `''` ==> 0, 1, ..., 9
 
 (n and m must be digits between 0 and 9 or letters letters between A and Z)
@@ -447,9 +442,9 @@ will print `jstr('20')`
 
 It is possible to control the way an `istr` instance will be repr'ed.
 
-By default, the `istr(5)` is represented as `istr('5')`.
+By default, `istr(5)` is represented as `istr('5')`.
 
-With the istr.repr_mode() context manager, that can be changed:
+With the `istr.repr_mode()` context manager, that can be changed:
 ```
 with istr.repr_mode('str'):
     five = istr(5)
@@ -467,7 +462,7 @@ This will print
 5
 istr('5')
 ```
-If the repr_mode is `'int'` and the istr can't be interpreted as an int the string `nan` (not a number) will be returned:
+If the repr_mode is `'int'` and the istr can't be interpreted as an int the string `?` will be returned:
 
 ```
  with istr.repr_mode('int'):
@@ -478,12 +473,12 @@ If the repr_mode is `'int'` and the istr can't be interpreted as an int the stri
 This will print
 
 ```
-nan
+?
 ```
 
-> > [!NOTE]
-> >
-> > The way an `istr` is represented is determined at initialization.
+##### Note
+>
+> The way an `istr` is represented is determined at initialization.
 
 It is also possible to set the repr mode without a context manager:
 
@@ -517,13 +512,13 @@ with istr.base(16):
     a = istr('7fff')
     print(int(a))
 
-    b = istr(15)
+    b = istr(127)
     print(repr(b))
 ```
 This will result in
 ```
 32767
-istr('F')
+istr('7F')
 ```
 All calculations are done in the decimal 10 system.
 
@@ -546,7 +541,7 @@ will result in `10`.
 
 #### Changing the format of the string
 
-When an  istr is initialized with a string the istr will be just stored as such.
+When an  istr is initialized with a string the istr will be always stored as such.
 
 ```
 repr('4')) ==> istr('4')
@@ -560,7 +555,7 @@ For initializing with an int (or other numeric) value, the string is by default 
 repr(4)) ==> istr('4')
 ```
 
- With the `istr.int_format()` context manager this behavior can be changed.
+With the `istr.int_format()` context manager this behavior can be changed.
 If the format specifier is a number, most likely a single digit, that
 will be the minimum number of characters in the string:
 
@@ -593,24 +588,10 @@ istr('012')
 istr('123')
 istr('1234')
 ```
-> > [!NOTE]
-> >
-> > if a string is used to initialize an istr AND that string can be interpreted as an int. the string will reformatted:
-> >
-> > ```
-> > with istr.int_format('03'):
-> >    print(repr(istr(12)))
-> > ```
-> >
-> > will result in
-> >
-> > ```
-> > istr('0012')
-> > ```
+
+##### Note
 >
-> > [!NOTE]
-> >
-> > For bases other than 10, the string will never be reformatted!
+> For bases other than 10, the string will never be reformatted!
 
 ### Overview of operations
 
@@ -649,6 +630,8 @@ other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
 There's an extensive pytest script in the `\tests` directory.
 
 This script also shows clearly the ways istr can be used, including several edge cases. Highly recommended to have a look at.
+
+
 
 ### Badges
 ![PyPI](https://img.shields.io/pypi/v/istr-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/istr-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/istr-python)

@@ -15,6 +15,7 @@ Note: the changelog is now in changelog.md
 You can view the changelog on www.salabim/istr_changelog.html
 """
 
+_0_to_Z = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 class _range:
     """
@@ -195,7 +196,7 @@ class istr(str):
     _int_format = ""
     _repr_mode = "istr"
     _base = 10
-    _nan = "nan"
+    _nan = object()
     _force_istr_repr = False
     _digits_cache = {}
 
@@ -205,7 +206,7 @@ class istr(str):
             raise ValueError(f"negative numbers are not allowed for base {base}")
         result = ""
         while number:
-            result += "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[number % base]
+            result += _0_to_Z[number % base]
             number //= base
         return result[::-1] or "0"
 
@@ -223,7 +224,7 @@ class istr(str):
         operator = args[len(args) == 2]
         if len(args) == 2:
             other = args[0]
-            if not self.is_int() or self._to_int(other) == self._nan:
+            if not self.is_int() or self._to_int(other) is self._nan:
                 self.__class__._force_istr_repr = True
                 if right:
                     message = f"unsupported operand for {operator}: {repr(other)} and {repr(self)}"
@@ -263,7 +264,7 @@ class istr(str):
         if isinstance(value, str):
             as_str = value
         else:
-            if as_int == cls._nan:
+            if as_int is cls._nan:
                 raise TypeError(f"incorrect value for {cls.__name__}: {repr(value)}")
             if cls._int_format == "" or cls._base != 10:
                 if cls._base == 10:
@@ -278,7 +279,7 @@ class istr(str):
         if self._repr_mode == "istr":
             self._as_repr = f"{cls.__name__}({repr(as_str)})"
         elif self._repr_mode == "int":
-            self._as_repr = "nan" if as_int == self._nan else repr(as_int)
+            self._as_repr = "?" if as_int is self._nan else repr(as_int)
         else:
             self._as_repr = repr(as_str)
         return self
@@ -453,7 +454,7 @@ class istr(str):
         return len(self) == len(set(self))
 
     def is_int(self):
-        return self._as_int != self._nan
+        return self._as_int is not self._nan
 
     def reversed(self):
         return self[::-1]
@@ -569,7 +570,6 @@ class istr(str):
         key = (args, cls._base, cls._int_format, cls._repr_mode)
         if key in cls._digits_cache:
             return cls.digits_cache[key]
-        sequence = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         result = []
         if not args:
             args = ["0-9"]
@@ -580,9 +580,9 @@ class istr(str):
             if pre.strip() == "":
                 pre = "0"
             pre = pre.upper()
-            if len(pre) > 1 or pre not in sequence:
+            if len(pre) > 1 or pre not in _0_to_Z:
                 raise ValueError(f"incorrect specifier: {repr(arg)}")
-            start = sequence.index(pre)
+            start = _0_to_Z.index(pre)
 
             if post:
                 post = post[0]
@@ -592,14 +592,14 @@ class istr(str):
                     else:
                         post = "Z"
                 post = post.upper()
-                if len(post) > 1 or post not in sequence:
+                if len(post) > 1 or post not in _0_to_Z:
                     raise ValueError(f"incorrect specifier: {repr(arg)}")
-                stop = sequence.index(post)
+                stop = _0_to_Z.index(post)
                 if start > stop:
                     raise ValueError(f"incorrect specifier: {repr(arg)}")
             else:
                 stop = start
-            result.extend(sequence[i] for i in range(start, stop + 1))
+            result.extend(_0_to_Z[i] for i in range(start, stop + 1))
 
         result = istr("".join(result))
         cls._digits_cache[key] = result
@@ -679,8 +679,15 @@ class istr(str):
 
 
 def main():
-    ...
-
+    with istr.repr_mode("int"):
+        print(repr(istr(3)))
+        print(repr(istr("a")))
+        with istr.int_format("4"):
+            print(repr(istr(3)))
+            print(repr(istr("a")))
+        with istr.int_format("04"):
+            print(repr(istr(3)))
+            print(repr(istr("a")))
 
 if __name__ == "__main__":
     main()
