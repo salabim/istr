@@ -470,8 +470,8 @@ def test_repr_mode():
     assert repr(hundred) == "istr('100')"
 
     with istr.repr_mode("int"):
-        a = istr("a")
-    assert repr(a) == "nan"
+        a = istr("abc")
+    assert repr(a) == "?"
 
     assert istr.repr_mode() == "istr"
 
