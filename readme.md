@@ -625,22 +625,23 @@ _                    x         istr(20) - 3 ==> istr('17')
 %                    x         istr(20) % 3 ==> istr('2')
 divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
 **                   x         istr(2) ** 3 ==> istr('8')
-@                         x    istr(20) @ 3 ==> istr('202020')
-==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
-|                         x    istr(20) | 5 ==> istr('205')
-abs                  x         abs(istr(-20)) ==> istr('20')
-bool                 x    x *) bool(istr(' 0 ')) ==> False | istr('') ==> False
 <=, <, >, >=         x         istr('100') > istr('2') ==> True
+abs                  x         abs(istr(-20)) ==> istr('20')
+==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
+bool                 x    x *) bool(istr(' 0 ')) ==> False | istr('') ==> False
+@                         x    istr(20) @ 3 ==> istr('202020')
+|                         x    istr(20) | '5' ==> istr('205')
 slicing                   x    istr(12345)[1:3] ==> istr('23')
-iterate                   x    [x for x in istr(20)] ==> [istr('2'), istr('0')
+iterate                   x    [x for x in istr(20)] ==> [istr('2'), istr('0')]
 len                       x    len(istr(' 20 ')) ==> 4
-count                     x    istr(100),count('0') ==> 2
+count                     x    istr(100).count('0') ==> 2
 index                     x    istr(' 100 ').index('0') ==> 2
 split                     x    istr('1 2').split() ==> (istr('1'), istr('2'))
-string format             x    f"|{istr((1234):6}|" ==> '|1234  |'
+string format             x    f"|{istr(1234):6}|" ==> '|1234  |'
 other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
                                istr('aAbBcC').islower() ==> False
                                istr('  abc   ').strip() ==> istr('abc')
+                               ...
 -----------------------------------------------------------------------------------------
 *) str is applied if is_int() is False
 
