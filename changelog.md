@@ -1,5 +1,9 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.0.5 | 2024-05-24
+Serious bug with caching istr.digits() fixed.
+Added tests for properly caching istr.digits().
+
 #### version 1.0.4 | 2024-05-24
 Serious bug with the or (|) operator fixed.
 Added tests for the or (|) operator.

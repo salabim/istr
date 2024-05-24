@@ -501,7 +501,7 @@ class istr(str):
         """
         key = (args, cls._base, cls._int_format, cls._repr_mode)
         if key in cls._digits_cache:
-            return cls.digits_cache[key]
+            return cls._digits_cache[key]
         result = []
         if not args:
             args = ["0-9"]
@@ -539,7 +539,13 @@ class istr(str):
 
 
 def main():
-    ...
+    print(istr.digits())
+
+    print(repr(istr.digits()))
+    print(int(istr.digits()))
+
+    with istr.base(16):
+        print(int(istr.digits()))
 
 if __name__ == "__main__":
     main()

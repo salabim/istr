@@ -577,6 +577,18 @@ def test_digits():
         assert ef == 239
 
 
+def test_digits_cache():
+    d = istr.digits()
+    assert id(d) == id(istr.digits())
+    assert int(d) == 123456789
+
+    with istr.base(16):
+        d = istr.digits()
+        assert id(d) == id(istr.digits())
+    assert int(d) == 4886718345
+
+
+
 def test_all_distinct():
     assert istr("abcdef").all_distinct()
     assert not istr("aabcdef").all_distinct()
