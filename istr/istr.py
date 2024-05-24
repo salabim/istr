@@ -5,17 +5,21 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 import functools
 import math
+import copy
 
 """
 Note: the changelog is now in changelog.md
 
-You can view the changelog on www.salabim/istr_changelog.html
+You can view the changelog on www.salabim.org/istr/changelog.html
+
+The readme can be viewed on www.salabim.org/istr/readme.html
 """
 
 _0_to_Z = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 
 class _range:
     """
@@ -34,6 +38,12 @@ class _range:
             step_sign = 1
         self._len = max(1 + (self.stop - self.start - step_sign) // self.step, 0)
         self.parent_cls = cls
+        self.init_done = True
+
+    def __setattr__(self, name, value):
+        if getattr(self, "init_done", False):
+            raise AttributeError()
+        super().__setattr__(name, value)
 
     def __contains__(self, value):
         if isinstance(value, int):
@@ -169,27 +179,28 @@ class istr(str):
     ----------
     value : any
         if str the value will to be interpreted as an int
-            istr("8") ==> istr("8")
+            istr('8') ==> istr('8')
         if numeric, the value will be interpreted as an int
-            istr(8) ==> istr("8")
-        if a dict (or subtype of dict), the same type dict will be returned with all values istr"ed
-            istr({0: 0, 1: 1, 2: 4}) ==> {0: istr("0"), 1: istr("1"), 2: istr("4")}
+            istr(8) ==> istr('8')
+        if a dict (or subtype of dict), the same type dict will be returned with all values istr'ed
+            istr({0: 0, 1: 1, 2: 4}) ==> {0: istr('0'), 1: istr('1'), 2: istr('4')}
         if an iterator, the iterator will be mapped with istr
             istr(i * i for i in range(3)) ==> <map object>
-            list(istr(i * i for i in range(3))) ==> [istr("0"), istr("1"), istr("4")]
-        if an iterable, the same type will be returned with all elements istr"ed
-            istr([0, 1, 4]) ==> [istr("0"), istr("1"), istr("4")]
-            istr((0, 1, 4)) ==> (istr("0"), istr("1"), istr("4"))
-            istr({0, 1, 4}) ==> {istr("4"), istr("0"), istr("1")} # or similar
+            list(istr(i * i for i in range(3))) ==> [istr('0'), istr('1'), istr('4')]
+        if an iterable, the same type will be returned with all elements istr'ed
+            istr([0, 1, 4]) ==> [istr('0'), istr('1'), istr('4')]
+            istr((0, 1, 4)) ==> (istr('0'), istr('1'), istr('4'))
+            istr({0, 1, 4}) ==> {istr('4'), istr('0'), istr('1')} # or similar
         if a range, an istr.range instance will be returned
             istr(range(3)) ==> istr.range(3)
-            list(istr(range(3))) ==> [istr("0"), istr("1"), istr("2")]
+            list(istr(range(3))) ==> [istr('0'), istr('1'), istr('2')]
             len(istr(range(3))) ==> 3
+        if an istr, the same istr will be returned istr(istr('2')) ==> istr('2')
 
         it is possible to give more than one parameter, in which case a tuple
         of the istrs of the parameters will be returned, which can be handy
         to multiple assign, e.g.
-            a, b, c = istr(5, 6, 7) ==> a=istr("5") , b=istr("6"), c=istr("7")"""
+            a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7')"""
 
     __slots__ = ("_as_int", "_as_repr")
 
@@ -197,7 +208,6 @@ class istr(str):
     _repr_mode = "istr"
     _base = 10
     _nan = object()
-    _force_istr_repr = False
     _digits_cache = {}
 
     @staticmethod
@@ -220,28 +230,6 @@ class istr(str):
         except:
             return cls._nan
 
-    def _check_is_int(self, *args, right=False):
-        operator = args[len(args) == 2]
-        if len(args) == 2:
-            other = args[0]
-            if not self.is_int() or self._to_int(other) is self._nan:
-                self.__class__._force_istr_repr = True
-                if right:
-                    message = f"unsupported operand for {operator}: {repr(other)} and {repr(self)}"
-                else:
-                    message = f"unsupported operand for {operator}: {repr(self)} and {repr(other)}"
-                self.__class__._force_istr_repr = False
-                raise TypeError(message)
-        else:
-            if not self.is_int():
-                self.__class__._force_istr_repr = True
-                message = f"unsupported operand for {operator}: {repr(self)}"
-                self.__class__._force_istr_repr = False
-                raise TypeError(message)
-
-    def _rcheck_is_int(self, *args):
-        self._check_is_int(*args, right=True)
-
     def __new__(cls, *value):
         if len(value) == 0:
             raise TypeError("no parameter given")
@@ -259,7 +247,6 @@ class istr(str):
             if hasattr(value, "__next__"):
                 return map(functools.partial(cls), value)
             return type(value)(map(functools.partial(cls), value))
-
         as_int = cls._to_int(value)
         if isinstance(value, str):
             as_str = value
@@ -300,167 +287,112 @@ class istr(str):
             return self._as_int == self._to_int(other)
         except Exception:
             return False
-
+            
     def __ne__(self, other):
         return not self == other
 
-    def __contains__(self, other):
-        return super().__contains__(str(other))
-
     def __repr__(self):
-        if self._force_istr_repr:
-            return f"{self.__class__.__name__}({super().__repr__()})"
         return self._as_repr
-
-    def __le__(self, other):
-        self._check_is_int(other, "<=")
-        return self._as_int <= self._to_int(other)
-
-    def __lt__(self, other):
-        self._check_is_int(other, "<")
-        return self._as_int < self._to_int(other)
-
-    def __ge__(self, other):
-        self._check_is_int(other, ">=")
-        return self._as_int >= self._to_int(other)
-
-    def __gt__(self, other):
-        self._check_is_int(other, ">")
-        return self._as_int > self._to_int(other)
 
     def __bool__(self):
         if self.is_int():
             return bool(self._as_int)
         return bool(str(self))
 
-    def __add__(self, other):
-        self._check_is_int(other, "+")
-        return self.__class__(self._as_int + self._to_int(other))
+    def _frepr(self, obj):
+        # like repr, but if obj is an istr, the as_repr is not used to make sure the
+        # the returned value is istr(...) and not infuenced by the repr mode
+        if isinstance(obj, self.__class__):
+            return f"{obj.__class__.__name__}({super(istr,obj).__repr__()})"
+        return repr(obj)
 
-    def __radd__(self, other):
-        self._rcheck_is_int(other, "+")
-        return self.__class__(self._to_int(other) + self._as_int)
+    def _int_method(self, name, op, *args):
+        if len(args) == 1:
+            other = args[0]
+            if not self.is_int() or self._to_int(other) is self._nan:
+                if name.startswith("__r"):
+                    raise TypeError(f"unsupported operand for {op}: {self._frepr(other)} and {self._frepr(self)}")
+                else:
+                    raise TypeError(f"unsupported operand for {op}: {self._frepr(self)} and {self._frepr(other)}")
+            return istr(getattr(self._as_int, name)(self._to_int(other)))
+        else:
+            if not self.is_int():
+                raise TypeError(f"unsupported operand for {op}: {self._frepr(self)}")
+            return istr(getattr(self._as_int, name)())
 
-    def __sub__(self, other):
-        self._check_is_int(other, "-")
-        return self.__class__(self._as_int - self._to_int(other))
+    for name_op in (
+        "__add__+ __radd__+ __sub__- __rsub__- __mul__* __rmul__* __floordiv__// __rfloordiv__// "
+        "__truediv__/ __rtruediv__/ __pow__** __rpow__** __mod__% __rmod__% "
+        "__divmod__divmod __rdivmod__divmod "
+        "__le__<= __lt__< __gt__> __ge__>= "
+        "__round__round __trunc__trunc __floor__floor __ceil__ceil __neg__- __pos__+ "
+        "__invert__~ __abs__abs "
+    ).split():
+        i = len(name_op) - "".join(reversed(name_op)).find("_")  # pos of last _
+        name = name_op[:i]
+        op = name_op[i:]
 
-    def __rsub__(self, other):
-        self._rcheck_is_int(other, "-")
-        return self.__class__(self._to_int(other) - self._as_int)
-
-    def __mul__(self, other):
-        self._check_is_int(other, "*")
-        return self.__class__(self._as_int * self._to_int(other))
-
-    def __rmul__(self, other):
-        self._rcheck_is_int(other, "*")
-        return self.__class__(self._to_int(other) * self._as_int)
-
-    def __floordiv__(self, other):
-        self._check_is_int(other, "//")
-        return self.__class__(self._as_int // self._to_int(other))
-
-    def __rfloordiv__(self, other):
-        self._rcheck_is_int(other, "//")
-        return self.__class__(self._to_int(other) // self._as_int)
-
-    def __truediv__(self, other):
-        self._check_is_int(other, "/")
-        return self.__class__(self._as_int // self._to_int(other))
-
-    def __rtruediv__(self, other):
-        self._rcheck_is_int(other, "/")
-        return self.__class__(self._to_int(other) // self._as_int)
-
-    def __pow__(self, other):
-        self._check_is_int(other, "**")
-        return self.__class__(self._as_int ** self._to_int(other))
-
-    def __rpow__(self, other):
-        self._rcheck_is_int(other, "**")
-        return self.__class__(self._to_int(other) ** self._as_int)
-
-    def __mod__(self, other):
-        self._check_is_int(other, "%")
-        return self.__class__(self._as_int % self._to_int(other))
-
-    def __rmod__(self, other):
-        self._rcheck_is_int(other, "%")
-        return self.__class__(self._to_int(other) % self._as_int)
-
-    def __or__(self, other):
-        return self.__class__("".join((self, self.__class__(other))))
-
-    def __ror__(self, other):
-        return self.__class__("".join((self.__class__(other), self)))
-
-    def __round__(self):
-        self._check_is_int("round")
-        return self.__class__(round(self._as_int))
+        locals()[name] = functools.partialmethod(_int_method, name, op)
 
     def __int__(self):
         if not self.is_int():
-            raise ValueError(f"invalid literal for int() with base 10: {repr(self)}")
+            raise ValueError(f"invalid literal for int() with base 10: {self._frepr(self)}")
         return int(self._as_int)
 
-    def __trunc__(self):
-        self._check_is_int("trunc")
-        return self.__class__(math.trunc(self._as_int))
-
-    def __floor__(self):
-        self._check_is_int("floor")
-        return self.__class__(math.floor(self._as_int))
-
-    def __ceil__(self):
-        self._check_is_int("ceil")
-        return self.__class__(math.ceil(self._as_int))
-
-    def __matmul__(self, other):
-        return self.__class__(super().__mul__(other))
-
-    def __rmatmul__(self, other):
-        return self.__class__(super().__rmul__(other))
-
-    def __divmod__(self, other):
-        self._check_is_int(other, "divmod")
-        return self.__class__(divmod(self._as_int, self._to_int(other)))
-
-    def __rdivmod__(self, other):
-        self._rcheck_is_int(other, "divmod")
-        return self.__class__(divmod(self._to_int(other), self._as_int))
-
-    def __neg__(self):
-        self._check_is_int("-")
-        return self.__class__(-self._as_int)
-
-    def __pos__(self):
-        self._check_is_int("+")
-        return self
-
-    def __abs__(self):
-        self._check_is_int("abs")
-        return self.__class__(abs(self._as_int))
-
     def is_even(self):
-        self._check_is_int("is_even")
+        if not self.is_int():
+            raise TypeError(f"unsupported operand for is_even: {self._frepr(self)}")
         return self._as_int % 2 == 0
 
     def is_odd(self):
-        self._check_is_int("is_odd")
+        if not self.is_int():
+            raise TypeError(f"unsupported operand for is_odd: {self._frepr(self)}")
         return self._as_int % 2 == 1
+
+    def __or__(self, other):
+        try:
+            return self.__class__(str(self).__add__(other))
+        except TypeError:
+            raise TypeError(f"unsupported operand type(s) for |: {self._frepr(self)} and {self._frepr(other)}")
+
+    def __ror__(self, other):
+        try:
+            return self.__class__(other.__add__(str(self)))
+        except TypeError:
+            raise TypeError(f"unsupported operand type(s) for |: {self._frepr(other)} and {self._frepr(self)}")
+
+    def __matmul__(self, other):
+        try:
+            return self.__class__(super().__mul__(other))
+        except TypeError:
+            raise TypeError(f"unsupported operand type(s) for @: {self._frepr(self)}  and {self._frepr(other)}")
+
+    def __rmatmul__(self, other):
+        try:
+            return self.__class__(super().__rmul__(other))
+        except TypeError:
+            raise TypeError(f"unsupported operand type(s) for @|: {self._frepr(other)}  and {self._frepr(self)}")
+
+    def __getitem__(self, key):
+        return self.__class__(super().__getitem__(key))
 
     def all_distinct(self):
         return len(self) == len(set(self))
 
-    def is_int(self):
-        return self._as_int is not self._nan
-
     def reversed(self):
         return self[::-1]
 
-    def __getitem__(self, key):
-        return self.__class__(super().__getitem__(key))
+    def _str_method(self, name, *args, **kwargs):
+        return istr(getattr(super(), name)(*args, **kwargs))
+
+    for name in (
+        "capitalize casefold center expandtabs format join ljust lower lstrip partition removeprefix "
+        "removesuffix replace rjust rpartition rsplit rstrip split strip swapcase title translate upper zfill"
+    ).split():
+        locals()[name] = functools.partialmethod(_str_method, name)
+
+    def is_int(self):
+        return self._as_int is not self._nan
 
     @classmethod
     def concat(cls, iterable):
@@ -605,89 +537,10 @@ class istr(str):
         cls._digits_cache[key] = result
         return result
 
-    def capitalize(self, *args, **kwargs):
-        return self.__class__(super().capitalize(*args, **kwargs))
-
-    def casefold(self, *args, **kwargs):
-        return self.__class__(super().casefold(*args, **kwargs))
-
-    def center(self, *args, **kwargs):
-        return self.__class__(super().center(*args, **kwargs))
-
-    def expandtabs(self, *args, **kwargs):
-        return self.__class__(super().expandtabs(*args, **kwargs))
-
-    def format(self, *args, **kwargs):
-        return self.__class__(super().format(*args, **kwargs))
-
-    def join(self, *args, **kwargs):
-        return self.__class__(super().join(*args, **kwargs))
-
-    def ljust(self, *args, **kwargs):
-        return self.__class__(super().ljust(*args, **kwargs))
-
-    def lower(self, *args, **kwargs):
-        return self.__class__(super().lower(*args, **kwargs))
-
-    def lstrip(self, *args, **kwargs):
-        return self.__class__(super().lstrip(*args, **kwargs))
-
-    def partition(self, *args, **kwargs):
-        return self.__class__(super().partition(*args, **kwargs))
-
-    def removeprefix(self, *args, **kwargs):
-        return self.__class__(super().removeprefix(*args, **kwargs))
-
-    def removesuffix(self, *args, **kwargs):
-        return self.__class__(super().removesuffix(*args, **kwargs))
-
-    def replace(self, *args, **kwargs):
-        return self.__class__(super().replace(*args, **kwargs))
-
-    def rjust(self, *args, **kwargs):
-        return self.__class__(super().rjust(*args, **kwargs))
-
-    def rpartition(self, *args, **kwargs):
-        return self.__class__(super().rpartition(*args, **kwargs))
-
-    def rsplit(self, *args, **kwargs):
-        return self.__class__(super().rsplit(*args, **kwargs))
-
-    def rstrip(self, *args, **kwargs):
-        return self.__class__(super().rstrip(*args, **kwargs))
-
-    def split(self, *args, **kwargs):
-        return self.__class__(super().split(*args, **kwargs))
-
-    def strip(self, *args, **kwargs):
-        return self.__class__(super().strip(*args, **kwargs))
-
-    def swapcase(self, *args, **kwargs):
-        return self.__class__(super().swapcase(*args, **kwargs))
-
-    def title(self, *args, **kwargs):
-        return self.__class__(super().title(*args, **kwargs))
-
-    def translate(self, *args, **kwargs):
-        return self.__class__(super().translate(*args, **kwargs))
-
-    def upper(self, *args, **kwargs):
-        return self.__class__(super().upper(*args, **kwargs))
-
-    def zfill(self, *args, **kwargs):
-        return self.__class__(super().zfill(*args, **kwargs))
-
 
 def main():
-    with istr.repr_mode("int"):
-        print(repr(istr(3)))
-        print(repr(istr("a")))
-        with istr.int_format("4"):
-            print(repr(istr(3)))
-            print(repr(istr("a")))
-        with istr.int_format("04"):
-            print(repr(istr(3)))
-            print(repr(istr("a")))
+    ...
 
 if __name__ == "__main__":
     main()
+

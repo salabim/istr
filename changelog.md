@@ -1,8 +1,27 @@
-## changelog
+## changelog of istr | strings you can count on |
 
-### version 1.0.2 | 2024-05-08
+#### version 1.0.4 | 2024-05-24
+Serious bug with the or (|) operator fixed.
+Added tests for the or (|) operator.
 
-When a string that can't be interpreted as an istr is created when istr.repr_mode is 'int', the repr of that file will be `?` (was: `nan`):
+#### version 1.0.3 | 2024-05-13
+The class istr.range is now immutable.
+
+The dunder int methods that were previously all defined separately are now defined with
+a simple loop that uses partialmethod (this does not change the functionality in any way).
+
+The string methods that were previously all defined separately are now defined with
+a simple loop that uses partialmethod (this does not change the functionality in any way).
+
+Generating TypeError messages for incompatible types is now direct (via _frepr method) instead of
+with a tricky force_repr boolean.
+
+The in operator now relies on the __contains__ method inherited from str (in other words
+it is not overridden anymore).
+
+#### version 1.0.2 | 2024-05-08
+
+When a string that can't be interpreted as an int is created when istr.repr_mode is 'int', the repr of that file will be `?` (was: `nan`):
 
 ```
 with istr.repr_mode('int'):
@@ -16,7 +35,7 @@ will print
 ?
 ```
 
-### version 1.0.1 | 2024-05-07
+#### version 1.0.1 | 2024-05-07
 
 From now on, the changelog is not anymore part of the istr.py file, but is in a separate `changelog.md` file.
 
@@ -36,7 +55,7 @@ If start is a letter, the default stop value is *Z*. So
   istr.digits('X-') ==> istr('XYZ')
 ```
 
-Technical detail: caching digits is now implemented with a custom cache dict instead of lru_cache to be able to include _base, int_format and int_repr_mode in the key.
+Technical detail: caching digits is now implemented with a custom cache dict instead of lru_cache to be able to include _base, _int_format and _int_repr_mode in the key.
 
 
 
@@ -50,7 +69,7 @@ This can be handy for quite a few puzzles.
   istr('thequickbrown').all_distinct() ==> True
 ```
 
-### version 1.0.0 | 2024-05-06
+#### version 1.0.0 | 2024-05-06
 
 With this version, istrs do not have to be interpretable as an int anymore.
 Only when arithmetic and friends are to be carried with an istr, that's a requirement.
@@ -81,7 +100,7 @@ will raise
   TypeError: unsupported operand for +: istr('1 2 3') and 1
 ```
 
-  It is possible to check if an istr can be interpreted as an int with the `is_int` method:
+  It is possible to check whether an istr can be interpreted as an int with the `is_int` method:
 
 ```
   a = istr('1 2 3')
@@ -94,7 +113,7 @@ will give
   False 
 ```
 
-This also means that there is no reason for `istr('')` to be interpreted *0*. So it isn't anymore.
+This also means that there is no reason for `istr('')` to be interpreted as *0*. So it isn't anymore.
 
 And `reversed()` now also works with negative numbers, although the result can't be used in calculations.
 
@@ -108,7 +127,7 @@ The bool method now operates on the *string* if it can not be interpreted as an 
 
 That means that `bool(istr(''))` is `False`. For any other istr where is_int() is True, bool will be True.
 
-### version 0.2.0 | 2024-04-30
+#### version 0.2.0 | 2024-04-30
 
 Added `__iter__` method .
 
@@ -139,13 +158,13 @@ istr.digits('1', '1-2', '1-3') ==> istr('112123')
 
   Note that a digit can occur more than once.
 
-### version 0.1.2  | 2024-04-26  
+#### version 0.1.2  | 2024-04-26  
 
 Added all relevant string methods to return istrs or data structures with istrs.
 
 Added corresponding tests.
 
-### version 0.1.0  | 2024-04-22  
+#### version 0.1.0  | 2024-04-22  
 
 Changed the way `istr.range` is implemented.
 
@@ -175,6 +194,6 @@ Introduced `istr.base()`
 
 Extended tests for new functionality
 
-### version 0.0.8  |2024-04-18  
+#### version 0.0.8  |2024-04-18  
 
 initial version with changelog

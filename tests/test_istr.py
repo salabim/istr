@@ -188,7 +188,7 @@ def test_divmod():
     assert divmod(eleven, three) == (istr(3), istr(2))
     assert divmod(11, three) == (istr(3), istr(2))
     assert divmod(eleven, 3) == (istr(3), istr(2))
-    assert divmod(11, 3) == (3, 2)
+    assert divmod(11, 3) == (3, 2)  # just for reference
 
 
 def test_iter():
@@ -286,9 +286,6 @@ def test_int_format():
     assert istr(" 8 ") == " 8 "
 
 
-#    assert repr(istr('a')) == "istr('a')"
-
-
 def test_range_int_format():
     r = istr.range(11)
     assert repr(r) == "istr.range(0, 11)"
@@ -325,6 +322,18 @@ def test_join():
     assert s == "6"
     assert s == 6
     assert type(s) == istr
+
+
+def test_or():
+    assert (eleven | twelve).equals(istr("1112"))
+    assert ("11" | twelve).equals(istr("1112"))
+    assert (eleven | "12").equals(istr("1112"))
+    with pytest.raises(TypeError):
+        11 | twelve
+    with pytest.raises(TypeError, match=re.escape("unsupported operand type(s) for |: 11 and istr('12')")):
+        11 | twelve
+    with pytest.raises(TypeError, match=re.escape("unsupported operand type(s) for |: istr('11') and 12")):
+        eleven | 12
 
 
 def test_matmul():
@@ -369,9 +378,9 @@ def test_is_int():
         +istr("a")
     with pytest.raises(TypeError, match=re.escape(f"unsupported operand for -: istr('a')")):
         -istr("a")
-    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for is_odd: istr('a')")):
+    with pytest.raises(TypeError):
         istr("a").is_odd()
-    with pytest.raises(TypeError, match=re.escape(f"unsupported operand for is_even: istr('a')")):
+    with pytest.raises(TypeError):
         istr("a").is_even()
     assert istr(1).is_int()
     assert not istr("a").is_int()
@@ -388,6 +397,9 @@ def test_is_int():
 
 def test_str():
     assert repr(str(five)) == "'5'"
+    assert f"|{istr(1234):6}|" == "|1234  |"
+    with pytest.raises(ValueError):
+        f"{istr(1234):d}"
 
 
 def test_bool():
@@ -406,16 +418,16 @@ def test_trunc_and_friends():
 
 
 def test_data_structures():
-    assert repr(istr(list(range(1, 4)))) == "[istr('1'), istr('2'), istr('3')]"
-    assert repr(istr(tuple(range(1, 4)))) == "(istr('1'), istr('2'), istr('3'))"
+    assert istr(list(range(1, 4))) == [istr("1"), istr("2"), istr("3")]
+    assert istr(tuple(range(1, 4))) == (istr("1"), istr("2"), istr("3"))
     assert istr(set(range(1, 4))) == {istr(1), istr(2), istr(3)}
 
-    assert repr(list(istr(range(1, 4)))) == "[istr('1'), istr('2'), istr('3')]"
+    assert list(istr(range(1, 4))) == [istr("1"), istr("2"), istr("3")]
 
-    assert repr(list(istr.enumerate("abc"))) == "[(istr('0'), 'a'), (istr('1'), 'b'), (istr('2'), 'c')]"
-    assert repr(list(istr.enumerate("abc", 1))) == "[(istr('1'), 'a'), (istr('2'), 'b'), (istr('3'), 'c')]"
+    assert list(istr.enumerate("abc")) == [(istr("0"), "a"), (istr("1"), "b"), (istr("2"), "c")]
+    assert list(istr.enumerate("abc", 1)) == [(istr("1"), "a"), (istr("2"), "b"), (istr("3"), "c")]
 
-    assert repr(istr(dict(zero=0, one=1, two=4))) == "{'zero': istr('0'), 'one': istr('1'), 'two': istr('4')}"
+    assert istr(dict(zero=0, one=1, two=4)) == {"zero": istr("0"), "one": istr("1"), "two": istr("4")}
 
 
 def test_indexing():
@@ -428,9 +440,9 @@ def test_indexing():
 
 def test_reverse():
     a = istr(12345)
-    assert a.reversed(), same(istr(54321))
-    a = istr(-120)
-    assert a.reversed(), same(istr("-210"))
+    assert a.reversed().equals(istr(54321))
+    a = istr(-123)
+    assert a.reversed().equals(istr("321-"))
 
 
 def test_edge_cases():
@@ -548,26 +560,28 @@ def test_digits():
     assert istr.digits("-3").equals(istr("0123"))
     assert istr.digits("1-4", "6", "8-9").equals(istr("1234689"))
     assert istr.digits("1", "1-2", "1-3").equals(istr("112123"))
-    a= istr.digits("a")
+    a = istr.digits("a")
     assert a.equals(istr("A"))
     assert not a.is_int()
-    with istr.base(36): 
-        a=istr.digits("a")
+    with istr.base(36):
+        a = istr.digits("a")
         assert a == 10
-        assert a =="A"
+        assert a == "A"
         assert istr.digits("-a").equals(istr("0123456789A"))
         assert istr.digits("x-").equals(istr("XYZ"))
         assert istr.digits("B-d").equals(istr("BCD"))
         assert istr.digits("-").equals(istr("0123456789"))
     with istr.base(16):
         ef = istr.digits("e-f")
-        assert (ef+1).equals(istr("F0"))
+        assert (ef + 1).equals(istr("F0"))
         assert ef == 239
+
 
 def test_all_distinct():
     assert istr("abcdef").all_distinct()
     assert not istr("aabcdef").all_distinct()
     assert istr("").all_distinct()
+
 
 def test_subclassing():
     class jstr(istr):

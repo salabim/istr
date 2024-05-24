@@ -26,4 +26,5 @@ Repository = "https://github.com/salabim/istr"
 packages = ["istr"]
 
 [tool.setuptools.package-data]
-"*" = ["*.md"]
+"*" = ["*.txt"]
+
