@@ -1,7 +1,11 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.0.7 | 2024-05-29
+When comparing istrs with <=, <, > and >= the type of the result is now bool, instead of istr,
+which is more logical.
+
 #### version 1.0.6 | 2024-05-29
-Alle methods in itertools are now available directly from istr.
+All methods in itertools are now available directly from istr.
 For example:
 
 ```

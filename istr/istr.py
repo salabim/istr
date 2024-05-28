@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 import functools
 import math
 import copy
@@ -315,7 +315,10 @@ class istr(str):
                     raise TypeError(f"unsupported operand for {op}: {self._frepr(other)} and {self._frepr(self)}")
                 else:
                     raise TypeError(f"unsupported operand for {op}: {self._frepr(self)} and {self._frepr(other)}")
-            return istr(getattr(self._as_int, name)(self._to_int(other)))
+            if "<" in op or ">" in op:
+                return getattr(self._as_int, name)(self._to_int(other))
+            else:
+                return istr(getattr(self._as_int, name)(self._to_int(other)))
         else:
             if not self.is_int():
                 raise TypeError(f"unsupported operand for {op}: {self._frepr(self)}")
@@ -551,7 +554,9 @@ class istr(str):
 
 
 def main():
-    ...
+    print(repr(istr(8) < 9))
+
 
 if __name__ == "__main__":
     main()
+

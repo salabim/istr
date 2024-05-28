@@ -68,6 +68,7 @@ def test_arithmetic():
 
 
 def test_lt():
+    assert type(two < three) == bool
     assert two < three
     assert 2 < three
     assert two < 3
@@ -82,6 +83,7 @@ def test_lt():
 
 
 def test_le():
+    assert type(two <= three) == bool
     assert two <= three
     assert 2 <= three
     assert two <= 3
@@ -92,6 +94,7 @@ def test_le():
 
 
 def test_gt():
+    assert type(three > two) == bool
     assert three > two
     assert 3 > two
     assert three > 2
@@ -106,6 +109,7 @@ def test_gt():
 
 
 def test_ge():
+    assert type(three >= two) == bool
     assert three >= two
     assert 3 >= two
     assert three >= 2
@@ -628,3 +632,4 @@ def test_subclassing():
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
+
