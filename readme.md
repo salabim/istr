@@ -386,6 +386,58 @@ istr('0') a
 istr('1') b
 istr('2') c
 ```
+#### itertools with istrs
+All methods in itertools are also available directly from istr.
+Note that the result is istr-ed (apart from groupby and tee).
+
+The following class methods are supported (provided their counterpart exists in the installed Python version's itertools):
+
+- istr.accumulate
+- istr.chain
+- istr.combinations
+- istr.combinations_with_replacement
+- istr.compress
+- istr.count
+- istr.cycle
+- istr.dropwhile
+- istr.filterfalse
+- istr.groupby (not istr-ed)
+- istr.islice
+- istr.pairwise
+- istr.permutations
+- istr.product
+- istr.repeat
+- istr.starmap
+- istr.takewhile
+- istr.tee (not istr-ed)
+- istr.zip_longest
+
+This can be handy as these methods don't have to be imported from itertools anymore.
+
+All methods have exactly the same (optional) parameters as their itertools counterpart.
+
+For example:
+
+```
+list(istr.repeat(1, 4)) ==> [istr('1'), istr('1'), istr('1'), istr('1')]
+next(istr.count(3)) ==> istr('3')
+```
+
+One more example:
+
+```
+for t in istr.permutations(range(3)):
+    print(t)
+```
+results in
+```
+(istr('0'), istr('1'), istr('2'))
+(istr('0'), istr('2'), istr('1'))
+(istr('1'), istr('0'), istr('2'))
+(istr('1'), istr('2'), istr('0'))
+(istr('2'), istr('0'), istr('1'))
+(istr('2'), istr('1'), istr('0'))
+```
 
 #### concatenate an iterable
 

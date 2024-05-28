@@ -588,6 +588,29 @@ def test_digits_cache():
     assert int(d) == 4886718345
 
 
+def test_itertools():
+    def list100(it):
+        # just iterates over the first 100 elements in the iterable
+        return [next(it) for _ in range(100)]
+
+    assert list(istr.accumulate((1, 3, 4))) == [istr("1"), istr("4"), istr("8")]
+    assert list(istr.chain(range(2), range(2, 5))) == [istr("0"), istr("1"), istr("2"), istr("3"), istr("4")]
+    assert list(istr.combinations(range(5), r=3)) == list(istr(itertools.combinations(range(5), r=3)))
+    assert list(istr.combinations_with_replacement(range(5), r=3)) == list(istr(itertools.combinations_with_replacement(range(5), r=3)))
+    assert list(istr.compress("123456", [1, 0, 1, 0, 1, 1])) == [istr("1"), istr("3"), istr("5"), istr("6")]
+    assert list100(istr.count()) == list100(istr(itertools.count()))
+    assert list100(istr.cycle(range(10))) == list100(istr(itertools.cycle(range(10))))
+    assert list(istr.dropwhile(lambda x: x < 5, [1, 4, 6, 4, 1])) == [istr("6"), istr("4"), istr("1")]
+    assert list(istr.filterfalse(lambda x: x % 2, range(10))) == [istr("0"), istr("2"), istr("4"), istr("6"), istr("8")]
+    assert list(istr.islice("123456", 2)) == [istr("1"), istr("2")]
+    assert list(istr.pairwise("1234")) == [(istr("1"), istr("2")), (istr("2"), istr("3")), (istr("3"), istr("4"))]
+    assert list(istr.permutations(range(5), 3)) == list(istr(itertools.permutations(range(5), 3)))
+    assert list(istr.product(range(5), range(4))) == list(istr(itertools.product(range(5), range(4))))
+    assert list100(istr.repeat(10)) == list100(istr(itertools.repeat(10)))
+    assert list(istr.starmap(pow, [(2, 5), (3, 2), (10, 3)])) == [istr("32"), istr("9"), istr("1000")]
+    assert list(istr.takewhile(lambda x: x < 5, [1, 4, 6, 3, 8])) == [istr("1"), istr("4")]
+    assert list(istr.zip_longest("123", "56", fillvalue="0")) == [(istr("1"), istr("5")), (istr("2"), istr("6")), (istr("3"), istr("0"))]
+
 
 def test_all_distinct():
     assert istr("abcdef").all_distinct()

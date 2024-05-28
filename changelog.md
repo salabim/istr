@@ -1,5 +1,18 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.0.6 | 2024-05-29
+Alle methods in itertools are now available directly from istr.
+For example:
+
+```
+list(istr.repeat(1, 4)) ==> [istr('1'), istr('1'), istr('1'), istr('1')]
+next(istr.count(3)) ==> istr('3')
+```
+
+This can be handy as these methods don't have to be imported from itertools anymore.
+
+Added tests for these new class methods.
+
 #### version 1.0.5 | 2024-05-24
 Serious bug with caching istr.digits() fixed.
 Added tests for properly caching istr.digits().

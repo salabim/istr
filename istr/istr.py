@@ -5,10 +5,11 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 import functools
 import math
 import copy
+import itertools
 
 """
 Note: the changelog is now in changelog.md
@@ -287,7 +288,7 @@ class istr(str):
             return self._as_int == self._to_int(other)
         except Exception:
             return False
-            
+
     def __ne__(self, other):
         return not self == other
 
@@ -390,6 +391,17 @@ class istr(str):
         "removesuffix replace rjust rpartition rsplit rstrip split strip swapcase title translate upper zfill"
     ).split():
         locals()[name] = functools.partialmethod(_str_method, name)
+
+    @classmethod
+    def _itertools_method(cls, name, *args, **kwargs):
+        return cls(getattr(itertools, name)(*args, **kwargs))
+
+    for name in dir(itertools):
+        if not name.startswith("__"):
+            if name in ("groupby", "tee"):
+                locals()[name] = getattr(itertools, name)
+            else:
+                locals()[name] = functools.partialmethod(_itertools_method, name)
 
     def is_int(self):
         return self._as_int is not self._nan
@@ -539,14 +551,7 @@ class istr(str):
 
 
 def main():
-    print(istr.digits())
-
-    print(repr(istr.digits()))
-    print(int(istr.digits()))
-
-    with istr.base(16):
-        print(int(istr.digits()))
+    ...
 
 if __name__ == "__main__":
     main()
-
