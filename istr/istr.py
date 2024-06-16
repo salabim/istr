@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.7"
+__version__ = "1.0.9"
 import functools
 import math
 import copy
@@ -318,11 +318,11 @@ class istr(str):
             if "<" in op or ">" in op:
                 return getattr(self._as_int, name)(self._to_int(other))
             else:
-                return istr(getattr(self._as_int, name)(self._to_int(other)))
+                return self.__class__(getattr(self._as_int, name)(self._to_int(other)))
         else:
             if not self.is_int():
                 raise TypeError(f"unsupported operand for {op}: {self._frepr(self)}")
-            return istr(getattr(self._as_int, name)())
+            return self.__class__(getattr(self._as_int, name)())
 
     for name_op in (
         "__add__+ __radd__+ __sub__- __rsub__- __mul__* __rmul__* __floordiv__// __rfloordiv__// "
@@ -385,9 +385,12 @@ class istr(str):
 
     def reversed(self):
         return self[::-1]
+        
+    def is_divisible_by(self, divisor):
+        return self._as_int % int(divisor)  == 0
 
     def _str_method(self, name, *args, **kwargs):
-        return istr(getattr(super(), name)(*args, **kwargs))
+        return self.__class__(getattr(super(), name)(*args, **kwargs))
 
     for name in (
         "capitalize casefold center expandtabs format join ljust lower lstrip partition removeprefix "
@@ -554,9 +557,12 @@ class istr(str):
 
 
 def main():
-    print(repr(istr(8) < 9))
-
-
+    print(istr(18).is_divisible_by(3))
+    print(istr(18).is_divisible_by(istr(3)))
+    print(istr(19).is_divisible_by(3))
+    print(istr(19).is_divisible_by(istr(3)))
+    print(istr.digits(1,9))
+    
 if __name__ == "__main__":
     main()
 

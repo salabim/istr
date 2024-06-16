@@ -555,7 +555,12 @@ def test_base():
     with istr.base(10):
         assert a * a == 225
 
-
+def test_is_divisible():    
+    assert istr(18).is_divisible_by(3)
+    assert istr(18).is_divisible_by(istr(3))
+    assert not istr(19).is_divisible_by(3)
+    assert not istr(19).is_divisible_by(istr(3))
+    
 def test_digits():
     assert istr.digits().equals(istr("0123456789"))
     assert istr.digits("").equals(istr("0123456789"))
