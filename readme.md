@@ -341,7 +341,7 @@ istr(5).is_odd()) ==> True
 
 #### test for divisibility
 
-It is possible to test whether an istr is divisible by a given value, e.g.
+It is possible to test whether an istr is divisible by a given value with the `is_divisible_by method,` e.g.
 
 ```
     istr(18).is_divisible_by(3) ==> True
@@ -349,7 +349,7 @@ It is possible to test whether an istr is divisible by a given value, e.g.
     istr(19).is_divisible_by(3) ==> False
     istr(19).is_divisible_by(istr(3)) == False
 ```
-    
+
 #### test whether all characters are distinct
 
 With the `all_distinct` method, it is possible to test whether all characters are distinct (i.e. no character appearts more than once).

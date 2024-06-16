@@ -1,16 +1,17 @@
 ## changelog of istr | strings you can count on |
 
 #### version 1.0.9 | 2024-06-15
-Introduced istr.is_divisible_by instance method.
+Introduced istr.is_divisible_by instance() method.
 For example:
-``
+
+```
     istr(18).is_divisible_by(3) ==> True
     istr(18).is_divisible_by(istr(3)) ==> True
     istr(19).is_divisible_by(3) ==> False
     istr(19).is_divisible_by(istr(3)) == False   
 ```
 
-#### version 1.0.8 | 2024-0
+#### version 1.0.8 | 2024-06-01
 Instead of using istr in the internal methods _int_method and _str_method, the proper class is now used.
 This makes inheriting from istr more correct.
 
