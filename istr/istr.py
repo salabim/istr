@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.10"
+__version__ = "1.0.11"
 import functools
 import math
 import itertools
@@ -243,9 +243,9 @@ class istr(str):
             return value
         if isinstance(value, dict):
             return type(value)((k, cls(v)) for k, v in value.items())
-        if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):      
+        if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):
             if hasattr(value, "__next__"):
-                return map(functools.partial(cls), value)              
+                return map(functools.partial(cls), value)
             return type(value)(map(functools.partial(cls), value))
         as_int = cls._to_int(value)
         if isinstance(value, str):
@@ -355,7 +355,7 @@ class istr(str):
     def is_square(self):
         if not self.is_int():
             raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-        return self == math.isqrt(self._as_int)**2
+        return self._as_int >= 0 and self == math.isqrt(self._as_int) ** 2
 
     def is_prime(self):
         if not self.is_int():
@@ -370,8 +370,6 @@ class istr(str):
             if self._as_int % x == 0:
                 return False
         return True
-
-
 
     def __or__(self, other):
         try:
@@ -574,8 +572,7 @@ class istr(str):
 
 
 def main():
-    for i in range(100):
-        print(i, istr(i).is_prime(),istr(i).is_square())
+    ...
 
 
 if __name__ == "__main__":

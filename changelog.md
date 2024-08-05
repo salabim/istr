@@ -1,6 +1,6 @@
 ## changelog of istr | strings you can count on |
 
-#### version 1.0.10 | 2024-08-05
+#### version 1.0.11 | 2024-08-05
 
 Introduced `istr.is_square` and `istr.is_prime` methods. Examples:
 
