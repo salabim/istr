@@ -5,10 +5,9 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.9"
+__version__ = "1.0.10"
 import functools
 import math
-import copy
 import itertools
 
 """
@@ -244,9 +243,9 @@ class istr(str):
             return value
         if isinstance(value, dict):
             return type(value)((k, cls(v)) for k, v in value.items())
-        if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):
+        if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):      
             if hasattr(value, "__next__"):
-                return map(functools.partial(cls), value)
+                return map(functools.partial(cls), value)              
             return type(value)(map(functools.partial(cls), value))
         as_int = cls._to_int(value)
         if isinstance(value, str):
@@ -345,13 +344,34 @@ class istr(str):
 
     def is_even(self):
         if not self.is_int():
-            raise TypeError(f"unsupported operand for is_even: {self._frepr(self)}")
+            raise TypeError(f"not interpretable as int: {self._frepr(self)}")
         return self._as_int % 2 == 0
 
     def is_odd(self):
         if not self.is_int():
-            raise TypeError(f"unsupported operand for is_odd: {self._frepr(self)}")
+            raise TypeError(f"not interpretable as int: {self._frepr(self)}")
         return self._as_int % 2 == 1
+
+    def is_square(self):
+        if not self.is_int():
+            raise TypeError(f"not interpretable as int: {self._frepr(self)}")
+        return self == math.isqrt(self._as_int)**2
+
+    def is_prime(self):
+        if not self.is_int():
+            raise TypeError(f"not interpretable as int: {self._frepr(self)}")
+        if self._as_int < 2:
+            return False
+        if self._as_int == 2:
+            return True
+        if not self._as_int & 1:
+            return False
+        for x in range(3, int(self._as_int**0.5) + 1, 2):
+            if self._as_int % x == 0:
+                return False
+        return True
+
+
 
     def __or__(self, other):
         try:
@@ -385,9 +405,9 @@ class istr(str):
 
     def reversed(self):
         return self[::-1]
-        
+
     def is_divisible_by(self, divisor):
-        return self._as_int % int(divisor)  == 0
+        return self._as_int % int(divisor) == 0
 
     def _str_method(self, name, *args, **kwargs):
         return self.__class__(getattr(super(), name)(*args, **kwargs))
@@ -436,8 +456,7 @@ class istr(str):
 
             cls._int_format = int_format
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._int_format = self.saved_int_format
@@ -456,8 +475,7 @@ class istr(str):
             self.saved_cls = cls
             cls._repr_mode = mode
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._repr_mode = self.saved_repr_mode
@@ -476,8 +494,7 @@ class istr(str):
             self.saved_cls = cls
             cls._base = base
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._base = self.saved_base
@@ -557,12 +574,9 @@ class istr(str):
 
 
 def main():
-    print(istr(18).is_divisible_by(3))
-    print(istr(18).is_divisible_by(istr(3)))
-    print(istr(19).is_divisible_by(3))
-    print(istr(19).is_divisible_by(istr(3)))
-    print(istr.digits(1,9))
-    
+    for i in range(100):
+        print(i, istr(i).is_prime(),istr(i).is_square())
+
+
 if __name__ == "__main__":
     main()
-

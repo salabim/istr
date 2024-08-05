@@ -1,7 +1,20 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.0.10 | 2024-08-05
+
+Introduced `istr.is_square` and `istr.is_prime` methods. Examples:
+
+```
+istr(4).is_square() ==> True
+istr(5).is_square()) ==> False
+
+istr(4).is_prime() ==> False
+istr(5).is_prime()) ==> True
+```
+
 #### version 1.0.9 | 2024-06-15
-Introduced istr.is_divisible_by instance() method.
+
+Introduced `istr.is_divisible_by`  method.
 For example:
 
 ```

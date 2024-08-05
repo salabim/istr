@@ -304,7 +304,26 @@ def test_even_odd():
     assert not istr(1).is_even()
 
     assert istr(12345678).is_even()
-    assert not istr(12345678).is_odd()
+    
+def test_is_square():
+    assert istr(1).is_square()
+    assert not istr(2).is_square()
+    assert istr(4).is_square()
+    assert istr(16).is_square()
+    assert not istr(99).is_square()
+
+def test_is_prime():
+    assert not istr(0).is_prime()
+    assert not istr(1).is_prime()
+    assert istr(2).is_prime()
+    assert istr(3).is_prime()
+    assert not istr(4).is_prime()
+    assert istr(97).is_prime()
+    assert not istr(99).is_prime()
+
+
+
+
 
 
 def test_join():

@@ -330,13 +330,28 @@ a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7')
 ```
 
 #### test for even/odd
-It is possible to test for even/odd (provided the istr can be interpreted as an int) with the
-
-`is_even` and `is_odd` method, e.g.
+It is possible to test for even/odd (provided the istr can be interpreted as an int) with the `is_even` and `is_odd` method, e.g.
 
 ```
 istr(4).is_even()) ==> True
 istr(5).is_odd()) ==> True
+```
+#### test for square
+
+It is possible to test whether the value is a perfect  square (provided the istr can be interpreted as an int) with the `is_square` method, e.g.
+
+```
+istr(4).is_square() ==> True
+istr(5).is_square()) ==> False
+```
+
+#### test for prime
+
+It is possible to test whether the value is a prime number (provided the istr can be interpreted as an int) with the `is_prime` method, e.g.
+
+```
+istr(4).is_prime() ==> False
+istr(5).is_prime()) ==> True
 ```
 
 #### test for divisibility
@@ -352,7 +367,7 @@ It is possible to test whether an istr is divisible by a given value with the `i
 
 #### test whether all characters are distinct
 
-With the `all_distinct` method, it is possible to test whether all characters are distinct (i.e. no character appearts more than once).
+With the `all_distinct` method, it is possible to test whether all characters are distinct (i.e. no character appears more than once).
 
 ```
 istr('01234').all_distict() ==> True
