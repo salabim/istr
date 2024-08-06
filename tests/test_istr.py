@@ -7,9 +7,10 @@ from pathlib import Path
 
 if __name__ == "__main__":  # to make the tests run without the pytest cli
     file_folder = Path(__file__).parent
-    top_folder = (file_folder / "..").resolve()
+    top_folder = (file_folder / ".." / "istr").resolve()
     sys.path.insert(0, str(top_folder))
     os.chdir(file_folder)
+    print(f"{file_folder=} {top_folder=}")
 
 import pytest
 
@@ -309,7 +310,12 @@ def test_even_odd():
     with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
         istr("a").is_even()
 
-    
+    assert istr.is_odd(1)
+    assert not istr.is_even(1)
+    assert istr.is_even(12345678)
+    assert istr.is_odd(11111111)
+
+
 def test_is_square():
     assert not istr(-1).is_square()
     assert istr(0).is_square()
@@ -320,6 +326,12 @@ def test_is_square():
     assert not istr(99).is_square()
     with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
         istr("a").is_square()
+    assert istr.is_square(0)
+    assert istr.is_square(1)
+    assert not istr.is_square(2)
+    assert istr.is_square(4)
+    assert istr.is_square(16)
+
 
 def test_is_prime():
     assert not istr(0).is_prime()
@@ -331,10 +343,13 @@ def test_is_prime():
     assert not istr(99).is_prime()
     with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
         istr("a").is_prime()
-
-
-
-
+    assert not istr.is_prime(0)
+    assert not istr.is_prime(1)
+    assert istr.is_prime(2)
+    assert istr.is_prime(3)
+    assert not istr.is_prime(4)
+    assert istr.is_prime(97)
+    assert not istr.is_prime(99)
 
 
 def test_join():
@@ -585,12 +600,18 @@ def test_base():
     with istr.base(10):
         assert a * a == 225
 
-def test_is_divisible():    
+
+def test_is_divisible():
     assert istr(18).is_divisible_by(3)
     assert istr(18).is_divisible_by(istr(3))
     assert not istr(19).is_divisible_by(3)
     assert not istr(19).is_divisible_by(istr(3))
-    
+    with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
+        istr("a").is_divisible_by(3)
+    assert istr.is_divisible_by(18, 3)
+    assert not istr.is_divisible_by(19, 3)
+
+
 def test_digits():
     assert istr.digits().equals(istr("0123456789"))
     assert istr.digits("").equals(istr("0123456789"))
@@ -658,8 +679,7 @@ def test_all_distinct():
 
 
 def test_subclassing():
-    class jstr(istr):
-        ...
+    class jstr(istr): ...
 
     assert jstr(5).equals(jstr(5))
     assert repr(jstr(*range(3))) == "(jstr('0'), jstr('1'), jstr('2'))"
@@ -667,4 +687,3 @@ def test_subclassing():
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
-

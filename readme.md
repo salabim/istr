@@ -336,6 +336,11 @@ It is possible to test for even/odd (provided the istr can be interpreted as an 
 istr(4).is_even()) ==> True
 istr(5).is_odd()) ==> True
 ```
+It is also possible to test for even/odd of an ordinary int:
+```
+istr.is_even(4) ==> True
+istr.is_odd(5) ==> True
+```
 #### test for square
 
 It is possible to test whether the value is a perfect  square (provided the istr can be interpreted as an int) with the `is_square` method, e.g.
@@ -344,7 +349,11 @@ It is possible to test whether the value is a perfect  square (provided the istr
 istr(4).is_square() ==> True
 istr(5).is_square()) ==> False
 ```
-
+It is also possible to test for square of an ordinary int:
+```
+istr.is_square(4) ==> True
+istr.is_square(5) ==> False
+```
 #### test for prime
 
 It is possible to test whether the value is a prime number (provided the istr can be interpreted as an int) with the `is_prime` method, e.g.
@@ -353,18 +362,27 @@ It is possible to test whether the value is a prime number (provided the istr ca
 istr(4).is_prime() ==> False
 istr(5).is_prime()) ==> True
 ```
+It is also possible to test for prime of an ordinary int:
 
+```
+istr.is_prime(4) ==> False
+istr.is_prime(5) ==> True
+```
 #### test for divisibility
 
 It is possible to test whether an istr is divisible by a given value with the `is_divisible_by method,` e.g.
 
 ```
-    istr(18).is_divisible_by(3) ==> True
-    istr(18).is_divisible_by(istr(3)) ==> True
-    istr(19).is_divisible_by(3) ==> False
-    istr(19).is_divisible_by(istr(3)) == False
+istr(18).is_divisible_by(3) ==> True
+istr(18).is_divisible_by(istr(3)) ==> True
+istr(19).is_divisible_by(3) ==> False
+istr(19).is_divisible_by(istr(3)) == False
 ```
-
+It is also possible to test for divisibility of an ordinary int:
+```
+istr.is_divisible(18, 3) ==> True
+istr.is_divisible(19, 3) ==> False
+```
 #### test whether all characters are distinct
 
 With the `all_distinct` method, it is possible to test whether all characters are distinct (i.e. no character appears more than once).

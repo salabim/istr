@@ -1,5 +1,17 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.0.12 | 2024-08-06
+
+The methods `istr.is_even`, `istr.is_odd`, `istr.is_square`, `istr.is_prime` and `istr.is_divisible_by` can now also be used with an ordinary int. E.g.:
+
+```
+istr.is_even(4) ==> True
+istr.is_odd(4) ==> False
+istr.is_square(4) ==> True
+istr.is_prime(4) ==> False
+istr.is_divisible_by(4, 2) ==> True
+```
+
 #### version 1.0.11 | 2024-08-05
 
 Introduced `istr.is_square` and `istr.is_prime` methods. Examples:

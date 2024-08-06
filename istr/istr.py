@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.11"
+__version__ = "1.0.12"
 import functools
 import math
 import itertools
@@ -343,31 +343,52 @@ class istr(str):
         return int(self._as_int)
 
     def is_even(self):
-        if not self.is_int():
-            raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-        return self._as_int % 2 == 0
+        if isinstance(self, istr):
+            if not self.is_int():
+                raise TypeError(f"not interpretable as int: {self._frepr(self)}")
+            n = self._as_int
+        else:
+            n = int(self)
+
+        return n % 2 == 0
 
     def is_odd(self):
-        if not self.is_int():
-            raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-        return self._as_int % 2 == 1
+        if isinstance(self, istr):
+            if not self.is_int():
+                raise TypeError(f"not interpretable as int: {self._frepr(self)}")
+            n = self._as_int
+        else:
+            n = int(self)
+
+        return n % 2 == 1
 
     def is_square(self):
-        if not self.is_int():
-            raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-        return self._as_int >= 0 and self == math.isqrt(self._as_int) ** 2
+        if isinstance(self, istr):
+            if not self.is_int():
+                raise TypeError(f"not interpretable as int: {self._frepr(self)}")
+            n = self._as_int
+        else:
+            n = int(self)
+
+        return n >= 0 and self == math.isqrt(n) ** 2
 
     def is_prime(self):
-        if not self.is_int():
-            raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-        if self._as_int < 2:
+        if isinstance(self, istr):
+            if not self.is_int():
+                raise TypeError(f"not interpretable as int: {self._frepr(self)}")
+            n = self._as_int
+        else:
+            n = int(self)
+
+        if n < 2:
             return False
-        if self._as_int == 2:
+        if n == 2:
             return True
-        if not self._as_int & 1:
+        if not n & 1:
             return False
-        for x in range(3, int(self._as_int**0.5) + 1, 2):
-            if self._as_int % x == 0:
+
+        for x in range(3, int(n**0.5) + 1, 2):
+            if n % x == 0:
                 return False
         return True
 
@@ -405,7 +426,13 @@ class istr(str):
         return self[::-1]
 
     def is_divisible_by(self, divisor):
-        return self._as_int % int(divisor) == 0
+        if isinstance(self, istr):
+            if not self.is_int():
+                raise TypeError(f"not interpretable as int: {self._frepr(self)}")
+            n = self._as_int
+        else:
+            n = int(self)
+        return n % int(divisor) == 0
 
     def _str_method(self, name, *args, **kwargs):
         return self.__class__(getattr(super(), name)(*args, **kwargs))
@@ -572,7 +599,9 @@ class istr(str):
 
 
 def main():
-    ...
+    print(istr(2).is_even())
+    print(istr.is_even("2"))
+    print(istr(3).is_prime())
 
 
 if __name__ == "__main__":
