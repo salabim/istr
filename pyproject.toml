@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "istr-python"
+authors = [
+    {name = "Ruud van der Ham", email = "rt.van.der.ham@gmail.com"}
+]
+description = "istr - strings you can count on"
+version = "1.0.12-0"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3 :: Only"
+]
+[project.urls]
+Homepage = "https://github.com/salabim/istr"
+Repository = "https://github.com/salabim/istr"
+
+[tool.setuptools]
+packages = ["istr"]
+
+[tool.setuptools.package-data]
+"*" = ["*.txt"]
+
