@@ -5,17 +5,19 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.0.12"
+__version__ = "1.1.0"
 import functools
 import math
 import itertools
+import types
+import sys
 
 """
 Note: the changelog is now in changelog.md
 
 You can view the changelog on www.salabim.org/istr/changelog.html
 
-The readme can be viewed on www.salabim.org/istr/readme.html
+The readme can be viewed on www.salabim.org/istr/
 """
 
 _0_to_Z = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -599,11 +601,22 @@ class istr(str):
         result = istr("".join(result))
         cls._digits_cache[key] = result
         return result
+        
+istr.type=type(istr(0))
 
 
 def main():
     ...
 
+class istrModule(types.ModuleType):
+    def __call__(self, *args, **kwargs):
+        return istr.__call__(*args, **kwargs)
+    def __setattr__(self, item, value):
+        setattr(istr,item,value)
+    def __getattr__(self, item,):
+        return getattr(istr,item)
+
+sys.modules[__name__].__class__ = istrModule
 
 if __name__ == "__main__":
     main()

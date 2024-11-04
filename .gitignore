@@ -9,3 +9,4 @@ toml_versioner.py
 upload_html.py
 *.html
 artwork/*
+misc/*

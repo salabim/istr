@@ -1,5 +1,21 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.0 | 2024-11-03
+
+With this version is possible to just use
+`import istr`
+instead of
+`from istr import istr`
+
+All functionality is maintained.
+
+The only functional difference is that istr cannot be use as a type in subclassing anymore. In order to still be able to subclass, use istr.type instead. So
+
+```
+class jstr(istr.type):
+   ...
+```
+
 #### version 1.0.12 | 2024-08-06
 
 The methods `istr.is_even`, `istr.is_odd`, `istr.is_square`, `istr.is_prime` and `istr.is_divisible_by` can now also be used with an ordinary int. E.g.:

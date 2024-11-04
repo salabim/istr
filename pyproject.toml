@@ -8,7 +8,7 @@ authors = [
     {name = "Ruud van der Ham", email = "rt.van.der.ham@gmail.com"}
 ]
 description = "istr - strings you can count on"
-version = "1.0.12-0"
+version = "1.1.0"
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [

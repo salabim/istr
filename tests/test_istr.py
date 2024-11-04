@@ -6,14 +6,13 @@ import re
 from pathlib import Path
 
 if __name__ == "__main__":  # to make the tests run without the pytest cli
-    file_folder = Path(__file__).parent
-    top_folder = (file_folder / ".." / "istr").resolve()
-    sys.path.insert(0, str(top_folder))
+    file_folder = os.path.dirname(__file__)
     os.chdir(file_folder)
-
+    sys.path.insert(0, file_folder + "/../istr") 
+       
 import pytest
 
-from istr import istr
+import istr
 
 istr.equals = lambda self, other: type(self) == type(other) and (str(self) == str(other))
 # this method tests whether self and other are exactly the same
@@ -359,17 +358,17 @@ def test_join():
     s = istr("").join(("4", "5", "6"))
     assert s == "456"
     assert s == 456
-    assert type(s) == istr
+    assert type(s) == istr.type
 
     s = istr("").join(istr(("4", "5", "6")))
     assert s == "456"
     assert s == 456
-    assert type(s) == istr
+    assert type(s) == istr.type
 
     s = istr("").join(istr(("", "", "6")))
     assert s == "6"
     assert s == 6
-    assert type(s) == istr
+    assert type(s) == istr.type
 
 
 def test_or():
@@ -678,7 +677,7 @@ def test_all_distinct():
 
 
 def test_subclassing():
-    class jstr(istr): ...
+    class jstr(istr.type): ...
 
     assert jstr(5).equals(jstr(5))
     assert repr(jstr(*range(3))) == "(jstr('0'), jstr('1'), jstr('2'))"
