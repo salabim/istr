@@ -12,7 +12,7 @@ if __name__ == "__main__":  # to make the tests run without the pytest cli
        
 import pytest
 
-import istr
+from istr import istr
 
 istr.equals = lambda self, other: type(self) == type(other) and (str(self) == str(other))
 # this method tests whether self and other are exactly the same
@@ -358,17 +358,17 @@ def test_join():
     s = istr("").join(("4", "5", "6"))
     assert s == "456"
     assert s == 456
-    assert type(s) == istr.type
+    assert type(s) == istr
 
     s = istr("").join(istr(("4", "5", "6")))
     assert s == "456"
     assert s == 456
-    assert type(s) == istr.type
+    assert type(s) == istr
 
     s = istr("").join(istr(("", "", "6")))
     assert s == "6"
     assert s == 6
-    assert type(s) == istr.type
+    assert type(s) == istr
 
 
 def test_or():
@@ -677,7 +677,7 @@ def test_all_distinct():
 
 
 def test_subclassing():
-    class jstr(istr.type): ...
+    class jstr(istr): ...
 
     assert jstr(5).equals(jstr(5))
     assert repr(jstr(*range(3))) == "(jstr('0'), jstr('1'), jstr('2'))"

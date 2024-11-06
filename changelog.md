@@ -1,5 +1,9 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.1 | 2024-11-06
+
+The new way of importing istr didn't work properly. So, importing should be done with from `istr import istr` (again).
+
 #### version 1.1.0 | 2024-11-03
 
 With this version is possible to just use

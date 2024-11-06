@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 import functools
 import math
 import itertools
@@ -602,21 +602,9 @@ class istr(str):
         cls._digits_cache[key] = result
         return result
         
-istr.type=type(istr(0))
-
 
 def main():
     ...
-
-class istrModule(types.ModuleType):
-    def __call__(self, *args, **kwargs):
-        return istr.__call__(*args, **kwargs)
-    def __setattr__(self, item, value):
-        setattr(istr,item,value)
-    def __getattr__(self, item,):
-        return getattr(istr,item)
-
-sys.modules[__name__].__class__ = istrModule
 
 if __name__ == "__main__":
     main()

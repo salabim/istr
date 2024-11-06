@@ -16,7 +16,7 @@ M O N E Y
 can be nicely, albeit not very efficient, coded as:
 ```
 import itertools
-import istr
+from istr import istr
 
 for s, e, n, d, m, o, r, y in istr(itertools.permutations(range(10), 8)):
     if m and ((s|e|n|d) + (m|o|r|e) == (m|o|n|e|y)):
@@ -53,7 +53,7 @@ No dependencies!
 Just start with
 
 ```
-import istr
+from istr import istr
 ```
 
 #### Use istr as int
@@ -545,7 +545,7 @@ When a class is derived from istr, all methods will return that newly derived cl
 
 E.g.
 ```
-class jstr(istr.type):
+class jstr(istr):
     ...
     
 print(repr(jstr(4) * jstr(5)))
