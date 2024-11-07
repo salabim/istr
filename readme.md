@@ -16,7 +16,7 @@ M O N E Y
 can be nicely, albeit not very efficient, coded as:
 ```
 import itertools
-from istr import istr
+import istr
 
 for s, e, n, d, m, o, r, y in istr(itertools.permutations(range(10), 8)):
     if m and ((s|e|n|d) + (m|o|r|e) == (m|o|n|e|y)):
@@ -37,11 +37,11 @@ And the module is a demonstration of extending a class (str) with extra and chan
 ### Installation
 Installing istr with pip is easy.
 ```
-$ pip install istr-python
+pip install istr-python
 ```
 or when you want to upgrade,
 ```
-$ pip install istr-python --upgrade
+pip install istr-python --upgrade
 ```
 Alternatively, istr.py can be just copied into you current work directory from GitHub (https://github.com/salabim/istr).
 
@@ -51,6 +51,12 @@ No dependencies!
 #### Start
 
 Just start with
+
+```
+import istr
+```
+
+or the more conventional, more verbose:
 
 ```
 from istr import istr
@@ -545,7 +551,7 @@ When a class is derived from istr, all methods will return that newly derived cl
 
 E.g.
 ```
-class jstr(istr):
+class jstr(istr.type):
     ...
     
 print(repr(jstr(4) * jstr(5)))

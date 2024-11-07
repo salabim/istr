@@ -1,5 +1,9 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.2 | 2024-11-07
+
+At last the short form of importing (`import istr`) works properly!
+
 #### version 1.1.1 | 2024-11-06
 
 The new way of importing istr didn't work properly. So, importing should be done with from `istr import istr` (again).
