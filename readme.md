@@ -15,10 +15,9 @@ M O N E Y
 ```
 can be nicely, albeit not very efficient, coded as:
 ```
-import itertools
 import istr
 
-for s, e, n, d, m, o, r, y in istr(itertools.permutations(range(10), 8)):
+for s, e, n, d, m, o, r, y in istr.permutations(range(10), 8):
     if m and ((s|e|n|d) + (m|o|r|e) == (m|o|n|e|y)):
         print(f' {s|e|n|d}')
         print(f' {m|o|r|e}')
@@ -64,7 +63,7 @@ from istr import istr
 
 #### Use istr as int
 
-We can define an istr:
+We can define an istr, like:
 ```
 four = istr('4')
 five = istr('5')
@@ -74,7 +73,7 @@ The variables `four`  and `five` can now be used as if they were int:
 ```
 twenty = four * five
 ```
-, after which x is `istr('20')`
+, after which twenty is `istr('20')`
 
 The same can be done with
 
@@ -99,7 +98,7 @@ is `istr('16')`
 We can do all the usual arithmetic operations on istrs, e.g.
 
 ```
--four + (twenty / 2)
+- four + (twenty / 2)
 ```
 
 is `istr('6')`
@@ -111,7 +110,7 @@ twenty == 20
 ```
 is True.
 
-But istrs are also strings. So
+But istrs are actually strings! So
 
 ```
 twenty == '20'
@@ -119,7 +118,7 @@ twenty == '20'
 
 is also True!
 
-For the order comparisons (<=, <, >, >=), the istr is always interpreted as an int.
+For the order comparisons (<=, <, >, >=), an istr is always interpreted as an int.
 
 That means that  
 ```
@@ -144,11 +143,10 @@ four, five = istr(4, 5)
 ```
 
 ##### Important
->
-> All calculations are strictly integer calculations. That means that if a float or decimal variable is ever produced it will be converted to an int.
+>All calculations are strictly integer calculations. That means that if a float or decimal variable is ever produced it will be converted to an int.
 > Also divisions are always floor divisions!
 
-#### Use istr as str
+#### Use istr as a string
 
 We should realize that istrs are in fact strings.
 
@@ -231,11 +229,13 @@ is `False`.
 The `bool` operator works normally on the integer value of an istr. So
 
 `bool(istr('0'))` ==> `False`
+
 `bool(istr('1'))` ==> `True`
 
 But if the istr can't be interpreted as an int, the string value will be used to test. So
 
 `bool(istr('abc'))` ==> `True`
+
 `bool(istr(''))` ==> `False`
 
 #### Other operators
@@ -499,7 +499,7 @@ to `istr` and then concatenate these.
 
 ```
 list(istr.concat(((1,2),(3,4))) ==> istr([12,34])
-list(istr.concat(itertools.permutations(range(3),2))) ==> 
+list(istr.concat(istr.permutations(range(3),2))) ==> 
     [istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')] 
 ```
 
@@ -754,7 +754,9 @@ There's an extensive pytest script in the `\tests` directory.
 
 This script also shows clearly the ways istr can be used, including several edge cases. Highly recommended to have a look at.
 
+###  Contact info
 
+You can contact Ruud van der Ham, the core developer, via ruud@salabim.org .
 
 ### Badges
 ![PyPI](https://img.shields.io/pypi/v/istr-python) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/istr-python) ![PyPI - Implementation](https://img.shields.io/pypi/implementation/istr-python)
