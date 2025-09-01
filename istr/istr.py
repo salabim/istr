@@ -305,7 +305,7 @@ class istr(str):
         # like repr, but if obj is an istr, the as_repr is not used to make sure the
         # the returned value is istr(...) and not infuenced by the repr mode
         if isinstance(obj, self.__class__):
-            return f"{obj.__class__.__name__}({super(istr,obj).__repr__()})"
+            return f"{obj.__class__.__name__}({super(istr, obj).__repr__()})"
         return repr(obj)
 
     def _int_method(self, name, op, *args):
@@ -483,8 +483,7 @@ class istr(str):
 
             cls._int_format = int_format
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._int_format = self.saved_int_format
@@ -494,6 +493,8 @@ class istr(str):
         def __new__(cls, cls_repr_mode, mode=None):
             if mode is None:
                 return cls_repr_mode._repr_mode
+            if mode == int:
+                mode = "int"
             if mode in ("istr", "str", "int"):  # _istr is used only for TypeErrors
                 return super().__new__(cls)
             raise TypeError(f"mode not 'istr', 'str' or 'int', but {repr(mode)}")
@@ -503,8 +504,7 @@ class istr(str):
             self.saved_cls = cls
             cls._repr_mode = mode
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._repr_mode = self.saved_repr_mode
@@ -523,8 +523,7 @@ class istr(str):
             self.saved_cls = cls
             cls._base = base
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._base = self.saved_base
@@ -601,23 +600,26 @@ class istr(str):
         result = istr("".join(result))
         cls._digits_cache[key] = result
         return result
-        
-istr.type=type(istr(0))
 
 
-def main():
-    ...
+istr.type = type(istr(0))
+
+
+def main(): ...
+
 
 class istrModule(types.ModuleType):
     def __call__(self, *args, **kwargs):
         return istr.__call__(*args, **kwargs)
+
     def __setattr__(self, item, value):
-        setattr(istr,item,value)
-    def __getattr__(self, item,):
-        return getattr(istr,item)
+        setattr(istr, item, value)
+
+    def __getattr__(self, item):
+        return getattr(istr, item)
+
 
 sys.modules["istr"].__class__ = istrModule
 
 if __name__ == "__main__":
     main()
-
