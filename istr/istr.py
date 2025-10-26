@@ -5,12 +5,13 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 import functools
 import math
 import itertools
 import types
 import sys
+import inspect
 
 """
 Note: the changelog is now in changelog.md
@@ -394,6 +395,30 @@ class istr(str):
                 return False
         return True
 
+    def decompose(self, letters, namespace=None):
+        """
+        decompose letter variables into local variables
+        each letter variable must represent just one character
+        same letter variables represent the the same character
+        the istr must have the same length as the letters
+        """
+        if namespace is None:
+            namespace = inspect.currentframe().f_back.f_globals
+        lookup = {}
+
+        for letter, ch in zip(letters, self):
+            if letter in lookup and lookup[letter] != ch:
+                raise ValueError(f"multiple values found for variable {letter}")
+            if not letter.isidentifier():
+                raise ValueError(f"{letter} cannot be used as a variable")
+
+            lookup[letter] = ch
+        if len(letters) != len(self):
+            raise ValueError(f"incorrect number of variables {len(letters)}; should be {len(self)}")
+
+        for letter, ch in zip(letters, self):
+            namespace[letter] = ch
+
     def __or__(self, other):
         try:
             return self.__class__(str(self).__add__(other))
@@ -602,6 +627,19 @@ class istr(str):
         return result
 
 
+def compose(letters, namespace=None):
+    """
+    compose an istr from individual letter variables
+    """
+    if namespace is None:
+        namespace = inspect.currentframe().f_back.f_globals
+    for letter in letters:
+        if letter not in namespace:
+            raise ValueError(f"variable {letter} not defined")
+
+    return istr("").join(istr(namespace[letter]) for letter in letters)
+
+
 istr.type = type(istr(0))
 
 
@@ -619,7 +657,7 @@ class istrModule(types.ModuleType):
         return getattr(istr, item)
 
 
-sys.modules["istr"].__class__ = istrModule
-
 if __name__ == "__main__":
     main()
+else:
+    sys.modules["istr"].__class__ = istrModule

@@ -1,12 +1,31 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.4 | 2025-10-25
+
+Introduced compose and decompose methods.
+
+With `decompose`, one-letter global variables can be set from an istr, e.g.
+```
+istr(934).decompose()
+```
+will result in the global variables a=9, b=3 and c=4.
+
+With `compose`, an istr will be constructed based on the values of one letter global variables, e.g.
+```
+x=4
+y=7
+z=0
+s = istr.compose('xyz')
+```
+will assign istr(470) to s.
+
 #### version 1.1.3 | 2025-03-09
 
 Readme updated
 
 #### version 1.1.2 | 2024-11-07
 
-At last the short form of importing (`import istr`) works properly!
+At last, the short form of importing (`import istr`) works properly!
 
 #### version 1.1.1 | 2024-11-06
 

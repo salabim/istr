@@ -5,11 +5,11 @@ import sys
 import re
 from pathlib import Path
 
-# if __name__ == "__main__":  # to make the tests run without the pytest cli
-#     file_folder = os.path.dirname(__file__)
-#     os.chdir(file_folder)
-#     sys.path.insert(0, file_folder + "/../istr") 
-       
+if __name__ == "__main__":  # to make the tests run without the pytest cli
+    file_folder = os.path.dirname(__file__)
+    os.chdir(file_folder)
+    sys.path.insert(0, file_folder + "/../istr")
+
 import pytest
 
 import istr
@@ -677,11 +677,49 @@ def test_all_distinct():
 
 
 def test_subclassing():
-    class jstr(istr.type):
-        ...
+    class jstr(istr.type): ...
 
     assert jstr(5).equals(jstr(5))
     assert repr(jstr(*range(3))) == "(jstr('0'), jstr('1'), jstr('2'))"
+
+
+def test_decompose():
+    istr("123").decompose("xyz")
+    assert x == 1
+    assert y == 2
+    assert z == 3
+    istr(456).decompose("xyz")
+    assert x == 4
+    assert y == 5
+    assert z == 6
+    istr(1231).decompose("xyzx")
+    assert x == 1
+    assert y == 2
+    assert z == 3
+    namespace = {}
+    istr(123).decompose("xyz", namespace=namespace)
+    assert namespace == dict(x=istr(1), y=istr(2), z=istr(3))
+
+    with pytest.raises(ValueError):
+        istr(1234).decompose("xyzx")
+    with pytest.raises(ValueError):
+        istr(1234).decompose("xyz")
+    with pytest.raises(ValueError):
+        istr(12).decompose("xyz")
+    with pytest.raises(ValueError):
+        istr(123).decompose("xy1")
+
+
+def test_compose():
+    x = 1
+    y = 2
+    z = 3
+    s = istr.compose("xyz")
+    assert s == 123
+    with pytest.raises(ValueError):
+        s = istr.compose("wxyz", globals())  # w is not defined
+    s = istr.compose("xyz", namespace=dict(x=3, y=istr(4), z="5"))
+    assert s == 345
 
 
 if __name__ == "__main__":
