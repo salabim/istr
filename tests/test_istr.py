@@ -313,6 +313,15 @@ def test_even_odd():
     assert istr.is_even(12345678)
     assert istr.is_odd(11111111)
 
+def test_is_divisible():
+    assert istr(18).is_divisible_by(3)
+    assert istr(18).is_divisible_by(istr(3))
+    assert not istr(19).is_divisible_by(3)
+    assert not istr(19).is_divisible_by(istr(3))
+    with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
+        istr("a").is_divisible_by(3)
+    assert istr.is_divisible_by(18, 3)
+    assert not istr.is_divisible_by(19, 3)
 
 def test_is_square():
     assert not istr(-1).is_square()
@@ -330,7 +339,43 @@ def test_is_square():
     assert istr.is_square(4)
     assert istr.is_square(16)
 
+def test_is_cube():
+    assert not istr(-1).is_cube()
+    assert istr(0).is_cube()
+    assert istr(1).is_cube()
+    assert not istr(2).is_cube()
+    assert istr(8).is_cube()
+    assert istr(27).is_cube()
+    assert not istr(99).is_cube()
+    with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
+        istr("a").is_cube()
+    assert istr.is_cube(0)
+    assert istr.is_cube(1)
+    assert not istr.is_cube(2)
+    assert istr.is_cube(8)
+    assert istr.is_cube(27)
 
+
+def test_is_power_of():
+    assert not istr(-1).is_power_of(3)
+    assert istr(0).is_power_of(3)
+    assert istr(1).is_power_of(3)
+    assert not istr(2).is_power_of(3)
+    assert istr(8).is_power_of(3)
+    assert istr(27).is_power_of(3)
+    assert not istr(99).is_power_of(3)
+    with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
+        istr("a").is_power_of(3)
+    assert istr.is_power_of(0,3)
+    assert istr.is_power_of(1,3)
+    assert not istr.is_power_of(2,3)
+    assert istr.is_power_of(8,3)
+    assert istr.is_power_of(27,3)
+    with pytest.raises(TypeError):
+        istr(1).is_power_of(3.1)
+    with pytest.raises(ValueError):
+        istr(1).is_power_of(-1)
+ 
 def test_is_prime():
     assert not istr(0).is_prime()
     assert not istr(1).is_prime()
@@ -508,7 +553,12 @@ def test_unpacking():
     assert x.equals(istr(1))
     assert y.equals(istr(2))
     assert z.equals(istr(3))
+    del x,y,z
 
+    x, y, z = a
+    assert x.equals(istr(1))
+    assert y.equals(istr(2))
+    assert z=="3"
 
 def test_repr_mode():
     hundred = istr(100)
@@ -599,15 +649,7 @@ def test_base():
         assert a * a == 225
 
 
-def test_is_divisible():
-    assert istr(18).is_divisible_by(3)
-    assert istr(18).is_divisible_by(istr(3))
-    assert not istr(19).is_divisible_by(3)
-    assert not istr(19).is_divisible_by(istr(3))
-    with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
-        istr("a").is_divisible_by(3)
-    assert istr.is_divisible_by(18, 3)
-    assert not istr.is_divisible_by(19, 3)
+
 
 
 def test_digits():
@@ -708,6 +750,8 @@ def test_decompose():
         istr(12).decompose("xyz")
     with pytest.raises(ValueError):
         istr(123).decompose("xy1")
+        
+
 
 
 def test_compose():

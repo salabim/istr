@@ -18,11 +18,24 @@ can be nicely, albeit not very efficient, coded as:
 import istr
 
 for s, e, n, d, m, o, r, y in istr.permutations(range(10), 8):
-    if m and ((s|e|n|d) + (m|o|r|e) == (m|o|n|e|y)):
+    if m and ((s|e|n|d) + (m|o|r|e) == (m|o|n|e|y):
         print(f' {s|e|n|d}')
         print(f' {m|o|r|e}')
         print('-----')
         print(f'{m|o|n|e|y}')
+```
+
+or even
+
+```
+import istr
+
+for S, E, N, D, M, O, R, Y in istr.permutations(range(10), 8):
+    if m and (istr.compose("SEND") + ist.compose("MORE") == istr.compose("MONEY"):
+        print(" ",istr.compose("SEND"))
+        print(" ",istr.compose("MORE"))
+        print('-----')
+        print(istr.compose("MONEY"))
 ```
 
 Of, if we want to add all the digits in a string:
@@ -31,7 +44,7 @@ Of, if we want to add all the digits in a string:
 sum_digits = sum(istr('9282334'))  # answer 31
 ```
 
-And the module is a demonstration of extending a class (str) with extra and changed functionality.
+The module is a demonstration of extending a class (str) with additional and modified functionality.
 
 ### Installation
 Installing istr with pip is easy.
@@ -42,7 +55,7 @@ or when you want to upgrade,
 ```
 pip install istr-python --upgrade
 ```
-Alternatively, istr.py can be just copied into you current work directory from GitHub (https://github.com/salabim/istr).
+Alternatively, istr.py can be just copied into your current work directory from GitHub (https://github.com/salabim/istr).
 
 No dependencies!
 
@@ -143,16 +156,16 @@ four, five = istr(4, 5)
 ```
 
 ##### Important
->All calculations are strictly integer calculations. That means that if a float or decimal variable is ever produced it will be converted to an int.
-> Also divisions are always floor divisions!
+>All calculations are strictly integer calculations. That means that if a float or decimal variable is ever produced, it will be converted to an int.
+> Also, divisions are always floor divisions!
 
 #### Use istr as a string
 
 We should realize that istrs are in fact strings.
 
-In order to concatenate two istrs (or an istr and a str), we cannot use the `+` operator (remember `four + five` is `istr('9')`).
+To concatenate two istrs (or an istr and a str), we cannot use the `+` operator (remember `four + five` is `istr('9')`).
 
-In order to concatenate istrs,  we use the or operator (`|`). So
+To concatenate strings, we use the or operator (`|`). So
 
 ```
 four | five
@@ -165,9 +178,9 @@ And
 ```
 is `istr('9')`.
 
-In order to repeat a string in the usual sense, you cannot use the `*` operator (remember `3 * four` is `istr('12')`. 
+To repeat a string in the usual sense, you cannot use the `*` operator (remember `3 * four` is `istr('12')`. 
 
-In order to repeat we use the matrix multiplication operator (`@`). So
+To  repeat, we use the matrix multiplication operator (`@`). So
 
  `3 @ four`
 
@@ -186,7 +199,7 @@ is also `istr('444')`
 #### istr that can't be interpreted as an int
 
 
-Although usualy istrs are to be interpreted as an int, that's not a requirement.
+Although usually istrs are to be interpreted as an int, that's not a requirement.
 
 So
 
@@ -202,7 +215,7 @@ istr('1,2,3')
 
 are perfectly acceptable.
 
-But, we can't do any arithmetic or comparison with them. 
+However, we cannot perform any arithmetic or comparison operations with them. 
 
 If we try
 
@@ -282,9 +295,9 @@ several other types:
 
 
 - if a dict (or subtype of dict), the same type dict will be returned with all *values* istr'ed
-  ```
+```
   istr({'one': 1, 'two':2}) ==> {'one': istr('1'), 'two': istr('2')}
-  ```
+```
 
 - if an iterator, the iterator will be mapped with istr
   ```
@@ -300,11 +313,11 @@ several other types:
 
 - if an iterable, the same type will be returned with all elements istr'ed
 
-```
+  ```
     istr([0, 1, 4]) ==> [istr('0'), istr('1'), istr('4')]
     istr((0, 1, 4)) ==> (istr('0'), istr('1'), istr('4'))
     istr({0, 1, 4}) ==> `{istr('4'), istr('0'), istr('1')}  # or similar  
-```
+  ```
 
 - if a range, an istr.range instance will be returned
   
@@ -315,26 +328,25 @@ several other types:
 ```
 
 - if an istr.range instance, the same istr.range will be returned
-  ```
+```
   istr(istr.range(5)) ==> istr.range(5)
-  ```
+```
 
 
 - if an istr, the same istr will be returned
 
-  ```
-    istr(istr('4')) ==> istr ('4')
-  ```
+```
+  istr(istr('4')) ==> istr ('4')
+```
 
 #### More than one parameter for istr
 It is possible to give more than one parameter, in which case a tuple
 of the istrs of the parameters will be returned, which can be handy
 to unpack multiple values, e.g.
 
-```
+  ```
 a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7') 
-```
-
+  ```
 #### test for even/odd
 It is possible to test for even/odd (provided the istr can be interpreted as an int) with the `is_even` and `is_odd` method, e.g.
 
@@ -346,33 +358,6 @@ It is also possible to test for even/odd of an ordinary int:
 ```
 istr.is_even(4) ==> True
 istr.is_odd(5) ==> True
-```
-#### test for square
-
-It is possible to test whether the value is a perfect  square (provided the istr can be interpreted as an int) with the `is_square` method, e.g.
-
-```
-istr(4).is_square() ==> True
-istr(5).is_square()) ==> False
-```
-It is also possible to test for square of an ordinary int:
-```
-istr.is_square(4) ==> True
-istr.is_square(5) ==> False
-```
-#### test for prime
-
-It is possible to test whether the value is a prime number (provided the istr can be interpreted as an int) with the `is_prime` method, e.g.
-
-```
-istr(4).is_prime() ==> False
-istr(5).is_prime()) ==> True
-```
-It is also possible to test for prime of an ordinary int:
-
-```
-istr.is_prime(4) ==> False
-istr.is_prime(5) ==> True
 ```
 #### test for divisibility
 
@@ -388,6 +373,61 @@ It is also possible to test for divisibility of an ordinary int:
 ```
 istr.is_divisible(18, 3) ==> True
 istr.is_divisible(19, 3) ==> False
+```
+#### test for square
+
+It is possible to test whether the value is a perfect square (provided the istr can be interpreted as an int) with the `is_square` method, e.g.
+
+```
+istr(4).is_square() ==> True
+istr(5).is_square()) ==> False
+```
+It is also possible to test for square of an ordinary int:
+```
+istr.is_square(4) ==> True
+istr.is_square(5) ==> False
+```
+#### test for cube
+
+It is possible to test whether the value is a perfect cube (provided the istr can be interpreted as an int) with the `is_cube` method, e.g.
+
+```
+istr(27).is_cube() ==> True
+istr(28).is_cube()) ==> False
+```
+It is also possible to test for cube of an ordinary int:
+```
+istr.is_cube(27) ==> True
+istr.is_cube(28 ==> False
+```
+
+#### test for power of
+
+It is possible to test whether the value is a perfect power of a given exponent (provided the istr can be interpreted as an int) with the `is_power_of` method, e.g.
+
+```
+istr(81).is_power_of(4) ==> True
+istr(82).is_power_of(4) ==> False
+```
+It is also possible to test for power of of an ordinary int:
+```
+istr.is_power_of(81, 4) ==> True
+istr.is_power_of(82, 4) ==> False
+```
+
+#### test for prime
+
+It is possible to test whether the value is a prime number (provided the istr can be interpreted as an int) with the `is_prime` method, e.g.
+
+```
+istr(4).is_prime() ==> False
+istr(5).is_prime()) ==> True
+```
+It is also possible to test for prime of an ordinary int:
+
+```
+istr.is_prime(4) ==> False
+istr.is_prime(5) ==> True
 ```
 #### test whether all characters are distinct
 
@@ -409,7 +449,7 @@ The method `reversed()` will return an istr with the reversed content:
 istr(456).reversed() ==> istr('654')
 istr('0456').reversed() ==> istr('6540')
 ```
-The same can -of course- be achieved with
+The same can, of course, be achieved with
 ```
 istr(456)[::-1] ==> istr('654')
 istr('0456')[::-1] ==> istr('6540')
@@ -545,8 +585,36 @@ istr.digits('3-') ==> istr('34567879')
 istr.digits('X-') ==> istr('XYZ')
 ```
 
+#### Decomposing to and composing from letter variables
+
+When we have an istr, we can decompose the value into individual one letter (global) variables with the `decompose()` method.
+E.g.
+
+```
+istr(485).decompose("abc")
+```
+will set the global variables `a`,  `b` and `c` to be set to `istr(4)`. `istr(8)` and` istr(5)`.
+Note that the length of the letters specifier must be the same as the length of the istr. Furthermore, multiple values for the same variables result in a ValueError.
+
+To decompose an istr into individual variables, it is arguably easier and safer to unpack the istr,  like
+
+```
+a, b, c = istr(485)
+```
+
+With `istr.compose()`, an istr can be constructed from individual (global) variables.
+E.g.
+
+```
+x = 3
+y = 9
+z = 6
+test = istr.compose("xyz")
+```
+Now, `test` will be `istr(396)` .
 
 #### Subclassing istr
+
 When a class is derived from istr, all methods will return that newly derived class. 
 
 E.g.
@@ -715,7 +783,7 @@ istr('1234')
 
 ### Overview of operations
 
-The table below shows whether the string or the int version of istr is applied.
+The table below indicates whether the string or integer version of istr is applied.
 
 ```
 operator/function   int  str   Example
@@ -731,7 +799,7 @@ divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
 <=, <, >, >=         x         istr('100') > istr('2') ==> True
 abs                  x         abs(istr(-20)) ==> istr('20')
 ==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
-bool                 x    x *) bool(istr(' 0 ')) ==> False | istr('') ==> False
+bool                 x    x *) bool(istr(' 0 ')) ==> False | bool(istr('')) ==> False
 @                         x    istr(20) @ 3 ==> istr('202020')
 |                         x    istr(20) | '5' ==> istr('205')
 slicing                   x    istr(12345)[1:3] ==> istr('23')
@@ -747,7 +815,6 @@ other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
                                ...
 -----------------------------------------------------------------------------------------
 *) str is applied if is_int() is False
-
 ```
 ### Test script
 There's an extensive pytest script in the `\tests` directory.

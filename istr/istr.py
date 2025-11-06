@@ -5,9 +5,8 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.4"
+__version__ = "1.1.7"
 import functools
-import math
 import itertools
 import types
 import sys
@@ -16,7 +15,7 @@ import inspect
 """
 Note: the changelog is now in changelog.md
 
-You can view the changelog on www.salabim.org/istr/changelog.html
+You can view the changelog on www.salabim.org/istr/changelog
 
 The readme can be viewed on www.salabim.org/istr/
 """
@@ -203,7 +202,8 @@ class istr(str):
         it is possible to give more than one parameter, in which case a tuple
         of the istrs of the parameters will be returned, which can be handy
         to multiple assign, e.g.
-            a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7')"""
+            a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7')
+    """
 
     __slots__ = ("_as_int", "_as_repr")
 
@@ -250,6 +250,9 @@ class istr(str):
             if hasattr(value, "__next__"):
                 return map(functools.partial(cls), value)
             return type(value)(map(functools.partial(cls), value))
+
+        if isinstance(value, str) and value.startswith('='):
+            value=str(cls.compose(value[1:],inspect.currentframe().f_back.f_back.f_globals))   
         as_int = cls._to_int(value)
         if isinstance(value, str):
             as_str = value
@@ -346,43 +349,30 @@ class istr(str):
         return int(self._as_int)
 
     def is_even(self):
-        if isinstance(self, istr):
-            if not self.is_int():
-                raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-            n = self._as_int
-        else:
-            n = int(self)
-
-        return n % 2 == 0
+        return istr.is_divisible_by(self,2)
 
     def is_odd(self):
-        if isinstance(self, istr):
-            if not self.is_int():
-                raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-            n = self._as_int
-        else:
-            n = int(self)
+        return not istr.is_divisible_by(self,2)
 
-        return n % 2 == 1
+    def is_divisible_by(self, divisor):
+        return istr.interpret_as_int(self) % int(divisor) == 0
 
     def is_square(self):
-        if isinstance(self, istr):
-            if not self.is_int():
-                raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-            n = self._as_int
-        else:
-            n = int(self)
+        return istr.is_power_of(self, 2)
 
-        return n >= 0 and self == math.isqrt(n) ** 2
+    def is_cube(self):
+        return istr.is_power_of(self, 3)
+
+    def is_power_of(self, exponent):
+        n = istr.interpret_as_int(self)
+        if exponent < 1:
+            raise ValueError(f"exponent must be >=1; not {exponent}")
+        if not isinstance(exponent, int):
+            raise TypeError(f"exponent must be int; not {type(exponent)}")
+        return n >= 0 and self == round(n ** (1 / exponent)) ** exponent
 
     def is_prime(self):
-        if isinstance(self, istr):
-            if not self.is_int():
-                raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-            n = self._as_int
-        else:
-            n = int(self)
-
+        n = istr.interpret_as_int(self)
         if n < 2:
             return False
         if n == 2:
@@ -397,13 +387,14 @@ class istr(str):
 
     def decompose(self, letters, namespace=None):
         """
-        decompose letter variables into local variables
-        each letter variable must represent just one character
-        same letter variables represent the the same character
+        decompose one-letter variables into global variables
+        each one-letter variable must represent just one character
+        same one-letter variables represent the the same character
         the istr must have the same length as the letters
         """
         if namespace is None:
             namespace = inspect.currentframe().f_back.f_globals
+
         lookup = {}
 
         for letter, ch in zip(letters, self):
@@ -411,13 +402,23 @@ class istr(str):
                 raise ValueError(f"multiple values found for variable {letter}")
             if not letter.isidentifier():
                 raise ValueError(f"{letter} cannot be used as a variable")
-
             lookup[letter] = ch
         if len(letters) != len(self):
             raise ValueError(f"incorrect number of variables {len(letters)}; should be {len(self)}")
+        namespace.update(lookup)
 
-        for letter, ch in zip(letters, self):
-            namespace[letter] = ch
+    @classmethod
+    def compose(cls, letters, namespace=None):
+        """
+        compose an istr from individual letter variables
+        """
+        if namespace is None:
+            namespace = inspect.currentframe().f_back.f_globals
+        for letter in letters:
+            if letter not in namespace:
+                raise ValueError(f"variable {letter} not defined")
+
+        return istr("").join(istr(namespace[letter]) for letter in letters)
 
     def __or__(self, other):
         try:
@@ -452,14 +453,14 @@ class istr(str):
     def reversed(self):
         return self[::-1]
 
-    def is_divisible_by(self, divisor):
+    def interpret_as_int(self):
         if isinstance(self, istr):
             if not self.is_int():
                 raise TypeError(f"not interpretable as int: {self._frepr(self)}")
             n = self._as_int
         else:
             n = int(self)
-        return n % int(divisor) == 0
+        return n
 
     def _str_method(self, name, *args, **kwargs):
         return self.__class__(getattr(super(), name)(*args, **kwargs))
@@ -565,7 +566,7 @@ class istr(str):
         if no args, 0-9 will be used
 
         all given args will be used
-        each arg has to be either null string, <digit>, <digit>-<digit> or -<digit>
+        each arg has to be either null string, <digit>, <digit>-<digit>, <digit>- or -<digit>
 
         the digits may be '0' through '9' and 'A' through 'Z' (not case sensitive)
         The returned value will always be in uppercase (if applicable).
@@ -627,28 +628,12 @@ class istr(str):
         return result
 
 
-def compose(letters, namespace=None):
-    """
-    compose an istr from individual letter variables
-    """
-    if namespace is None:
-        namespace = inspect.currentframe().f_back.f_globals
-    for letter in letters:
-        if letter not in namespace:
-            raise ValueError(f"variable {letter} not defined")
-
-    return istr("").join(istr(namespace[letter]) for letter in letters)
-
-
 istr.type = type(istr(0))
-
-
-def main(): ...
 
 
 class istrModule(types.ModuleType):
     def __call__(self, *args, **kwargs):
-        return istr.__call__(*args, **kwargs)
+        return istr(*args, **kwargs)
 
     def __setattr__(self, item, value):
         setattr(istr, item, value)
@@ -657,7 +642,5 @@ class istrModule(types.ModuleType):
         return getattr(istr, item)
 
 
-if __name__ == "__main__":
-    main()
-else:
+if __name__ != "__main__":
     sys.modules["istr"].__class__ = istrModule

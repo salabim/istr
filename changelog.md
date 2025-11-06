@@ -1,12 +1,42 @@
 ## changelog of istr | strings you can count on |
 
-#### version 1.1.4 | 2025-10-25
+#### version 1.1.7 | 2025-11-06
+
+A new way to compose an istr from global one-letter variables is introduced: by starting a string with = as an argument to istr, the rest of the argument will be used to compose the istr  from the one-letter variable:
+
+```
+x=4
+y=7
+z=0
+assert istr("=xyz") == istr.compose("xyz")
+```
+
+Not so much a change in istr, but a remark: To decompose an istr into individual variables, istr.decompose() can be used,
+But it is arguably easier and safer to unpack the istr, like
+```
+a, b, c = istr(934)
+```
+, which is functionally equivalent to
+```
+istr(934).decompose("abc")
+```
+#### version 1.1.6 | 2025-11-05
+
+Refactored `istr.is_square`(),  `istr.is_cube()`,  `istr.is_power_of()`,  `istr.is_odd()`,  `istr.is_even()`,  `istr.is_prime()` and `istr.is_disible_by()`.
+
+#### version 1.1.5 | 2025-11-04
+
+Added `istr.is_cube()` and `istr.is_power_of()`.
+
+Internal change: `is_square()` now delegates to `istr._is_power_off`, which is used also for `istr.is_cube()` and `istr.is_power_of()`.
+
+#### version 1.1.4 | 2025-10-26
 
 Introduced compose and decompose methods.
 
 With `decompose`, one-letter global variables can be set from an istr, e.g.
 ```
-istr(934).decompose()
+istr(934).decompose("abc")
 ```
 will result in the global variables a=9, b=3 and c=4.
 
@@ -15,7 +45,7 @@ With `compose`, an istr will be constructed based on the values of one letter gl
 x=4
 y=7
 z=0
-s = istr.compose('xyz')
+s = istr.compose("xyz")
 ```
 will assign istr(470) to s.
 
