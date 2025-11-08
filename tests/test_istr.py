@@ -313,7 +313,8 @@ def test_even_odd():
     assert istr.is_even(12345678)
     assert istr.is_odd(11111111)
 
-def test_is_divisible():
+
+def test_is_divisible_by():
     assert istr(18).is_divisible_by(3)
     assert istr(18).is_divisible_by(istr(3))
     assert not istr(19).is_divisible_by(3)
@@ -322,6 +323,7 @@ def test_is_divisible():
         istr("a").is_divisible_by(3)
     assert istr.is_divisible_by(18, 3)
     assert not istr.is_divisible_by(19, 3)
+
 
 def test_is_square():
     assert not istr(-1).is_square()
@@ -338,6 +340,7 @@ def test_is_square():
     assert not istr.is_square(2)
     assert istr.is_square(4)
     assert istr.is_square(16)
+
 
 def test_is_cube():
     assert not istr(-1).is_cube()
@@ -366,16 +369,17 @@ def test_is_power_of():
     assert not istr(99).is_power_of(3)
     with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
         istr("a").is_power_of(3)
-    assert istr.is_power_of(0,3)
-    assert istr.is_power_of(1,3)
-    assert not istr.is_power_of(2,3)
-    assert istr.is_power_of(8,3)
-    assert istr.is_power_of(27,3)
+    assert istr.is_power_of(0, 3)
+    assert istr.is_power_of(1, 3)
+    assert not istr.is_power_of(2, 3)
+    assert istr.is_power_of(8, 3)
+    assert istr.is_power_of(27, 3)
     with pytest.raises(TypeError):
         istr(1).is_power_of(3.1)
     with pytest.raises(ValueError):
         istr(1).is_power_of(-1)
- 
+
+
 def test_is_prime():
     assert not istr(0).is_prime()
     assert not istr(1).is_prime()
@@ -553,12 +557,13 @@ def test_unpacking():
     assert x.equals(istr(1))
     assert y.equals(istr(2))
     assert z.equals(istr(3))
-    del x,y,z
+    del x, y, z
 
     x, y, z = a
     assert x.equals(istr(1))
     assert y.equals(istr(2))
-    assert z=="3"
+    assert z == "3"
+
 
 def test_repr_mode():
     hundred = istr(100)
@@ -649,9 +654,6 @@ def test_base():
         assert a * a == 225
 
 
-
-
-
 def test_digits():
     assert istr.digits().equals(istr("0123456789"))
     assert istr.digits("").equals(istr("0123456789"))
@@ -703,19 +705,39 @@ def test_itertools():
     assert list(istr.dropwhile(lambda x: x < 5, [1, 4, 6, 4, 1])) == [istr("6"), istr("4"), istr("1")]
     assert list(istr.filterfalse(lambda x: x % 2, range(10))) == [istr("0"), istr("2"), istr("4"), istr("6"), istr("8")]
     assert list(istr.islice("123456", 2)) == [istr("1"), istr("2")]
-    assert list(istr.pairwise("1234")) == [(istr("1"), istr("2")), (istr("2"), istr("3")), (istr("3"), istr("4"))]
     assert list(istr.permutations(range(5), 3)) == list(istr(itertools.permutations(range(5), 3)))
     assert list(istr.product(range(5), range(4))) == list(istr(itertools.product(range(5), range(4))))
     assert list100(istr.repeat(10)) == list100(istr(itertools.repeat(10)))
     assert list(istr.starmap(pow, [(2, 5), (3, 2), (10, 3)])) == [istr("32"), istr("9"), istr("1000")]
     assert list(istr.takewhile(lambda x: x < 5, [1, 4, 6, 3, 8])) == [istr("1"), istr("4")]
     assert list(istr.zip_longest("123", "56", fillvalue="0")) == [(istr("1"), istr("5")), (istr("2"), istr("6")), (istr("3"), istr("0"))]
+    if sys.version_info >= (3, 10):
+        assert list(istr.pairwise("1234")) == [(istr("1"), istr("2")), (istr("2"), istr("3")), (istr("3"), istr("4"))]
+    if sys.version_info >= (3, 12):
+        assert list(istr.batched("12345", n=2)) == [(istr("1"), istr("2")), (istr("3"), istr("4")), (istr("5"),)]
 
 
 def test_all_distinct():
     assert istr("abcdef").all_distinct()
     assert not istr("aabcdef").all_distinct()
     assert istr("").all_distinct()
+
+
+def test_prod():
+    assert istr.prod(range(1, 5)).equals(istr(24))
+    assert istr.prod((1, 2, 3), start=4).equals(istr(24))
+
+
+def test_sumprod():
+    assert istr.sumprod((1, 2), (3, 4)).equals(istr(11))
+    assert istr.sumprod(istr("12"), (3, 4)).equals(istr(11))
+    assert istr.sumprod(istr("12"), "34").equals(istr(11))
+    assert istr.sumprod(istr("12"), "34", strict=False).equals(istr(11))
+    assert istr.sumprod(istr("12"), "345", strict=False).equals(istr(11))
+    with pytest.raises(ValueError):
+        istr.sumprod((1, 2), (3, 4, 5))
+    with pytest.raises(ValueError):
+        istr.sumprod((1, 2), (3, 4, 5), strict=True)
 
 
 def test_subclassing():
@@ -750,8 +772,6 @@ def test_decompose():
         istr(12).decompose("xyz")
     with pytest.raises(ValueError):
         istr(123).decompose("xy1")
-        
-
 
 
 def test_compose():

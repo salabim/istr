@@ -5,12 +5,14 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.7"
+__version__ = "1.1.8"
 import functools
 import itertools
 import types
 import sys
 import inspect
+import math
+import operator
 
 """
 Note: the changelog is now in changelog.md
@@ -230,7 +232,7 @@ class istr(str):
                 return int(value, cls._base)
             else:
                 return int(value)
-        except:
+        except Exception:
             return cls._nan
 
     def __new__(cls, *value):
@@ -251,8 +253,8 @@ class istr(str):
                 return map(functools.partial(cls), value)
             return type(value)(map(functools.partial(cls), value))
 
-        if isinstance(value, str) and value.startswith('='):
-            value=str(cls.compose(value[1:],inspect.currentframe().f_back.f_back.f_globals))   
+        if isinstance(value, str) and value.startswith("="):
+            value = str(cls.compose(value[1:], inspect.currentframe().f_back.f_back.f_globals))
         as_int = cls._to_int(value)
         if isinstance(value, str):
             as_str = value
@@ -349,10 +351,10 @@ class istr(str):
         return int(self._as_int)
 
     def is_even(self):
-        return istr.is_divisible_by(self,2)
+        return istr.is_divisible_by(self, 2)
 
     def is_odd(self):
-        return not istr.is_divisible_by(self,2)
+        return not istr.is_divisible_by(self, 2)
 
     def is_divisible_by(self, divisor):
         return istr.interpret_as_int(self) % int(divisor) == 0
@@ -490,6 +492,16 @@ class istr(str):
         return map(lambda x: istr("").join(x), istr(iterable))
 
     @classmethod
+    def prod(cls, iterable, *, start=1):
+        return math.prod(iterable, start=cls(start))
+
+    @classmethod
+    def sumprod(cls, p, q, /, strict=True):
+        if "sumprod" in math.__dict__ and strict:
+            return istr(math.sumprod(p, q))
+        return sum(_map(operator.__mul__, cls(p), cls(q), strict=strict))
+
+    @classmethod
     def enumerate(cls, iterable, start=0):
         for i, value in enumerate(iterable, start):
             yield cls(i), value
@@ -519,7 +531,7 @@ class istr(str):
         def __new__(cls, cls_repr_mode, mode=None):
             if mode is None:
                 return cls_repr_mode._repr_mode
-            if mode == int:
+            if mode is int:
                 mode = "int"
             if mode in ("istr", "str", "int"):  # _istr is used only for TypeErrors
                 return super().__new__(cls)
@@ -626,6 +638,41 @@ class istr(str):
         result = istr("".join(result))
         cls._digits_cache[key] = result
         return result
+
+
+def _map(func, *iterables, strict=False):
+    """
+    like map, but with a strict parameter (also for Python < 3.14)
+    """
+    if sys.version_info >= (3, 14):
+        yield from map(func, *iterables, strict=strict)
+        return 
+    
+    if not strict:
+        yield from map(func, *iterables)
+        return
+
+    iterators = [iter(it) for it in iterables]
+
+    while True:
+        values = []
+        exhausted = []
+        for it in iterators:
+            try:
+                v = next(it)
+                values.append(v)
+                exhausted.append(False)
+            except StopIteration:
+                values.append(None)
+                exhausted.append(True)
+
+        if all(exhausted):
+            return
+
+        if any(exhausted) and not all(exhausted):
+            raise ValueError("map_strict: iterables have different lengths")
+
+        yield func(*values)
 
 
 istr.type = type(istr(0))

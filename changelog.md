@@ -1,8 +1,22 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.8 | 2025-11-08
+Introduced `istr.prod()`, which is equivalent to `math.prod()`, but results in an istr.
+Thus, `istr.prod(range(1,5))` is `istr(24)`
+And `istr((1,2,3), start=4)` is also `istr(24)`.
+
+Introduced `istr.sumprod()`, which is equivalent to `math.sumprod()`, but applies  istr to both iterables.
+Note that this method is available even in Python < 3.14 .
+Thus, `istr.sumprod("12", (3,4))` is `istr(11)`
+In contrast with `math.sumprod()`, `istr.sumprod()` supports a `strict` parameter (True by default)
+Thus, `istr.sumprod("12", (3,4,5), strict=False)` is `istr(11)`, whereas `istr.sumprod("12", (3,4,5))` 
+raises a ValueError. 
+
+Python 3.7 is no longer supported. So, from now on Python >= 3.8 is required.
+
 #### version 1.1.7 | 2025-11-06
 
-A new way to compose an istr from global one-letter variables is introduced: by starting a string with = as an argument to istr, the rest of the argument will be used to compose the istr  from the one-letter variable:
+A new way to compose an istr from global one-letter variables is introduced: by starting a string with = as an argument to istr, the rest of the argument will be used to compose the istr  from the one-letter variables:
 
 ```
 x=4
