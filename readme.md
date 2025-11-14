@@ -31,11 +31,11 @@ or even
 import istr
 
 for S, E, N, D, M, O, R, Y in istr.permutations(range(10), 8):
-    if m and (istr.compose("SEND") + ist.compose("MORE") == istr.compose("MONEY"):
-        print(" ",istr.compose("SEND"))
-        print(" ",istr.compose("MORE"))
-        print('-----')
-        print(istr.compose("MONEY"))
+    if M and (istr("=SEND") + istr("=MORE")) == istr("=MONEY"):
+        print(" " | istr("=SEND"))
+        print(" " | istr("=MORE"))
+        print("-----")
+        print(istr("=MONEY"))
 ```
 
 Of, if we want to add all the digits in a string:
@@ -543,6 +543,25 @@ list(istr.concat(istr.permutations(range(3),2))) ==>
     [istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')] 
 ```
 
+#### prod to get product of an iterable
+
+The method `prod` can be used to return the product of an iterable (including an istr), like `math.prod`, but as istr. 
+Thus, `istr.prod(range(1,5))` is `istr(24)`
+And `istr("123", start=4)` is also `istr(24)`.
+
+It is also possible to apply `prod` on an istr:
+`istr(1234).prod()` is `istr(24)`
+`istr("123").prod(start=4)` is `istr(24)`
+
+#### sumprod to get the sum of products of iterables
+
+The class method `istr.sumprod()`, is equivalent to `math.sumprod()`, but applies  istr to both iterables.
+Note that this method is available even in Python < 3.12 .
+Thus, `istr.sumprod("12", (3,4))` is `istr(11)`
+In contrast to `math.sumprod()`, `istr.sumprod()` supports a `strict` parameter (True by default)
+Thus, `istr.sumprod("12", (3,4,5), strict=False)` is `istr(11)`, whereas `istr.sumprod("12", (3,4,5))` 
+raises a ValueError. 
+
 #### generate istr with digits
 
 The class method `digits` can be used to return an istr of digits according to a given specification.
@@ -612,6 +631,14 @@ z = 6
 test = istr.compose("xyz")
 ```
 Now, `test` will be `istr(396)` .
+
+Composing can also be done by prefixing a string with '=', like:
+
+```
+test = istr("=xyz")
+```
+
+Usually, composing and decomposing use the globals namespace, but this can be overridden with the namespace parameter. See the test suite for details.
 
 #### Subclassing istr
 
@@ -798,6 +825,9 @@ divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
 **                   x         istr(2) ** 3 ==> istr('8')
 <=, <, >, >=         x         istr('100') > istr('2') ==> True
 abs                  x         abs(istr(-20)) ==> istr('20')
+int                  x         int(istr("20")) ==> 20
+float                x         float(istr("20")) ==> 20.0
+complex              x         complex(istr("20")) ==> (20+0j)
 ==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
 bool                 x    x *) bool(istr(' 0 ')) ==> False | bool(istr('')) ==> False
 @                         x    istr(20) @ 3 ==> istr('202020')

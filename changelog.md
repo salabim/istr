@@ -1,16 +1,60 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.10 | 2025-11-14
+- From now on when istr() is applied to an istr, the current base, repr_mode and int_format will be used to determine the representation.
+  This can be handy to reformat an istr.
+- istr now has three more keyword arguments: `base`, `int_format` and `repr_mode`. So these attributes can now be set easily on an individual instance.
+  So, `repr(istr(12, base==36))` is  `istr('C')`
+- `istr.range` now has three more keyword arguments: `base`, `int_format` and `repr_mode`.
+  So, `list(istr.range(4, base=2))` is `[istr('0', istr('1'), istr('10'), istr('11')`
+- The `base`, `int_format` and `repr_mode` of an istr can now be queried with the methods `this_base()`, `this_int_format` and `this_repr_mode`. E.g.
+  `istr(12, base=36).this_base()` is 36 and
+- The builtins `float()` and `complex()` now support istr-s as well.
+
+
+#### version 1.1.9 | 2025-11-09
+- The namespace keyword argument now propagates to embedded istr-s.
+  So, for instance
+
+  ```
+  x, y, z = 1, 2, 3
+  istr(["=xy", "=yz"])
+  ```
+  evaluates to `[istr("12"), istr("23")]`
+  
+  And
+  ```
+  istr(["=xy", "=yz"], namespace=dict(x=3, y=4, z="z")
+  ```
+  evaluates to `[istr("34"), istr("4z")]`
+
+  For more examples, see the test suite.
+
+- `istr("=")` now evaluates to an istr with one = character, rather than compose to an empty istr.
+
+- In the test suite, the variables `minus_one` to `thirteen` are now explicitly defined, instead of via a clever patch loop. This is to avoid excessive ruff warnings reported.
+
+- Bug in `istr.__eq__()` made that peek crashed when peeking a non-int istr. Fixed.
+
 #### version 1.1.8 | 2025-11-08
 Introduced `istr.prod()`, which is equivalent to `math.prod()`, but results in an istr.
 Thus, `istr.prod(range(1,5))` is `istr(24)`
-And `istr((1,2,3), start=4)` is also `istr(24)`.
+And `istr.prod((1,2,3), start=4)` is also `istr(24)`.
+
+It is also possible to apply `prod` on an istr:
+`istr(1234).prod()` is `istr(24)`
+`istr("123").prod(start=4)` is `istr(24)`
+
+
 
 Introduced `istr.sumprod()`, which is equivalent to `math.sumprod()`, but applies  istr to both iterables.
-Note that this method is available even in Python < 3.14 .
+Note that this method is available even in Python < 3.12 .
 Thus, `istr.sumprod("12", (3,4))` is `istr(11)`
-In contrast with `math.sumprod()`, `istr.sumprod()` supports a `strict` parameter (True by default)
+In contrast to `math.sumprod()`, `istr.sumprod()` supports a `strict` parameter (True by default)
 Thus, `istr.sumprod("12", (3,4,5), strict=False)` is `istr(11)`, whereas `istr.sumprod("12", (3,4,5))` 
 raises a ValueError. 
+
+
 
 Python 3.7 is no longer supported. So, from now on Python >= 3.8 is required.
 

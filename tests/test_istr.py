@@ -3,22 +3,35 @@ import itertools
 import os
 import sys
 import re
-from pathlib import Path
 
 if __name__ == "__main__":  # to make the tests run without the pytest cli
-    file_folder = os.path.dirname(__file__)
-    os.chdir(file_folder)
-    sys.path.insert(0, file_folder + "/../istr")
+    import os, sys  # three lines to use the local package and chdir
+
+    os.chdir(os.path.dirname(__file__))
+    sys.path.insert(0, os.path.dirname(__file__) + "/../" + os.path.dirname(__file__).split(os.sep)[-2])
 
 import pytest
 
 import istr
 
-istr.equals = lambda self, other: type(self) == type(other) and (str(self) == str(other))
+istr.equals = lambda self, other: type(self) is type(other) and (str(self) == str(other))
 # this method tests whether self and other are exactly the same
 
-for i, name in enumerate("minus_one zero one two three four five six seven eight nine ten eleven twelve thirteen".split(), -1):
-    globals()[name] = istr(i)
+minus_one = istr(-1)
+zero = istr(0)
+one = istr(1)
+two = istr(2)
+three = istr(3)
+four = istr(4)
+five = istr(5)
+six = istr(6)
+seven = istr(7)
+eight = istr(8)
+nine = istr(9)
+ten = istr(10)
+eleven = istr(11)
+twelve = istr(12)
+thirteen = istr(13)
 one_to_twelve = istr.range(1, thirteen)
 
 
@@ -67,7 +80,7 @@ def test_arithmetic():
 
 
 def test_lt():
-    assert type(two < three) == bool
+    assert type(two < three) is bool
     assert two < three
     assert 2 < three
     assert two < 3
@@ -82,7 +95,7 @@ def test_lt():
 
 
 def test_le():
-    assert type(two <= three) == bool
+    assert type(two <= three) is bool
     assert two <= three
     assert 2 <= three
     assert two <= 3
@@ -93,7 +106,7 @@ def test_le():
 
 
 def test_gt():
-    assert type(three > two) == bool
+    assert type(three > two) is bool
     assert three > two
     assert 3 > two
     assert three > 2
@@ -108,7 +121,7 @@ def test_gt():
 
 
 def test_ge():
-    assert type(three >= two) == bool
+    assert type(three >= two) is bool
     assert three >= two
     assert 3 >= two
     assert three >= 2
@@ -173,7 +186,9 @@ def test_range():
     assert one_to_twelve[2:4] == istr.range(3, 5)
 
     with pytest.raises(IndexError):
-        a = one_to_twelve[12]
+        one_to_twelve[12]
+        
+    assert str(list(istr.range(5, base=2, repr_mode='str'))) == "['0', '1', '10', '11', '100']"
 
 
 def test_misc():
@@ -293,9 +308,12 @@ def test_range_int_format():
     r = istr.range(11)
     assert repr(r) == "istr.range(0, 11)"
     assert " ".join(r) == "0 1 2 3 4 5 6 7 8 9 10"
-    r = istr.range(11)
+
     with istr.int_format("02"):
+        r = istr.range(11)
         assert " ".join(r) == "00 01 02 03 04 05 06 07 08 09 10"
+    r = istr.range(11, int_format="03")
+    assert " ".join(r) == "000 001 002 003 004 005 006 007 008 009 010"
 
 
 def test_even_odd():
@@ -402,22 +420,22 @@ def test_is_prime():
 def test_join():
     s = "".join(istr(("4", "5", "6")))
     assert s == "456"
-    assert type(s) == str
+    assert type(s) is str
 
     s = istr("").join(("4", "5", "6"))
     assert s == "456"
     assert s == 456
-    assert type(s) == istr.type
+    assert type(s) is istr.type
 
     s = istr("").join(istr(("4", "5", "6")))
     assert s == "456"
     assert s == 456
-    assert type(s) == istr.type
+    assert type(s) is istr.type
 
     s = istr("").join(istr(("", "", "6")))
     assert s == "6"
     assert s == 6
-    assert type(s) == istr.type
+    assert type(s) is istr.type
 
 
 def test_or():
@@ -653,7 +671,27 @@ def test_base():
     with istr.base(10):
         assert a * a == 225
 
+    a = istr(255)
+    x = istr("?")
+    with istr.base(16):
+        assert istr(a) == "FF"
+        assert istr(a, base=36) == "73"
+        assert istr(x) == "?"
+        assert istr(x, base=36) == "?"
+        
+def test_this_queries():
+    a = istr(12, base=36, int_format="04", repr_mode="str")
+    assert repr(a)=="'C'"
+    assert a.this_base()==36
+    assert a.this_int_format()=='04'
+    assert a.this_repr_mode()=='str'
 
+    a = istr(12, int_format="04", repr_mode="str")
+    assert repr(a)=="'0012'"
+    assert a.this_base()==10
+    assert a.this_int_format()=='04'
+    assert a.this_repr_mode()=='str'
+    
 def test_digits():
     assert istr.digits().equals(istr("0123456789"))
     assert istr.digits("").equals(istr("0123456789"))
@@ -726,6 +764,8 @@ def test_all_distinct():
 def test_prod():
     assert istr.prod(range(1, 5)).equals(istr(24))
     assert istr.prod((1, 2, 3), start=4).equals(istr(24))
+    assert istr("1234").prod().equals(istr(24))
+    assert istr("123").prod(start=4).equals(istr(24))
 
 
 def test_sumprod():
@@ -741,7 +781,8 @@ def test_sumprod():
 
 
 def test_subclassing():
-    class jstr(istr.type): ...
+    class jstr(istr.type):
+        ...
 
     assert jstr(5).equals(jstr(5))
     assert repr(jstr(*range(3))) == "(jstr('0'), jstr('1'), jstr('2'))"
@@ -775,16 +816,28 @@ def test_decompose():
 
 
 def test_compose():
+    global x, y, z
     x = 1
-    y = 2
-    z = 3
-    s = istr.compose("xyz")
-    assert s == 123
+    y = "2"
+    z = istr(3)
+    assert istr.compose("xyz").equals(istr(123))
     with pytest.raises(ValueError):
-        s = istr.compose("wxyz", globals())  # w is not defined
-    s = istr.compose("xyz", namespace=dict(x=3, y=istr(4), z="5"))
-    assert s == 345
+        istr.compose("wxyz")  # w is not defined
+    assert istr.compose("xyz", namespace=dict(x=3, y=istr(4), z="5")).equals(istr(345))
+    assert istr("=xyz").equals(istr(123))
+    assert istr("=xyz", "=x") == (istr(123), istr(1))
+    assert istr("=") == "="
+
+    assert istr(["=xyz", "=y"]) == [istr(123), istr(2)]
+    assert istr(("=xyz", "=y")) == (istr(123), istr(2))
+    assert istr({"=xyz", "=y"}) == {istr(123), istr(2)}
+
+    assert istr(dict(xyz="=xyz", y="=y")) == {"xyz": istr(123), "y": istr(2)}
+    assert istr(dict(xyz="=xyz", y="=y"), namespace=dict(x=3, y=4, z="z")) == {"xyz": istr("34z"), "y": istr(4)}
+
+    assert istr(istr("=xyz")) == istr(123)
 
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
+

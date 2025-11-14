@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.8"
+__version__ = "1.1.10"
 import functools
 import itertools
 import types
@@ -13,6 +13,7 @@ import sys
 import inspect
 import math
 import operator
+import copy
 
 """
 Note: the changelog is now in changelog.md
@@ -30,7 +31,7 @@ class _range:
     based on https://codereview.stackexchange.com/questions/229073/pure-python-range-implementation
     """
 
-    def __init__(self, cls, start, stop=None, step=1):
+    def __init__(self, cls, start, stop=None, step=1, base=None, int_format=None, repr_mode=None):
         if stop is None:
             start, stop = 0, start
         self.start, self.stop, self.step = (int(obj) for obj in (start, stop, step))
@@ -42,6 +43,9 @@ class _range:
             step_sign = 1
         self._len = max(1 + (self.stop - self.start - step_sign) // self.step, 0)
         self.parent_cls = cls
+        self.base = cls._base if base is None else base
+        self.int_format = cls._int_format if int_format is None else int_format
+        self.repr_mode = cls._repr_mode if repr_mode is None else repr_mode
         self.init_done = True
 
     def __setattr__(self, name, value):
@@ -100,13 +104,20 @@ class _range:
 
         if isinstance(index, slice):
             start, stop, step = adjust_indices(self._len, index.start, index.stop, index.step)
-            return self.parent_cls.range(self.start + self.step * start, self.start + self.step * stop, self.step * step)
+            return self.parent_cls.range(
+                self.start + self.step * start,
+                self.start + self.step * stop,
+                self.step * step,
+                base=self.base,
+                int_format=self.int_format,
+                repr_mode=self.repr_mode,
+            )
         index = int(index)
         if index < 0:
             index += self._len
         if not 0 <= index < self._len:
             raise IndexError("range object index out of range")
-        return self.parent_cls(self.start + self.step * index)
+        return self.parent_cls(self.start + self.step * index, base=self.base, int_format=self.int_format, repr_mode=self.repr_mode)
 
     def __hash__(self):
         if self._len == 0:
@@ -117,11 +128,11 @@ class _range:
         value = self.start
         if self.step > 0:
             while value < self.stop:
-                yield self.parent_cls(value)
+                yield self.parent_cls(value, base=self.base, int_format=self.int_format, repr_mode=self.repr_mode)
                 value += self.step
         else:
             while value > self.stop:
-                yield self.parent_cls(value)
+                yield self.parent_cls(value, base=self.base, int_format=self.int_format, repr_mode=self.repr_mode)
                 value += self.step
 
     def __len__(self):
@@ -207,7 +218,7 @@ class istr(str):
             a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7')
     """
 
-    __slots__ = ("_as_int", "_as_repr")
+    __slots__ = ("_as_int", "_as_repr","_this_base", "_this_int_format", "_this_repr_mode")
 
     _int_format = ""
     _repr_mode = "istr"
@@ -226,57 +237,70 @@ class istr(str):
         return result[::-1] or "0"
 
     @classmethod
-    def _to_int(cls, value):
+    def _to_int(cls, value, base=10):
         try:
-            if cls._base != 10 and isinstance(value, str):
-                return int(value, cls._base)
+            if base != 10 and isinstance(value, str):
+                return int(value, base)
             else:
                 return int(value)
         except Exception:
             return cls._nan
 
-    def __new__(cls, *value):
+    def __new__(cls, *value, namespace=None, base=None, int_format=None, repr_mode=None):
+        if namespace is None:
+            try:
+                namespace = inspect.currentframe().f_back.f_back.f_globals
+            except AttributeError:
+                namespace = inspect.currentframe().f_back.f_globals  # only used when running istr itself
+        base = cls._base if base is None else base
+        int_format = cls._int_format if int_format is None else int_format
+        repr_mode = cls._repr_mode if repr_mode is None else repr_mode
         if len(value) == 0:
             raise TypeError("no parameter given")
         if len(value) == 1:
             value = value[0]  # normal case of 1 parameter
         if isinstance(value, range):
-            return cls.range(value.start, value.stop, value.step)
+            return cls.range(value.start, value.stop, value.step, base=base, int_format=int_format, repr_mode=repr_mode)
         if isinstance(value, _range):
             return value
         if isinstance(value, cls):
-            return value
+            if value.is_int():
+                return cls(value._as_int, base=base, int_format=int_format, repr_mode=repr_mode)
+            else:
+                return copy.copy(value)
         if isinstance(value, dict):
-            return type(value)((k, cls(v)) for k, v in value.items())
+            return type(value)((k, cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=namespace)) for k, v in value.items())
         if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):
             if hasattr(value, "__next__"):
-                return map(functools.partial(cls), value)
-            return type(value)(map(functools.partial(cls), value))
-
-        if isinstance(value, str) and value.startswith("="):
-            value = str(cls.compose(value[1:], inspect.currentframe().f_back.f_back.f_globals))
-        as_int = cls._to_int(value)
+                return map(lambda v: cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=namespace), value)
+            return type(value)(map(lambda v: cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=namespace), value))
+        if isinstance(value, str) and value.startswith("=") and value != "=":
+            value = str(cls.compose(value[1:], namespace=namespace))
+        as_int = cls._to_int(value, base)
         if isinstance(value, str):
             as_str = value
         else:
             if as_int is cls._nan:
                 raise TypeError(f"incorrect value for {cls.__name__}: {repr(value)}")
-            if cls._int_format == "" or cls._base != 10:
-                if cls._base == 10:
+            if int_format == "" or base != 10:
+                if base == 10:
                     as_str = str(as_int)
                 else:
-                    as_str = istr._to_base(as_int, cls._base)
+                    as_str = istr._to_base(as_int, base)
             else:
-                as_str = f"{as_int:{cls._int_format}}"
+                as_str = f"{as_int:{int_format}}"
 
         self = super().__new__(cls, as_str)
         self._as_int = as_int
-        if self._repr_mode == "istr":
+        if repr_mode == "istr":
             self._as_repr = f"{cls.__name__}({repr(as_str)})"
-        elif self._repr_mode == "int":
+        elif repr_mode == "int":
             self._as_repr = "?" if as_int is self._nan else repr(as_int)
         else:
             self._as_repr = repr(as_str)
+        self._this_base=base
+        self._this_int_format=int_format
+        self._this_repr_mode=repr_mode
         return self
 
     def __iter__(self):
@@ -291,10 +315,12 @@ class istr(str):
                 return self._as_int == other._as_int
         if isinstance(other, str):
             return super().__eq__(other)
-        try:
-            return self._as_int == self._to_int(other)
-        except Exception:
-            return False
+        if self.is_int():
+            try:
+                return self._as_int == int(other)
+            except Exception:
+                return False
+        return False
 
     def __ne__(self, other):
         return not self == other
@@ -347,9 +373,19 @@ class istr(str):
 
     def __int__(self):
         if not self.is_int():
-            raise ValueError(f"invalid literal for int() with base 10: {self._frepr(self)}")
+            raise ValueError(f"invalid literal for int(): {self._frepr(self)}")
         return int(self._as_int)
 
+    def __float__(self):
+        if not self.is_int():
+            raise ValueError(f"invalid literal for float(): {self._frepr(self)}")
+        return float(self._as_int)
+        
+    def __complex__(self):
+        if not self.is_int():
+            raise ValueError(f"invalid literal for complex(): {self._frepr(self)}")
+        return complex(self._as_int)
+        
     def is_even(self):
         return istr.is_divisible_by(self, 2)
 
@@ -398,13 +434,12 @@ class istr(str):
             namespace = inspect.currentframe().f_back.f_globals
 
         lookup = {}
-
         for letter, ch in zip(letters, self):
             if letter in lookup and lookup[letter] != ch:
                 raise ValueError(f"multiple values found for variable {letter}")
             if not letter.isidentifier():
                 raise ValueError(f"{letter} cannot be used as a variable")
-            lookup[letter] = ch
+            lookup[str(letter)] = ch
         if len(letters) != len(self):
             raise ValueError(f"incorrect number of variables {len(letters)}; should be {len(self)}")
         namespace.update(lookup)
@@ -419,8 +454,8 @@ class istr(str):
         for letter in letters:
             if letter not in namespace:
                 raise ValueError(f"variable {letter} not defined")
-
-        return istr("").join(istr(namespace[letter]) for letter in letters)
+        s = "".join(str(namespace[letter]) for letter in letters)
+        return istr(s)
 
     def __or__(self, other):
         try:
@@ -491,9 +526,8 @@ class istr(str):
     def concat(cls, iterable):
         return map(lambda x: istr("").join(x), istr(iterable))
 
-    @classmethod
-    def prod(cls, iterable, *, start=1):
-        return math.prod(iterable, start=cls(start))
+    def prod(self, *, start=1):
+        return math.prod(self, start=istr(start))
 
     @classmethod
     def sumprod(cls, p, q, /, strict=True):
@@ -505,7 +539,16 @@ class istr(str):
     def enumerate(cls, iterable, start=0):
         for i, value in enumerate(iterable, start):
             yield cls(i), value
+            
+    def this_base(self):
+        return self._this_base
 
+    def this_int_format(self):
+        return self._this_int_format
+
+    def this_repr_mode(self):
+        return self._this_repr_mode
+        
     @classmethod
     class int_format:
         def __new__(cls, cls_int_format, int_format=None):
@@ -520,8 +563,8 @@ class istr(str):
                 raise ValueError(f"{repr(int_format)} is incorrect int_format")
 
             cls._int_format = int_format
-
-        def __enter__(self): ...
+        def __enter__(self):
+            ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._int_format = self.saved_int_format
@@ -533,7 +576,7 @@ class istr(str):
                 return cls_repr_mode._repr_mode
             if mode is int:
                 mode = "int"
-            if mode in ("istr", "str", "int"):  # _istr is used only for TypeErrors
+            if mode in ("istr", "str", "int"):  # istr is used only for TypeErrors
                 return super().__new__(cls)
             raise TypeError(f"mode not 'istr', 'str' or 'int', but {repr(mode)}")
 
@@ -542,7 +585,8 @@ class istr(str):
             self.saved_cls = cls
             cls._repr_mode = mode
 
-        def __enter__(self): ...
+        def __enter__(self):
+            ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._repr_mode = self.saved_repr_mode
@@ -561,14 +605,15 @@ class istr(str):
             self.saved_cls = cls
             cls._base = base
 
-        def __enter__(self): ...
+        def __enter__(self):
+            ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._base = self.saved_base
 
     @classmethod
-    def range(cls, start, stop=None, step=1):
-        return _range(cls, start, stop, step)
+    def range(cls, start, stop=None, step=1, base=None, int_format=None, repr_mode=None):
+        return _range(cls, start, stop, step, base=base, int_format=int_format, repr_mode=repr_mode)
 
     @classmethod
     def digits(cls, *args):
@@ -646,8 +691,8 @@ def _map(func, *iterables, strict=False):
     """
     if sys.version_info >= (3, 14):
         yield from map(func, *iterables, strict=strict)
-        return 
-    
+        return
+
     if not strict:
         yield from map(func, *iterables)
         return
@@ -691,3 +736,4 @@ class istrModule(types.ModuleType):
 
 if __name__ != "__main__":
     sys.modules["istr"].__class__ = istrModule
+
