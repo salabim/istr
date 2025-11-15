@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.10"
+__version__ = "1.1.11"
 import functools
 import itertools
 import types
@@ -276,6 +276,10 @@ class istr(str):
             return type(value)(map(lambda v: cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=namespace), value))
         if isinstance(value, str) and value.startswith("=") and value != "=":
             value = str(cls.compose(value[1:], namespace=namespace))
+        if isinstance(value, str) and value.startswith(":=") and value != ";=":
+            var_name=value[2:]
+            value = str(cls.compose(value[2:], namespace=namespace))  
+            namespace[var_name]=cls(value)         
         as_int = cls._to_int(value, base)
         if isinstance(value, str):
             as_str = value

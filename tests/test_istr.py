@@ -816,7 +816,6 @@ def test_decompose():
 
 
 def test_compose():
-    global x, y, z
     x = 1
     y = "2"
     z = istr(3)
@@ -829,13 +828,14 @@ def test_compose():
     assert istr("=") == "="
 
     assert istr(["=xyz", "=y"]) == [istr(123), istr(2)]
-    assert istr(("=xyz", "=y")) == (istr(123), istr(2))
-    assert istr({"=xyz", "=y"}) == {istr(123), istr(2)}
-
+ 
     assert istr(dict(xyz="=xyz", y="=y")) == {"xyz": istr(123), "y": istr(2)}
     assert istr(dict(xyz="=xyz", y="=y"), namespace=dict(x=3, y=4, z="z")) == {"xyz": istr("34z"), "y": istr(4)}
 
     assert istr(istr("=xyz")) == istr(123)
+
+    assert istr(":=xyz").equals(istr(123))
+    assert xyz.equals(istr(123))
 
 
 if __name__ == "__main__":

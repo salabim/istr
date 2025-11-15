@@ -1,7 +1,19 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.11 | 2025-11-15
+- A new way to compose an istr from global one-letter variables is introduced: by starting a string with := as an argument to istr, the rest of the argument will be used to compose the istr from the one-letter variables, just like when the string started with =.
+  But, now, the evaluated will also be assigned to a variable composed of the names of the one-letter variables. E.g.
+  
+  ```
+  x=4
+  y=7
+  if istr(":=xy").is_prime():
+      print(f"{xy=}")  
+  ```
+  This will print `xy=47`. This is particularly useful when combined with peek.
+  
 #### version 1.1.10 | 2025-11-14
-- From now on when istr() is applied to an istr, the current base, repr_mode and int_format will be used to determine the representation.
+- From now on, when istr() is applied to an istr, the current base, repr_mode and int_format will be used to determine the representation.
   This can be handy to reformat an istr.
 - istr now has three more keyword arguments: `base`, `int_format` and `repr_mode`. So these attributes can now be set easily on an individual instance.
   So, `repr(istr(12, base==36))` is  `istr('C')`

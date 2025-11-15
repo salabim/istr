@@ -635,7 +635,14 @@ Now, `test` will be `istr(396)` .
 Composing can also be done by prefixing a string with '=', like:
 
 ```
-test = istr("=xyz")
+test = istr("=xyz")  # test will be assigned istr(396)
+```
+
+Composing and assignment can be done by prefixing a string with ':=', like:
+
+```
+if istr("=xyz") > 300:
+	print(f"{xyx=}"")  # ==> will print xyz=396
 ```
 
 Usually, composing and decomposing use the globals namespace, but this can be overridden with the namespace parameter. See the test suite for details.
