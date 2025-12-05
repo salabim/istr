@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.11"
+__version__ = "1.1.12"
 import functools
 import itertools
 import types
@@ -218,7 +218,7 @@ class istr(str):
             a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7')
     """
 
-    __slots__ = ("_as_int", "_as_repr","_this_base", "_this_int_format", "_this_repr_mode")
+    __slots__ = ("_as_int", "_as_repr", "_this_base", "_this_int_format", "_this_repr_mode")
 
     _int_format = ""
     _repr_mode = "istr"
@@ -276,10 +276,10 @@ class istr(str):
             return type(value)(map(lambda v: cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=namespace), value))
         if isinstance(value, str) and value.startswith("=") and value != "=":
             value = str(cls.compose(value[1:], namespace=namespace))
-        if isinstance(value, str) and value.startswith(":=") and value != ";=":
-            var_name=value[2:]
-            value = str(cls.compose(value[2:], namespace=namespace))  
-            namespace[var_name]=cls(value)         
+        if isinstance(value, str) and value.startswith(":=") and value != ":=":
+            var_name = value[2:]
+            value = str(cls.compose(value[2:], namespace=namespace))
+            namespace[var_name] = cls(value)
         as_int = cls._to_int(value, base)
         if isinstance(value, str):
             as_str = value
@@ -302,9 +302,9 @@ class istr(str):
             self._as_repr = "?" if as_int is self._nan else repr(as_int)
         else:
             self._as_repr = repr(as_str)
-        self._this_base=base
-        self._this_int_format=int_format
-        self._this_repr_mode=repr_mode
+        self._this_base = base
+        self._this_int_format = int_format
+        self._this_repr_mode = repr_mode
         return self
 
     def __iter__(self):
@@ -384,12 +384,12 @@ class istr(str):
         if not self.is_int():
             raise ValueError(f"invalid literal for float(): {self._frepr(self)}")
         return float(self._as_int)
-        
+
     def __complex__(self):
         if not self.is_int():
             raise ValueError(f"invalid literal for complex(): {self._frepr(self)}")
         return complex(self._as_int)
-        
+
     def is_even(self):
         return istr.is_divisible_by(self, 2)
 
@@ -491,6 +491,23 @@ class istr(str):
     def all_distinct(self):
         return len(self) == len(set(self))
 
+    def is_consecutive(self):
+        s = str(self)
+        if len(s) <= 1:
+            return False
+        c0 = s[0]
+        for c1 in s[1:]:
+            if ord(c1) - ord(c0) != 1:
+                return False
+            c0 = c1
+        return True
+
+    def is_triangular(self):
+        n = istr.interpret_as_int(self)
+        if n<=0:
+            return False
+        return istr.is_square(n * 8 + 1)
+
     def reversed(self):
         return self[::-1]
 
@@ -543,7 +560,7 @@ class istr(str):
     def enumerate(cls, iterable, start=0):
         for i, value in enumerate(iterable, start):
             yield cls(i), value
-            
+
     def this_base(self):
         return self._this_base
 
@@ -552,7 +569,7 @@ class istr(str):
 
     def this_repr_mode(self):
         return self._this_repr_mode
-        
+
     @classmethod
     class int_format:
         def __new__(cls, cls_int_format, int_format=None):
@@ -567,8 +584,8 @@ class istr(str):
                 raise ValueError(f"{repr(int_format)} is incorrect int_format")
 
             cls._int_format = int_format
-        def __enter__(self):
-            ...
+
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._int_format = self.saved_int_format
@@ -589,8 +606,7 @@ class istr(str):
             self.saved_cls = cls
             cls._repr_mode = mode
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._repr_mode = self.saved_repr_mode
@@ -609,8 +625,7 @@ class istr(str):
             self.saved_cls = cls
             cls._base = base
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._base = self.saved_base
@@ -740,4 +755,3 @@ class istrModule(types.ModuleType):
 
 if __name__ != "__main__":
     sys.modules["istr"].__class__ = istrModule
-

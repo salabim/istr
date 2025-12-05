@@ -429,6 +429,7 @@ It is also possible to test for prime of an ordinary int:
 istr.is_prime(4) ==> False
 istr.is_prime(5) ==> True
 ```
+
 #### test whether all characters are distinct
 
 With the `all_distinct` method, it is possible to test whether all characters are distinct (i.e. no character appears more than once).
@@ -441,6 +442,27 @@ n100 = n98 + 2
 istr(n98).all_distinct() ==> True
 istr(n100).all_distinct() ==> False
 ```
+#### test if characters are consecutive
+
+With the `is_consecutive` method, it is possible to test whether the individual digits (characters) are consecutive.
+```
+istr(123).is_consecutive() ==> True
+istr(124).is_consecutive() ==> False
+```
+
+Note that this method can also be used for non-istr-s, like `istr.is_consecutive(123) ==> True`
+
+#### test for triangular number
+
+With the `is_triangular` method, it is possible to test whether this is a triangular number (sum of integers, starting at 1):
+
+```
+istr(6).is_triangular() ==> True
+istr(7).is_triangular() ==> False
+```
+
+Note that this method can also be used for non-istr-s, like `istr.is_triangular(6) ==> True`.
+
 
 #### reverse an istr
 
@@ -635,17 +657,21 @@ Now, `test` will be `istr(396)` .
 Composing can also be done by prefixing a string with '=', like:
 
 ```
-test = istr("=xyz")  # test will be assigned istr(396)
-```
+xyz = istr("=xyz")
+print(f"{xyx=}")  # ==> will print xyz=396
+
+Note that `str(istr("="))` is "=".
 
 Composing and assignment can be done by prefixing a string with ':=', like:
 
 ```
-if istr("=xyz") > 300:
-	print(f"{xyx=}"")  # ==> will print xyz=396
+if istr(":=xyz") > 300:
+	print(f"{xyx=}")  # ==> will print xyz=396
+	
+Note that `str(istr(":="))` is ":=" and does not assign the value to a variable.
 ```
 
-Usually, composing and decomposing use the globals namespace, but this can be overridden with the namespace parameter. See the test suite for details.
+Usually, composing and decomposing uses the globals namespace, but this can be overridden with the namespace parameter. See the test suite for details.
 
 #### Subclassing istr
 
@@ -825,28 +851,28 @@ operator/function   int  str   Example
 +                    x         istr(20) + 3 ==> istr('23')
 _                    x         istr(20) - 3 ==> istr('17')
 *                    x         istr(20) * 3 ==> istr('60')
-/                    x         istr(20) / 3 ==> istr('6')
-//                   x         istr(20) // 3 ==> istr('6')
-%                    x         istr(20) % 3 ==> istr('2')
-divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
-**                   x         istr(2) ** 3 ==> istr('8')
-<=, <, >, >=         x         istr('100') > istr('2') ==> True
-abs                  x         abs(istr(-20)) ==> istr('20')
-int                  x         int(istr("20")) ==> 20
-float                x         float(istr("20")) ==> 20.0
-complex              x         complex(istr("20")) ==> (20+0j)
-==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
-bool                 x    x *) bool(istr(' 0 ')) ==> False | bool(istr('')) ==> False
-@                         x    istr(20) @ 3 ==> istr('202020')
-|                         x    istr(20) | '5' ==> istr('205')
-slicing                   x    istr(12345)[1:3] ==> istr('23')
-iterate                   x    [x for x in istr(20)] ==> [istr('2'), istr('0')]
-len                       x    len(istr(' 20 ')) ==> 4
-count                     x    istr(100).count('0') ==> 2
-index                     x    istr(' 100 ').index('0') ==> 2
-split                     x    istr('1 2').split() ==> (istr('1'), istr('2'))
-string format             x    f"|{istr(1234):6}|" ==> '|1234  |'
-other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
+                     /                    x         istr(20) / 3 ==> istr('6')
+                     //                   x         istr(20) // 3 ==> istr('6')
+                     %                    x         istr(20) % 3 ==> istr('2')
+                     divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
+                     **                   x         istr(2) ** 3 ==> istr('8')
+                     <=, <, >, >=         x         istr('100') > istr('2') ==> True
+                     abs                  x         abs(istr(-20)) ==> istr('20')
+                     int                  x         int(istr("20")) ==> 20
+                     float                x         float(istr("20")) ==> 20.0
+                     complex              x         complex(istr("20")) ==> (20+0j)
+                     ==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
+                     bool                 x    x *) bool(istr(' 0 ')) ==> False | bool(istr('')) ==> False
+                     @                         x    istr(20) @ 3 ==> istr('202020')
+                     |                         x    istr(20) | '5' ==> istr('205')
+                     slicing                   x    istr(12345)[1:3] ==> istr('23')
+                     iterate                   x    [x for x in istr(20)] ==> [istr('2'), istr('0')]
+                     len                       x    len(istr(' 20 ')) ==> 4
+                     count                     x    istr(100).count('0') ==> 2
+                     index                     x    istr(' 100 ').index('0') ==> 2
+                     split                     x    istr('1 2').split() ==> (istr('1'), istr('2'))
+                     string format             x    f"|{istr(1234):6}|" ==> '|1234  |'
+                     other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
                                istr('aAbBcC').islower() ==> False
                                istr('  abc   ').strip() ==> istr('abc')
                                ...

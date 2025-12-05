@@ -761,6 +761,24 @@ def test_all_distinct():
     assert istr("").all_distinct()
 
 
+def test_is_consecutive():
+    assert not istr('').is_consecutive()    
+    assert not istr(1).is_consecutive()    
+    assert istr('abc').is_consecutive()    
+    assert not istr(321).is_consecutive()                         
+    assert not istr(11111).is_consecutive() 
+    assert istr.is_consecutive(123)    
+
+def test_is_triangular():
+    assert istr(1).is_triangular()
+    assert not istr(5).is_triangular()
+    assert not istr(0).is_triangular()
+    assert not istr(-1).is_triangular()
+    assert istr(6).is_triangular()
+    assert istr(424581).is_triangular()
+    assert not istr(424582).is_triangular()
+    assert istr.is_triangular(424581)    
+
 def test_prod():
     assert istr.prod(range(1, 5)).equals(istr(24))
     assert istr.prod((1, 2, 3), start=4).equals(istr(24))
@@ -819,6 +837,7 @@ def test_compose():
     x = 1
     y = "2"
     z = istr(3)
+
     assert istr.compose("xyz").equals(istr(123))
     with pytest.raises(ValueError):
         istr.compose("wxyz")  # w is not defined
@@ -837,7 +856,10 @@ def test_compose():
     assert istr(":=xyz").equals(istr(123))
     assert xyz.equals(istr(123))
 
-
+    assert istr(":=")==":="
+    assert istr("=")=="="
+        
+    
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
 

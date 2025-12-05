@@ -1,5 +1,16 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.12 | 2025-12-05
+- Introduced `is_consecutive()`
+  This method checks whether all (string) elements of an istr are consecutive (distance 1):
+  `istr(123).is_consecutive()` is True, whereas `istr(124).is_consecutive()` is False.
+  Note that this method can also be used for non istr-s, like `istr.is_consecutive(123)`
+
+- Introduced `is_triangular()`
+  This method checks whether a number is a triangular number:
+  `istr(6).is_triangular()` is True, whereas `istr(7).is_triangular()` is False.
+  Note that this method can also be used for non istr-s, like `istr.is_triangular(6)`
+
 #### version 1.1.11 | 2025-11-15
 - A new way to compose an istr from global one-letter variables is introduced: by starting a string with := as an argument to istr, the rest of the argument will be used to compose the istr from the one-letter variables, just like when the string started with =.
   But, now, the evaluated will also be assigned to a variable composed of the names of the one-letter variables. E.g.
