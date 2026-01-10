@@ -1,15 +1,55 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.16  2026-01-10
+
+- introduced `istr.power_ofs`, which can be used to get all numbers up to a given upperbound or between a given lowerbound and upperbound that are a power of a given number, like
+  `istr.power_ofs (4, 100)`  returns `[istr('0'), istr('1'), istr('16'), istr('81')]`
+
+- `istr.squares` and `istr.cubes` now delegate to `istr.power_ofs` 
+
+- `istr.primes`, `istr.squares`, `istr.cubes` and `istr.power_ofs` now have a keyword argument cache, which is True by default. If False, the result is not cached.
+
+- `istr.primes`, `istr.squares`, `istr.cubes` and `istr.power_ofs` now have a non inclusive upper bound (in line with Python's common behaviour),
+
+  ```
+  istr.squares(16) ==> [istr('0'), istr('1'), istr('4'), istr('9')]  # 16 is excluded
+  ```
+
+- `istr.is_divisible_by` now correctly returns False if called with a 0 as divisor.
+
+- error message for `istr.compose` and `istr.decompose` improved.
+
+#### version 1.1.15  2026-01-06
+
+- `istr.squares`, `istr.cubes` and `istr.primes` now caches the result, so it's no problem to call multiple times.
+
+#### version 1.1.14  2026-01-05
+
+- `istr.is_square`, `istr.is_cube` and `istr.is_prime` now uses a (once) precomputed set for numbers <=1_000_000, thus improving performance in many cases.
+- Introduced `istr.squares` , `istr.cubes` and `istr.primes` .to get all squares, cubes or primes up to a given upperbound or between a given lowerbound and upperbound:
+  `istr.squares (100)` returns a list of all squares <=100
+  `istr.squares(50, 100)` return a list of all squares >=50 and <=100
+  The same functionality is available for cubes and primes 
+
+#### version 1.1.13  2026-01-04
+
+- `istr.join` may now also be used as a class method, like
+  `istr.join(("1", "2", "3"))` ==> `istr("123")` (`""` is applied as separator)
+
+  `istr.join("0", ("1", "2", "3"))` ==> `istr("10203")`)
+
+- Tests for this new functionality have been added.
+
 #### version 1.1.12 | 2025-12-05
 - Introduced `is_consecutive()`
   This method checks whether all (string) elements of an istr are consecutive (distance 1):
   `istr(123).is_consecutive()` is True, whereas `istr(124).is_consecutive()` is False.
-  Note that this method can also be used for non istr-s, like `istr.is_consecutive(123)`
+  Note that this method can also be used for non-istr-s, like `istr.is_consecutive(123)`
 
 - Introduced `is_triangular()`
   This method checks whether a number is a triangular number:
   `istr(6).is_triangular()` is True, whereas `istr(7).is_triangular()` is False.
-  Note that this method can also be used for non istr-s, like `istr.is_triangular(6)`
+  Note that this method can also be used for non-istr-s, like `istr.is_triangular(6)`
 
 #### version 1.1.11 | 2025-11-15
 - A new way to compose an istr from global one-letter variables is introduced: by starting a string with := as an argument to istr, the rest of the argument will be used to compose the istr from the one-letter variables, just like when the string started with =.

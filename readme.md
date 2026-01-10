@@ -499,7 +499,17 @@ istr('0') a
 istr('1') b
 istr('2') c
 ```
+#### join with istrs
+
+`istr.join` can be used just like `str.join`. The result will be an istr.
+
+On top of that, `istr.join` may be used as a class method, like
+
+- `istr.join(("1", "2", "3"))` ==> `istr("123")` (`""` is applied as separator)
+- `istr.join("0", ("1", "2", "3"))` ==> `istr("10203")`)
+
 #### itertools with istrs
+
 All methods in itertools are also available directly from istr.
 Note that the result is istr-ed (apart from groupby and tee).
 
@@ -583,6 +593,17 @@ Thus, `istr.sumprod("12", (3,4))` is `istr(11)`
 In contrast to `math.sumprod()`, `istr.sumprod()` supports a `strict` parameter (True by default)
 Thus, `istr.sumprod("12", (3,4,5), strict=False)` is `istr(11)`, whereas `istr.sumprod("12", (3,4,5))` 
 raises a ValueError. 
+
+#### get all squares, cubes, power ofs or primes in a given range
+
+The class methods `istr.squares`, `istr.cubes` and `istr.primes` can be used to get a list of all squares, cubes or primes up to a given upperbound (non inclusive) or between a given lowerbound and upperbound (non inclusive), like:
+
+`istr.squares (100)` returns a list of all squares <100
+`istr.squares(50, 100)` return a list of all squares >=50 and <100
+
+Unless `cache=False` is specified, the result of the query is cached.
+
+The same functionality is available for cubes, power ofs and primes 
 
 #### generate istr with digits
 

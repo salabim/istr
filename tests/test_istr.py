@@ -8,7 +8,7 @@ if __name__ == "__main__":  # to make the tests run without the pytest cli
     import os, sys  # three lines to use the local package and chdir
 
     os.chdir(os.path.dirname(__file__))
-    sys.path.insert(0, os.path.dirname(__file__) + "/../" + os.path.dirname(__file__).split(os.sep)[-2])
+    sys.path.insert(0, os.path.dirname(__file__) + "/../")
 
 import pytest
 
@@ -187,8 +187,8 @@ def test_range():
 
     with pytest.raises(IndexError):
         one_to_twelve[12]
-        
-    assert str(list(istr.range(5, base=2, repr_mode='str'))) == "['0', '1', '10', '11', '100']"
+
+    assert str(list(istr.range(5, base=2, repr_mode="str"))) == "['0', '1', '10', '11', '100']"
 
 
 def test_misc():
@@ -358,6 +358,9 @@ def test_is_square():
     assert not istr.is_square(2)
     assert istr.is_square(4)
     assert istr.is_square(16)
+    assert istr.is_square(1_000_000)
+    assert istr.is_square(12345**2)
+    assert not istr.is_square(12345**2 + 1)
 
 
 def test_is_cube():
@@ -375,6 +378,8 @@ def test_is_cube():
     assert not istr.is_cube(2)
     assert istr.is_cube(8)
     assert istr.is_cube(27)
+    assert istr.is_cube(12345**3)
+    assert not istr.is_cube(12345**3 + 1)
 
 
 def test_is_power_of():
@@ -415,6 +420,32 @@ def test_is_prime():
     assert not istr.is_prime(4)
     assert istr.is_prime(97)
     assert not istr.is_prime(99)
+    assert not istr(100000003).is_prime()
+    assert istr(100000007).is_prime()
+
+
+def test_primes():
+    assert istr.primes(17) == [istr("2"), istr("3"), istr("5"), istr("7"), istr("11"), istr("13")]
+    assert istr.primes(40, 50) == [istr("41"), istr("43"), istr("47")]
+    assert id(istr.primes(100)) == id(istr.primes(100))  # test caching
+
+
+def test_squares():
+    assert istr.squares(50) == [istr("0"), istr("1"), istr("4"), istr("9"), istr("16"), istr("25"), istr("36"), istr("49")]
+    assert istr.squares(40, 50) == [istr("49")]
+    assert id(istr.squares(100)) == id(istr.squares(100))  # test caching
+
+
+def test_cubes():
+    assert istr.cubes(50) == [istr("0"), istr("1"), istr("8"), istr("27")]
+    assert istr.cubes(27, 50) == [istr("27")]
+    assert id(istr.cubes(100)) == id(istr.cubes(100))  # test caching
+
+def test_power_ofs():
+    assert istr.power_ofs(3,1,50) == [istr("1"), istr("8"), istr("27")]
+    assert istr.power_ofs(5,1, 500) == [istr('1'), istr('32'), istr('243')]
+    assert id(istr.power_ofs(3,2000)) != id(istr.cubes(3,2000))  # test caching
+    assert id(istr.power_ofs(3,1000,cache=False)) != id(istr.cubes(3,1000,cache=False))  # test caching
 
 
 def test_join():
@@ -436,6 +467,24 @@ def test_join():
     assert s == "6"
     assert s == 6
     assert type(s) is istr.type
+
+    s = istr.join("123")
+    assert s == "123"
+    assert type(s) is istr.type
+
+    s = istr.join(("1", "2", "3"))
+    assert s == "123"
+    assert type(s) is istr.type
+
+    s = istr.join(", ", ("1", "2", "3"))
+    assert s == "1, 2, 3"
+    assert type(s) is istr.type
+
+    with pytest.raises(TypeError):
+        istr.join(12)
+
+    with pytest.raises(TypeError):
+        istr.join("a", 12)
 
 
 def test_or():
@@ -678,20 +727,22 @@ def test_base():
         assert istr(a, base=36) == "73"
         assert istr(x) == "?"
         assert istr(x, base=36) == "?"
-        
+
+
 def test_this_queries():
     a = istr(12, base=36, int_format="04", repr_mode="str")
-    assert repr(a)=="'C'"
-    assert a.this_base()==36
-    assert a.this_int_format()=='04'
-    assert a.this_repr_mode()=='str'
+    assert repr(a) == "'C'"
+    assert a.this_base() == 36
+    assert a.this_int_format() == "04"
+    assert a.this_repr_mode() == "str"
 
     a = istr(12, int_format="04", repr_mode="str")
-    assert repr(a)=="'0012'"
-    assert a.this_base()==10
-    assert a.this_int_format()=='04'
-    assert a.this_repr_mode()=='str'
-    
+    assert repr(a) == "'0012'"
+    assert a.this_base() == 10
+    assert a.this_int_format() == "04"
+    assert a.this_repr_mode() == "str"
+
+
 def test_digits():
     assert istr.digits().equals(istr("0123456789"))
     assert istr.digits("").equals(istr("0123456789"))
@@ -762,12 +813,13 @@ def test_all_distinct():
 
 
 def test_is_consecutive():
-    assert not istr('').is_consecutive()    
-    assert not istr(1).is_consecutive()    
-    assert istr('abc').is_consecutive()    
-    assert not istr(321).is_consecutive()                         
-    assert not istr(11111).is_consecutive() 
-    assert istr.is_consecutive(123)    
+    assert not istr("").is_consecutive()
+    assert not istr(1).is_consecutive()
+    assert istr("abc").is_consecutive()
+    assert not istr(321).is_consecutive()
+    assert not istr(11111).is_consecutive()
+    assert istr.is_consecutive(123)
+
 
 def test_is_triangular():
     assert istr(1).is_triangular()
@@ -777,7 +829,8 @@ def test_is_triangular():
     assert istr(6).is_triangular()
     assert istr(424581).is_triangular()
     assert not istr(424582).is_triangular()
-    assert istr.is_triangular(424581)    
+    assert istr.is_triangular(424581)
+
 
 def test_prod():
     assert istr.prod(range(1, 5)).equals(istr(24))
@@ -847,7 +900,7 @@ def test_compose():
     assert istr("=") == "="
 
     assert istr(["=xyz", "=y"]) == [istr(123), istr(2)]
- 
+
     assert istr(dict(xyz="=xyz", y="=y")) == {"xyz": istr(123), "y": istr(2)}
     assert istr(dict(xyz="=xyz", y="=y"), namespace=dict(x=3, y=4, z="z")) == {"xyz": istr("34z"), "y": istr(4)}
 
@@ -856,10 +909,10 @@ def test_compose():
     assert istr(":=xyz").equals(istr(123))
     assert xyz.equals(istr(123))
 
-    assert istr(":=")==":="
-    assert istr("=")=="="
-        
-    
+    assert istr(":=") == ":="
+    assert istr("=") == "="
+
+
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
 
