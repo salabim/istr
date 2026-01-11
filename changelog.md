@@ -1,5 +1,9 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.17  2026-01-11
+
+- some internal changes and added tests
+  
 #### version 1.1.16  2026-01-10
 
 - introduced `istr.power_ofs`, which can be used to get all numbers up to a given upperbound or between a given lowerbound and upperbound that are a power of a given number, like

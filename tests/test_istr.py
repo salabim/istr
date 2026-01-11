@@ -441,11 +441,16 @@ def test_cubes():
     assert istr.cubes(27, 50) == [istr("27")]
     assert id(istr.cubes(100)) == id(istr.cubes(100))  # test caching
 
+
 def test_power_ofs():
-    assert istr.power_ofs(3,1,50) == [istr("1"), istr("8"), istr("27")]
-    assert istr.power_ofs(5,1, 500) == [istr('1'), istr('32'), istr('243')]
-    assert id(istr.power_ofs(3,2000)) != id(istr.cubes(3,2000))  # test caching
-    assert id(istr.power_ofs(3,1000,cache=False)) != id(istr.cubes(3,1000,cache=False))  # test caching
+    assert istr.power_ofs(0, 1, 5) == [istr("1")]
+    assert istr.power_ofs(0, 1) == []
+    assert istr.power_ofs(1, -1, 5) == [istr("0"), istr("1"), istr("2"), istr("3"), istr("4")]
+    assert istr.power_ofs(1, 0) == []
+    assert istr.power_ofs(3, 1, 50) == [istr("1"), istr("8"), istr("27")]
+    assert istr.power_ofs(5, 1, 500) == [istr("1"), istr("32"), istr("243")]
+    assert id(istr.power_ofs(3, 2000)) != id(istr.cubes(3, 2000))  # test caching
+    assert id(istr.power_ofs(3, 1000, cache=False)) != id(istr.cubes(3, 1000, cache=False))  # test caching
 
 
 def test_join():

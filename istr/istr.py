@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.16"
+__version__ = "1.1.17"
 import functools
 import itertools
 import types
@@ -193,7 +193,7 @@ class istr(str):
     Parameters
     ----------
     value : any
-        if str the value will to be interpreted as an int
+        if str, the value will to be interpreted as an int
             istr('8') ==> istr('8')
         if numeric, the value will be interpreted as an int
             istr(8) ==> istr('8')
@@ -296,12 +296,13 @@ class istr(str):
 
         self = super().__new__(cls, as_str)
         self._as_int = as_int
-        if repr_mode == "istr":
-            self._as_repr = f"{cls.__name__}({repr(as_str)})"
-        elif repr_mode == "int":
-            self._as_repr = "?" if as_int is self._nan else repr(as_int)
-        else:
-            self._as_repr = repr(as_str)
+        match repr_mode:
+            case "istr":
+                self._as_repr = f"{cls.__name__}({repr(as_str)})"
+            case "int":
+                self._as_repr = "?" if as_int is self._nan else repr(as_int)
+            case _:
+                self._as_repr = repr(as_str)
         self._this_base = base
         self._this_int_format = int_format
         self._this_repr_mode = repr_mode
@@ -397,38 +398,39 @@ class istr(str):
         return not istr.is_divisible_by(self, 2)
 
     def is_divisible_by(self, divisor):
-        return divisor!=0 and istr.interpret_as_int(self) % int(divisor) == 0
+        return divisor != 0 and istr.interpret_as_int(self) % int(divisor) == 0
 
     def is_square(self):
-        n = istr.interpret_as_int(self)
-        if n < 1000000:
-            return n in _squares_up_to_1_000_000()
-        return n == round(n ** (1 / 2)) ** 2
+        return istr.is_power_of(self, 2)
 
     def is_cube(self):
-        n = istr.interpret_as_int(self)
-        if n < 1000000:
-            return n in _cubes_up_to_1_000_000()
-        return n == round(n ** (1 / 3)) ** 3
+        return istr.is_power_of(self, 3)
 
     def is_power_of(self, exponent):
         n = istr.interpret_as_int(self)
-        if exponent < 1:
-            raise ValueError(f"exponent must be >=1; not {exponent}")
-        if not isinstance(exponent, int):
-            raise TypeError(f"exponent must be int; not {type(exponent)}")
+        match exponent:
+            case 2:
+                if n < 1000000:
+                    return n in _squares_up_to_1_000_000()
+            case 3:
+                if n < 1000000:
+                    return n in _cubes_up_to_1_000_000()
+            case 0:
+                return n == 1
+            case _ if exponent < 0:
+                raise ValueError(f"exponent must be >=1; not {exponent}")
+            case _ if not isinstance(exponent, int):
+                raise TypeError(f"exponent must be int; not {type(exponent)}")
         return n >= 0 and n == round(n ** (1 / exponent)) ** exponent
 
     def is_prime(self):
         n = istr.interpret_as_int(self)
-        if n < 2:
-            return False
-        if n == 2:
-            return True
-        if not n & 1:
-            return False
         if n < 1000000:
             return n in _primes_up_to_1_000_000()
+
+        if not n & 1:
+            return False
+
         for x in range(3, int(n**0.5) + 1, 2):
             if n % x == 0:
                 return False
@@ -441,35 +443,33 @@ class istr(str):
         """
         if ("primes", lb_or_ub, ub) in _cache:
             return _cache["primes", lb_or_ub, ub]
-        result = sorted(map(cls, _primes(lb_or_ub, ub)))
+        result = list(map(cls, _primes(lb_or_ub, ub)))
         if cache:
-            _cache["primes", lb_or_ub, ub]=result
-        return result 
+            _cache["primes", lb_or_ub, ub] = result
+        return result
 
     @classmethod
     def squares(cls, lb_or_ub, ub=None, cache=True):
         """
         returns all squares up to a given upperbound or between a given lowerbound and upperbound
         """
-        return istr.power_ofs(2,lb_or_ub, ub, cache=cache)
+        return istr.power_ofs(2, lb_or_ub, ub, cache=cache)
 
     @classmethod
     def cubes(cls, lb_or_ub, ub=None, cache=True):
-        return istr.power_ofs(3,lb_or_ub, ub, cache=cache)
+        return istr.power_ofs(3, lb_or_ub, ub, cache=cache)
 
     @classmethod
-    def power_ofs(cls, n,lb_or_ub, ub=None, cache=True):
+    def power_ofs(cls, n, lb_or_ub, ub=None, cache=True):
         """
         returns all power of n up to a given upperbound or between a given lowerbound and upperbound
         """
         if ("power_ofs", n, lb_or_ub, ub) in _cache:
             return _cache["power_ofs", n, lb_or_ub, ub]
-        result = sorted(map(cls, _power_ofs(n,lb_or_ub, ub)))
+        result = list(map(cls, _power_ofs(n, lb_or_ub, ub)))
         if cache:
-            _cache["power_ofs", n, lb_or_ub, ub]=result
-        return result         
-
-
+            _cache["power_ofs", n, lb_or_ub, ub] = result
+        return result
 
     def decompose(self, letters, namespace=None):
         """
@@ -796,51 +796,61 @@ def _map(func, *iterables, strict=False):
 
         yield func(*values)
 
-_cache={}
+
+_cache = {}
+
 
 def _primes(lb_or_ub, ub=None):
     lb, ub = (0, lb_or_ub) if ub is None else (lb_or_ub, ub)
+    if lb < 0:
+        lb = 0
     sieve = bytearray(b"\x01") * (ub + 1)
     sieve[0:2] = b"\x00\x00"
 
-    for i in range(2, int(ub**0.5)+1 ):
+    for i in range(2, int(ub**0.5) + 1):
         if sieve[i]:
             sieve[i * i : ub + 1 : i] = b"\x00" * (((ub - i * i) // i) + 1)
 
-    return {i for i, is_prime in enumerate(sieve) if is_prime and lb<=i<ub}
+    return [i for i, is_prime in enumerate(sieve) if is_prime and lb <= i < ub]
 
 
 @functools.lru_cache(maxsize=1)
 def _primes_up_to_1_000_000():
-    return _primes(1000000)
+    return set(_primes(1000000))
 
 
 @functools.lru_cache(maxsize=1)
 def _squares_up_to_1_000_000():
-    return _power_ofs(2,1000000)
+    return set(_power_ofs(2, 1000000))
+
 
 @functools.lru_cache(maxsize=1)
 def _cubes_up_to_1_000_000():
-    return _power_ofs(3,1000000)
+    return set(_power_ofs(3, 1000000))
 
 
 def _power_ofs(n, lb_or_ub, ub=None):
     lb, ub = (0, lb_or_ub) if ub is None else (lb_or_ub, ub)
-    result = set()
-    if n==0:
-        if lb<=1<ub:
-            result.add(1)
-    elif n==1:
-        result={*range(lb,ub)}
-    else:
-        i = int(lb ** (1 / n))
-        while (in_ := i**n) < ub:
-            if in_ >= lb:
-                result.add(in_)
-            i += 1
+    if lb < 0:
+        lb = 0
+    result = []
+    match n:
+        case 0:
+            if lb <= 1 < ub:
+                result.append(1)
+        case 1:
+            result = {*range(lb, ub)}
+        case _:
+            i = int(lb ** (1 / n))
+            while (i_n := i**n) < ub:
+                if i_n >= lb:
+                    result.append(i_n)
+                i += 1
     return result
 
+
 istr.type = type(istr(0))
+
 
 class istrModule(types.ModuleType):
     def __call__(self, *args, **kwargs):
@@ -853,6 +863,6 @@ class istrModule(types.ModuleType):
         return getattr(istr, item)
 
 
-if __name__ != "__main__":
+if __name__ != "__mai_n_":
     sys.modules["istr"].__class__ = istrModule
 

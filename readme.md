@@ -680,17 +680,16 @@ Composing can also be done by prefixing a string with '=', like:
 ```
 xyz = istr("=xyz")
 print(f"{xyx=}")  # ==> will print xyz=396
-
+```
 Note that `str(istr("="))` is "=".
 
 Composing and assignment can be done by prefixing a string with ':=', like:
 
 ```
 if istr(":=xyz") > 300:
-	print(f"{xyx=}")  # ==> will print xyz=396
-	
-Note that `str(istr(":="))` is ":=" and does not assign the value to a variable.
+	print(f"{xyz=}")  # ==> will print xyz=396
 ```
+Note that `str(istr(":="))` is ":=" and does not assign any value.
 
 Usually, composing and decomposing uses the globals namespace, but this can be overridden with the namespace parameter. See the test suite for details.
 
