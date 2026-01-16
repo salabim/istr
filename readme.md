@@ -374,6 +374,15 @@ It is also possible to test for divisibility of an ordinary int:
 istr.is_divisible(18, 3) ==> True
 istr.is_divisible(19, 3) ==> False
 ```
+The method `divided_by` not only tests divisibility, but also returns the result of the division. If not possible, None will be returned.
+```
+istr(18).divided_by(3) ==> 6 (actually istr("6"))
+istr(18).divided_by(istr(3)) ==> 6
+istr(19).divided_by(3) ==> None
+istr(19).divided_by(istr(3)) ==> None
+istr.divided_by(18, 3) ==>  6
+istr.divided_by(19, 3) ==>  None
+```
 #### test for square
 
 It is possible to test whether the value is a perfect square (provided the istr can be interpreted as an int) with the `is_square` method, e.g.

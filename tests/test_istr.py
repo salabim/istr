@@ -343,6 +343,17 @@ def test_is_divisible_by():
     assert not istr.is_divisible_by(19, 3)
 
 
+def test_divided_by():
+    assert istr(18).divided_by(3).equals(istr(6))
+    assert istr(18).divided_by(istr(3)).equals(istr(6))
+    assert istr(19).divided_by(3) is None
+    assert istr(19).divided_by(istr(3)) is None
+    with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
+        istr("a").divided_by(3)
+    assert istr.divided_by(18, 3).equals(istr(6))
+    assert istr.divided_by(19, 3) is None
+
+
 def test_is_square():
     assert not istr(-1).is_square()
     assert istr(0).is_square()

@@ -1,5 +1,16 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.18  2026-01-16
+
+- introduced `istr.divided_by`, which will return None if not divisible by the given divisor, otherwise the result of the division. Example:
+  
+  ```
+  istr(18).divided_by(3) ==> 6
+  istr(19).divided_by(3) ==> None
+  ```
+  
+  So, it combines `is_divisible_by` and the actual division.
+  
 #### version 1.1.17  2026-01-11
 
 - some internal changes and added tests
