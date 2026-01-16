@@ -1,5 +1,14 @@
 ## changelog of istr | strings you can count on |
 
+#### version 1.1.19  2026-01-17
+
+- `istr.divided_by`has a new parameter, *fallback* which will be retured if the (integer) division is not possible. The default is None.
+  
+  ```
+  istr(19).divided_by(3) ==> None
+  istr(19).divided_by(3, 0) ==> 0
+  ```
+  
 #### version 1.1.18  2026-01-16
 
 - introduced `istr.divided_by`, which will return None if not divisible by the given divisor, otherwise the result of the division. Example:

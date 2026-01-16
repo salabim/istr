@@ -374,14 +374,18 @@ It is also possible to test for divisibility of an ordinary int:
 istr.is_divisible(18, 3) ==> True
 istr.is_divisible(19, 3) ==> False
 ```
-The method `divided_by` not only tests divisibility, but also returns the result of the division. If not possible, None will be returned.
+The method `divided_by` not only tests divisibility, but also returns the result of the division. If not possible, None will be returned,
+unless the *fallback* (last argument) is given, in which case *fallback* will be returned.
 ```
 istr(18).divided_by(3) ==> 6 (actually istr("6"))
 istr(18).divided_by(istr(3)) ==> 6
 istr(19).divided_by(3) ==> None
+istr(19).divided_by(3, 0) ==> 
+istr(19).divided_by(3) ==> None
 istr(19).divided_by(istr(3)) ==> None
 istr.divided_by(18, 3) ==>  6
 istr.divided_by(19, 3) ==>  None
+istr.divided_by(19, 3, 0) ==>  0
 ```
 #### test for square
 

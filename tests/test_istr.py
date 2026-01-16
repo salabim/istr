@@ -352,6 +352,10 @@ def test_divided_by():
         istr("a").divided_by(3)
     assert istr.divided_by(18, 3).equals(istr(6))
     assert istr.divided_by(19, 3) is None
+    assert istr.divided_by(18, 3, 0).equals(istr(6))
+    assert istr.divided_by(19, 3, 0)==0
+    assert istr.divided_by(4,0) is None
+    assert istr.divided_by(4,0,0) == 0
 
 
 def test_is_square():

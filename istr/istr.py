@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.18"
+__version__ = "1.1.19"
 import functools
 import itertools
 import types
@@ -400,11 +400,11 @@ class istr(str):
     def is_divisible_by(self, divisor):
         return istr.divided_by(self, divisor) is not None
 
-    def divided_by(self, divisor):
+    def divided_by(self, divisor, fallback=None):
         if divisor == 0:
-            return None
+            return fallback
         quotient, remainder = divmod(istr.interpret_as_int(self), int(divisor))
-        return istr(quotient) if remainder == 0 else None
+        return istr(quotient) if remainder == 0 else fallback
 
     def is_square(self):
         return istr.is_power_of(self, 2)
