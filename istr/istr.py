@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.19"
+__version__ = "1.1.22"
 import functools
 import itertools
 import types
@@ -279,6 +279,8 @@ class istr(str):
         if isinstance(value, str) and value.startswith(":=") and value != ":=":
             var_name = value[2:]
             value = str(cls.compose(value[2:], namespace=namespace))
+            if not var_name.isidentifier():
+                raise ValueError(f"{var_name!r} is not a valid identifier")
             namespace[var_name] = cls(value)
         as_int = cls._to_int(value, base)
         if isinstance(value, str):
@@ -414,21 +416,33 @@ class istr(str):
 
     def is_power_of(self, exponent):
         n = istr.interpret_as_int(self)
+        if isinstance(exponent, istr):
+            exponent = int(exponent)
+        if n < 0:
+            if exponent % 2 == 0:
+                return False
+            else:
+                n = -n
         match exponent:
+            case 0:
+                return n == 1
+            case 1:
+                return True
             case 2:
                 if n < 1000000:
                     return n in _squares_up_to_1_000_000()
             case 3:
-                if n < 1000000:
-                    return n in _cubes_up_to_1_000_000()
-            case 0:
-                return n == 1
+                if abs(n) < 1000000:
+                    return abs(n) in _cubes_up_to_1_000_000()
             case _ if exponent < 0:
                 raise ValueError(f"exponent must be >=1; not {exponent}")
             case _ if not isinstance(exponent, int):
                 raise TypeError(f"exponent must be int; not {type(exponent)}")
-        return n >= 0 and n == round(n ** (1 / exponent)) ** exponent
+            case _:
+                ...
 
+        return n == round(n ** (1 / exponent)) ** exponent
+    
     def is_prime(self):
         n = istr.interpret_as_int(self)
         if n < 1000000:
@@ -459,11 +473,11 @@ class istr(str):
         """
         returns all squares up to a given upperbound or between a given lowerbound and upperbound
         """
-        return istr.power_ofs(2, lb_or_ub, ub, cache=cache)
+        return cls.power_ofs(2, lb_or_ub, ub, cache=cache)
 
     @classmethod
     def cubes(cls, lb_or_ub, ub=None, cache=True):
-        return istr.power_ofs(3, lb_or_ub, ub, cache=cache)
+        return cls.power_ofs(3, lb_or_ub, ub, cache=cache)
 
     @classmethod
     def power_ofs(cls, n, lb_or_ub, ub=None, cache=True):
@@ -505,11 +519,12 @@ class istr(str):
         """
         if namespace is None:
             namespace = inspect.currentframe().f_back.f_globals
+        namespace |= {ch: ch for ch in "0123456789"}
         for letter in letters:
             if letter not in namespace:
                 raise ValueError(f"variable {repr(letter)} not defined")
         s = "".join(str(namespace[letter]) for letter in letters)
-        return istr(s)
+        return cls(s)
 
     def __or__(self, other):
         try:
@@ -595,18 +610,16 @@ class istr(str):
 
     def join(self, iterable=None):
         if isinstance(self, istr):
-            return istr(str(self).join(iterable))
-        else:
-            if iterable is None:
-                return istr("").join(self)
-            else:
-                if not isinstance(self, str):
-                    raise TypeError(f"{self!r} should be str, not {type(self)}")
-                return istr(self).join(iterable)
+            return self.__class__(str(self).join(iterable))
+        if iterable is None:
+            return istr("").join(self)
+        if not isinstance(self, str):
+            raise TypeError(f"{self!r} should be str, not {type(self)}")
+        return istr(self).join(iterable)
 
     @classmethod
     def concat(cls, iterable):
-        return map(lambda x: istr("").join(x), istr(iterable))
+        return map(lambda x: cls("").join(x), cls(iterable))
 
     def prod(self, *, start=1):
         return math.prod(self, start=istr(start))
@@ -614,7 +627,7 @@ class istr(str):
     @classmethod
     def sumprod(cls, p, q, /, strict=True):
         if "sumprod" in math.__dict__ and strict:
-            return istr(math.sumprod(p, q))
+            return cls(math.sumprod(p, q))
         return sum(_map(operator.__mul__, cls(p), cls(q), strict=strict))
 
     @classmethod
@@ -763,7 +776,7 @@ class istr(str):
                 stop = start
             result.extend(_0_to_Z[i] for i in range(start, stop + 1))
 
-        result = istr("".join(result))
+        result = cls("".join(result))
         cls._digits_cache[key] = result
         return result
 
@@ -837,21 +850,28 @@ def _cubes_up_to_1_000_000():
 
 def _power_ofs(n, lb_or_ub, ub=None):
     lb, ub = (0, lb_or_ub) if ub is None else (lb_or_ub, ub)
-    if lb < 0:
-        lb = 0
-    result = []
+    if n % 2 == 0:
+        lb = max(0, lb)
+
     match n:
         case 0:
             if lb <= 1 < ub:
-                result.append(1)
+                result=[1]
+            else:
+                result=[]
         case 1:
-            result = {*range(lb, ub)}
+            result = [*range(lb, ub)]
         case _:
-            i = int(lb ** (1 / n))
+            result = []            
+            if lb < 0:  # can't be the case for even n (because of above limiting)
+                i = -int((-lb) ** (1 / n))
+            else:
+                i = int(lb ** (1 / n))
             while (i_n := i**n) < ub:
                 if i_n >= lb:
                     result.append(i_n)
                 i += 1
+
     return result
 
 

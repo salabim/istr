@@ -4,8 +4,14 @@
 
 The `istr` module makes it possible to use strings as if they were integers.
 
-This can be very handy for solving puzzles, but also for other purposes.
-For instance the famous send more money puzzle, where each letter has to be replaced by a unique digit (0-9)
+### Changelog
+
+For the changelog, see www.salabim.org/istr/changelog .
+
+### Background
+
+Using strings as if they were integers can be very handy for solving puzzles, but also for other purposes.
+For instance, the famous send more money puzzle, where each letter has to be replaced by a unique digit (0-9)
 
 ```
   S E N D
@@ -44,10 +50,10 @@ Of, if we want to add all the digits in a string:
 sum_digits = sum(istr('9282334'))  # answer 31
 ```
 
-The module is a demonstration of extending a class (str) with additional and modified functionality.
+The module is also a demonstration of extending a class (str) with additional and modified functionality.
 
 ### Installation
-Installing istr with pip is easy.
+Installing `istr` with pip is easy.
 ```
 pip install istr-python
 ```
@@ -677,22 +683,25 @@ To decompose an istr into individual variables, it is arguably easier and safer 
 a, b, c = istr(485)
 ```
 
-With `istr.compose()`, an istr can be constructed from individual (global) variables.
+With `istr.compose()`, an istr can be constructed from individual (global) variables and digits.
 E.g.
 
 ```
 x = 3
 y = 9
 z = 6
-test = istr.compose("xyz")
+test1 = istr.compose("xyz")
+test2 = istr.compose("xyz0")
 ```
-Now, `test` will be `istr(396)` .
+Now, `test1` will be `istr(396)` and `test2` will be `istr(3960)`.
 
 Composing can also be done by prefixing a string with '=', like:
 
 ```
-xyz = istr("=xyz")
-print(f"{xyx=}")  # ==> will print xyz=396
+test1 = istr("=xyz")
+test2 = istr("=xyz0")
+
+Now, `test1` will be `istr(396)` and `test2` will be `istr(3960)`.
 ```
 Note that `str(istr("="))` is "=".
 

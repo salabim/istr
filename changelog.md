@@ -1,5 +1,40 @@
 ## changelog of istr | strings you can count on |
 
+#### For the full documentation, see www.salabim.org/istr .
+
+#### version 1.1.22 2026-01-23
+
+- Python 3.10 is now a minimum requirement (because match/case statements are now used).
+
+#### version 1.1.21 2026-01-21
+
+- `istr.power_ofs` now correctly supports negative lower and upper bounds.
+- `istr.is_power_of` now correctly supports negative values.
+
+#### version 1.1.20 2026-01-20
+
+- `istr.compose` now als accepts digits. So
+  
+  ```
+  a=1
+  b=2
+  print(istr.compose('ab3'))
+  print(istr('=a9'))
+  print(istr('=9a'))
+  print(istr(':=a9'))
+  print(a9)
+  print(istr(':=9a'))
+  ```
+  will print
+  ```
+  123
+  19
+  91
+  19
+  19
+  ValueError: '9a' is not a valid identifier
+  ```
+
 #### version 1.1.19  2026-01-17
 
 - `istr.divided_by`has a new parameter, *fallback* which will be retured if the (integer) division is not possible. The default is None.
@@ -45,7 +80,7 @@
 
 #### version 1.1.15  2026-01-06
 
-- `istr.squares`, `istr.cubes` and `istr.primes` now caches the result, so it's no problem to call multiple times.
+- `istr.squares`, `istr.cubes` and `istr.primes` now caches the result, so it's no problem to call multiple times. The caching can be disabled with the `cache=False` parameter
 
 #### version 1.1.14  2026-01-05
 

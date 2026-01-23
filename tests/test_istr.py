@@ -379,7 +379,7 @@ def test_is_square():
 
 
 def test_is_cube():
-    assert not istr(-1).is_cube()
+    assert istr(-1).is_cube()
     assert istr(0).is_cube()
     assert istr(1).is_cube()
     assert not istr(2).is_cube()
@@ -398,7 +398,13 @@ def test_is_cube():
 
 
 def test_is_power_of():
-    assert not istr(-1).is_power_of(3)
+    assert istr(-1).is_power_of(1)
+    assert not istr(-1).is_power_of(2)
+    assert istr(-1).is_power_of(3)
+    assert not istr(-1).is_power_of(4)
+    assert istr(-1).is_power_of(5)
+    assert istr(12345**3).is_power_of(3)
+    assert istr(-12345**3).is_power_of(3)
     assert istr(0).is_power_of(3)
     assert istr(1).is_power_of(3)
     assert not istr(2).is_power_of(3)
@@ -416,6 +422,9 @@ def test_is_power_of():
         istr(1).is_power_of(3.1)
     with pytest.raises(ValueError):
         istr(1).is_power_of(-1)
+    assert istr(3**7).is_power_of(istr(7))
+    assert istr(10).is_power_of(1)
+    assert istr(-8).is_power_of(3)
 
 
 def test_is_prime():
@@ -460,7 +469,13 @@ def test_cubes():
 def test_power_ofs():
     assert istr.power_ofs(0, 1, 5) == [istr("1")]
     assert istr.power_ofs(0, 1) == []
-    assert istr.power_ofs(1, -1, 5) == [istr("0"), istr("1"), istr("2"), istr("3"), istr("4")]
+    assert istr.power_ofs(1, -1, 5) == [istr("-1"),istr("0"), istr("1"), istr("2"), istr("3"), istr("4")]
+    assert istr.power_ofs(2, -10, 10) == [istr("0"), istr("1"), istr("4"), istr("9")]
+    assert istr.power_ofs(3, -10, 10) == [istr("-8"), istr("-1"), istr("0"), istr("1"),istr("8")]
+    assert istr.power_ofs(3, -10, 9) == [istr("-8"), istr("-1"), istr("0"), istr("1"),istr("8")]
+    assert istr.power_ofs(3, -10, 8) == [istr("-8"), istr("-1"), istr("0"), istr("1")]
+    assert istr.power_ofs(4, -10, 10) == [istr("0"), istr("1")]
+    assert istr.power_ofs(2, 10, 0) == []
     assert istr.power_ofs(1, 0) == []
     assert istr.power_ofs(3, 1, 50) == [istr("1"), istr("8"), istr("27")]
     assert istr.power_ofs(5, 1, 500) == [istr("1"), istr("32"), istr("243")]
@@ -915,10 +930,14 @@ def test_compose():
     with pytest.raises(ValueError):
         istr.compose("wxyz")  # w is not defined
     assert istr.compose("xyz", namespace=dict(x=3, y=istr(4), z="5")).equals(istr(345))
+    assert istr.compose("xyz0").equals(istr(1230))
     assert istr("=xyz").equals(istr(123))
     assert istr("=xyz", "=x") == (istr(123), istr(1))
     assert istr("=") == "="
-
+    
+    assert istr('=09').equals(istr('09'))
+    assert istr('=x09z').equals(istr('1093'))
+    
     assert istr(["=xyz", "=y"]) == [istr(123), istr(2)]
 
     assert istr(dict(xyz="=xyz", y="=y")) == {"xyz": istr(123), "y": istr(2)}
@@ -929,6 +948,12 @@ def test_compose():
     assert istr(":=xyz").equals(istr(123))
     assert xyz.equals(istr(123))
 
+    assert istr(":=xyz0").equals(istr(1230))
+    assert xyz0.equals(istr(1230))
+    
+    with pytest.raises(ValueError, match=re.escape(f"'0xyz' is not a valid identifier")):
+        istr(":=0xyz") 
+    
     assert istr(":=") == ":="
     assert istr("=") == "="
 
