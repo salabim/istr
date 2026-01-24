@@ -482,6 +482,16 @@ def test_power_ofs():
     assert id(istr.power_ofs(3, 2000)) != id(istr.cubes(3, 2000))  # test caching
     assert id(istr.power_ofs(3, 1000, cache=False)) != id(istr.cubes(3, 1000, cache=False))  # test caching
 
+def test_in_range():
+    primes1000=istr.primes(1000)
+    n=len(primes1000)
+    assert len(primes1000)==n
+    assert istr.in_range(primes1000,0,5)==[istr('2'), istr('3')]
+    assert istr.in_range(primes1000,0,6)==[istr('2'), istr('3'),istr('5')]
+    assert istr.in_range(primes1000,3,6)==[istr('3'),istr('5')]
+    assert len(istr.in_range(primes1000,0,998))==n
+    assert len(istr.in_range(primes1000,0,997))==n-1
+    assert len(istr.in_range(primes1000,3,997))==n-2
 
 def test_join():
     s = "".join(istr(("4", "5", "6")))

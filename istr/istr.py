@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.22"
+__version__ = "1.1.23"
 import functools
 import itertools
 import types
@@ -14,6 +14,7 @@ import inspect
 import math
 import operator
 import copy
+import bisect
 
 """
 Note: the changelog is now in changelog.md
@@ -408,6 +409,63 @@ class istr(str):
         quotient, remainder = divmod(istr.interpret_as_int(self), int(divisor))
         return istr(quotient) if remainder == 0 else fallback
 
+
+    def is_prime(self):
+        n = istr.interpret_as_int(self)
+        if n < 1000000:
+            return n in istr._primes_up_to_1_000_000_as_set()
+
+        if not n & 1:
+            return False
+
+        for x in range(3, int(n**0.5) + 1, 2):
+            if n % x == 0:
+                return False
+        return True
+
+    @classmethod
+    def primes(cls, lb_or_ub, ub=None, cache=True):
+        lb, ub = (0, lb_or_ub) if ub is None else (lb_or_ub, ub)
+        if lb < 0:
+            lb = 0
+        lb = int(lb)
+        ub = int(ub)
+        """
+        returns all primes up to a given upperbound or between a given lowerbound and upperbound
+        """
+        if ("primes", lb, ub) in _cache:
+            return _cache["primes", lb, ub]
+        if ub <= 1_000_000:
+            result = in_range(cls._primes_up_to_1_000_000(), lb, ub)
+        else:
+            result = cls._primes(lb, ub)
+        if cache:
+            _cache["primes", lb, ub] = result
+        return result
+
+    @classmethod
+    def _primes(cls,lb, ub):
+        sieve = bytearray(b"\x01") * (ub + 1)
+        sieve[0:2] = b"\x00\x00"
+    
+        for i in range(2, int(ub**0.5) + 1):
+            if sieve[i]:
+                sieve[i * i : ub + 1 : i] = b"\x00" * (((ub - i * i) // i) + 1)
+    
+        return list(map(cls, ([i for i, is_prime in enumerate(sieve) if is_prime and lb <= i < ub])))
+
+
+    @classmethod
+    @functools.lru_cache
+    def _primes_up_to_1_000_000(cls):
+        return cls._primes(0, 1_000_000)
+    
+    
+    @classmethod
+    @functools.lru_cache
+    def _primes_up_to_1_000_000_as_set(cls):
+        return set(map(int, cls._primes_up_to_1_000_000()))
+
     def is_square(self):
         return istr.is_power_of(self, 2)
 
@@ -428,46 +486,16 @@ class istr(str):
                 return n == 1
             case 1:
                 return True
-            case 2:
-                if n < 1000000:
-                    return n in _squares_up_to_1_000_000()
-            case 3:
-                if abs(n) < 1000000:
-                    return abs(n) in _cubes_up_to_1_000_000()
             case _ if exponent < 0:
                 raise ValueError(f"exponent must be >=1; not {exponent}")
             case _ if not isinstance(exponent, int):
                 raise TypeError(f"exponent must be int; not {type(exponent)}")
+            case _ if n < 1000000:
+                return n in istr._power_ofs_up_to_1_000_000_as_set(exponent)
             case _:
                 ...
-
         return n == round(n ** (1 / exponent)) ** exponent
-    
-    def is_prime(self):
-        n = istr.interpret_as_int(self)
-        if n < 1000000:
-            return n in _primes_up_to_1_000_000()
-
-        if not n & 1:
-            return False
-
-        for x in range(3, int(n**0.5) + 1, 2):
-            if n % x == 0:
-                return False
-        return True
-
-    @classmethod
-    def primes(cls, lb_or_ub, ub=None, cache=True):
-        """
-        returns all primes up to a given upperbound or between a given lowerbound and upperbound
-        """
-        if ("primes", lb_or_ub, ub) in _cache:
-            return _cache["primes", lb_or_ub, ub]
-        result = list(map(cls, _primes(lb_or_ub, ub)))
-        if cache:
-            _cache["primes", lb_or_ub, ub] = result
-        return result
-
+        
     @classmethod
     def squares(cls, lb_or_ub, ub=None, cache=True):
         """
@@ -484,13 +512,55 @@ class istr(str):
         """
         returns all power of n up to a given upperbound or between a given lowerbound and upperbound
         """
-        if ("power_ofs", n, lb_or_ub, ub) in _cache:
-            return _cache["power_ofs", n, lb_or_ub, ub]
-        result = list(map(cls, _power_ofs(n, lb_or_ub, ub)))
+        lb, ub = (0, lb_or_ub) if ub is None else (lb_or_ub, ub)
+        lb = int(lb)
+        ub = int(ub)
+
+        if ("power_ofs", n, lb, ub) in _cache:
+            return _cache["power_ofs", n, lb, ub]
+        if n != 1 and (n % 2 == 0 or lb >= 0) and ub <= 1_000_000:
+            result = in_range(cls._power_ofs_up_to_1_000_000(n), lb, ub)
+        else:
+            result = cls._power_ofs(n, lb, ub)
         if cache:
-            _cache["power_ofs", n, lb_or_ub, ub] = result
+            _cache["power_ofs", n, lb, ub] = result
         return result
 
+    @classmethod
+    def _power_ofs(cls,n, lb, ub):
+        if n % 2 == 0:
+            lb = max(0, lb)
+        match n:
+            case 0:
+                if lb <= 1 < ub:
+                    result = [1]
+                else:
+                    result = []
+            case 1:
+                result = [*range(lb, ub)]
+            case _:
+                result = []
+                if lb < 0:  # can't be the case for even n (because of above limiting)
+                    i = -int((-lb) ** (1 / n))
+                else:
+                    i = int(lb ** (1 / n))
+                while (i_n := i**n) < ub:
+                    if i_n >= lb:
+                        result.append(i_n)
+                    i += 1
+    
+        return list(map(cls, result))
+    
+    @classmethod    
+    @functools.lru_cache
+    def _power_ofs_up_to_1_000_000(cls,n):
+        return cls._power_ofs(n, 0, 1_000_000)
+    
+    @classmethod    
+    @functools.lru_cache
+    def _power_ofs_up_to_1_000_000_as_set(cls,n):
+        return set(map(int, cls._power_ofs_up_to_1_000_000(n)))
+        
     def decompose(self, letters, namespace=None):
         """
         decompose one-letter variables into global variables
@@ -632,7 +702,7 @@ class istr(str):
 
     @classmethod
     def enumerate(cls, iterable, start=0):
-        for i, value in enumerate(iterable, start):
+        for i, value in enumerate(iterable, int(start)):
             yield cls(i), value
 
     def this_base(self):
@@ -819,60 +889,35 @@ def _map(func, *iterables, strict=False):
 _cache = {}
 
 
-def _primes(lb_or_ub, ub=None):
-    lb, ub = (0, lb_or_ub) if ub is None else (lb_or_ub, ub)
-    if lb < 0:
-        lb = 0
-    sieve = bytearray(b"\x01") * (ub + 1)
-    sieve[0:2] = b"\x00\x00"
+def in_range(lst, lb, ub):
+    """
+    this function will give all values of lst in the range [lb, ub)
 
-    for i in range(2, int(ub**0.5) + 1):
-        if sieve[i]:
-            sieve[i * i : ub + 1 : i] = b"\x00" * (((ub - i * i) // i) + 1)
+    Parameters
+    ----------
+    lst : list
+        must be sorted!
 
-    return [i for i, is_prime in enumerate(sieve) if is_prime and lb <= i < ub]
+    lb : int (or istr)
+        lowerbound
 
+    ub : int (or istr)
+        non inclusive upperbound
 
-@functools.lru_cache(maxsize=1)
-def _primes_up_to_1_000_000():
-    return set(_primes(1000000))
+    Returns
+    -------
+    list of all items in [lb, ub)
 
-
-@functools.lru_cache(maxsize=1)
-def _squares_up_to_1_000_000():
-    return set(_power_ofs(2, 1000000))
-
-
-@functools.lru_cache(maxsize=1)
-def _cubes_up_to_1_000_000():
-    return set(_power_ofs(3, 1000000))
-
-
-def _power_ofs(n, lb_or_ub, ub=None):
-    lb, ub = (0, lb_or_ub) if ub is None else (lb_or_ub, ub)
-    if n % 2 == 0:
-        lb = max(0, lb)
-
-    match n:
-        case 0:
-            if lb <= 1 < ub:
-                result=[1]
-            else:
-                result=[]
-        case 1:
-            result = [*range(lb, ub)]
-        case _:
-            result = []            
-            if lb < 0:  # can't be the case for even n (because of above limiting)
-                i = -int((-lb) ** (1 / n))
-            else:
-                i = int(lb ** (1 / n))
-            while (i_n := i**n) < ub:
-                if i_n >= lb:
-                    result.append(i_n)
-                i += 1
-
-    return result
+    Note
+    ----
+    Equivalent to
+    [item for item in lst if lb <= item < ub], but more efficient.
+    """
+    lb = int(lb)
+    ub = int(ub)
+    left = bisect.bisect_left(lst, lb)
+    right = bisect.bisect_left(lst, ub)
+    return lst[left:right]
 
 
 istr.type = type(istr(0))

@@ -2,9 +2,16 @@
 
 #### For the full documentation, see www.salabim.org/istr .
 
-#### version 1.1.22 2026-01-23
+#### version 1.1.23 2026-01-24
 
 - Python 3.10 is now a minimum requirement (because match/case statements are now used).
+
+- `istr.primes` did not work properly for lower or upper bounds that were an istr. Fixed.
+
+- optimized `istr,primes`, `istr.squares`, `istr.cubes` and `istr.power_ofs` for upper bounds up to 1_000_000 .
+
+- the `start` parameter of `istr.enumerate` could not be an `istr`. Fixed.
+
 
 #### version 1.1.21 2026-01-21
 
@@ -13,7 +20,7 @@
 
 #### version 1.1.20 2026-01-20
 
-- `istr.compose` now als accepts digits. So
+- `istr.compose` now also accepts digits. So
   
   ```
   a=1

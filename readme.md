@@ -352,6 +352,7 @@ to unpack multiple values, e.g.
 
   ```
 a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7') 
+a, b, c = istr(*range(3)) ==> a=istr('0') , b=istr('1'), c=istr('2') 
   ```
 #### test for even/odd
 It is possible to test for even/odd (provided the istr can be interpreted as an int) with the `is_even` and `is_odd` method, e.g.
@@ -463,10 +464,10 @@ istr(n100).all_distinct() ==> False
 ```
 #### test if characters are consecutive
 
-With the `is_consecutive` method, it is possible to test whether the individual digits (characters) are consecutive.
+With the `is_consecutive` method, it is possible to test whether the individual digits (characters) are consecutive. ASCII-ordering is applied.
 ```
-istr(123).is_consecutive() ==> True
-istr(124).is_consecutive() ==> False
+istr('123').is_consecutive() ==> True
+istr('124').is_consecutive() ==> False
 ```
 
 Note that this method can also be used for non-istr-s, like `istr.is_consecutive(123) ==> True`
@@ -606,7 +607,7 @@ It is also possible to apply `prod` on an istr:
 
 #### sumprod to get the sum of products of iterables
 
-The class method `istr.sumprod()`, is equivalent to `math.sumprod()`, but applies  istr to both iterables.
+The class method `istr.sumprod()`, is equivalent to `math.sumprod()`, but applies istr to both iterables.
 Note that this method is available even in Python < 3.12 .
 Thus, `istr.sumprod("12", (3,4))` is `istr(11)`
 In contrast to `math.sumprod()`, `istr.sumprod()` supports a `strict` parameter (True by default)
@@ -615,14 +616,12 @@ raises a ValueError.
 
 #### get all squares, cubes, power ofs or primes in a given range
 
-The class methods `istr.squares`, `istr.cubes` and `istr.primes` can be used to get a list of all squares, cubes or primes up to a given upperbound (non inclusive) or between a given lowerbound and upperbound (non inclusive), like:
+The class methods `istr.squares`, `istr.cubes`, `istr.power_ofs` and `istr.primes` can be used to get a list of all squares, cubes, power_ofs or primes up to a given upperbound (non inclusive) or between a given lower bound and upper bound (non inclusive), like:
 
 `istr.squares (100)` returns a list of all squares <100
-`istr.squares(50, 100)` return a list of all squares >=50 and <100
+`istr.squares(50, 100)` returns a list of all squares in the range [50, 100)
 
-Unless `cache=False` is specified, the result of the query is cached.
-
-The same functionality is available for cubes, power ofs and primes 
+Unless `cache=False` is specified, the query result is cached.
 
 #### generate istr with digits
 
