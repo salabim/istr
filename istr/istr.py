@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.23"
+__version__ = "1.1.24"
 import functools
 import itertools
 import types
@@ -219,7 +219,7 @@ class istr(str):
             a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7')
     """
 
-    __slots__ = ("_as_int", "_as_repr", "_this_base", "_this_int_format", "_this_repr_mode")
+    __slots__ = ("_as_int", "_this_base", "_this_int_format", "_this_repr_mode")
 
     _int_format = ""
     _repr_mode = "istr"
@@ -248,47 +248,47 @@ class istr(str):
             return cls._nan
 
     def __new__(cls, *value, namespace=None, base=None, int_format=None, repr_mode=None):
-        if namespace is None:
-            try:
-                namespace = inspect.currentframe().f_back.f_back.f_globals
-            except AttributeError:
-                namespace = inspect.currentframe().f_back.f_globals  # only used when running istr itself
         base = cls._base if base is None else base
         int_format = cls._int_format if int_format is None else int_format
         repr_mode = cls._repr_mode if repr_mode is None else repr_mode
-        if len(value) == 0:
-            raise TypeError("no parameter given")
         if len(value) == 1:
             value = value[0]  # normal case of 1 parameter
-        if isinstance(value, range):
-            return cls.range(value.start, value.stop, value.step, base=base, int_format=int_format, repr_mode=repr_mode)
-        if isinstance(value, _range):
-            return value
-        if isinstance(value, cls):
-            if value.is_int():
-                return cls(value._as_int, base=base, int_format=int_format, repr_mode=repr_mode)
-            else:
-                return copy.copy(value)
-        if isinstance(value, dict):
-            return type(value)((k, cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=namespace)) for k, v in value.items())
-        if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):
-            if hasattr(value, "__next__"):
-                return map(lambda v: cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=namespace), value)
-            return type(value)(map(lambda v: cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=namespace), value))
-        if isinstance(value, str) and value.startswith("=") and value != "=":
-            value = str(cls.compose(value[1:], namespace=namespace))
-        if isinstance(value, str) and value.startswith(":=") and value != ":=":
-            var_name = value[2:]
-            value = str(cls.compose(value[2:], namespace=namespace))
-            if not var_name.isidentifier():
-                raise ValueError(f"{var_name!r} is not a valid identifier")
-            namespace[var_name] = cls(value)
+        elif len(value) == 0:
+            raise TypeError("no parameter given")
+
+        match value:
+            case range():
+                return cls.range(value.start, value.stop, value.step, base=base, int_format=int_format, repr_mode=repr_mode)
+            case _range():
+                return value
+            case cls():
+                if value.is_int():
+                    return cls(value._as_int, base=base, int_format=int_format, repr_mode=repr_mode)
+                else:
+                    return copy.copy(value)
+            case dict():
+                return type(value)(
+                    (k, cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=get_namespace(namespace))) for k, v in value.items()
+                )
+
+            case _ if not isinstance(value, (str, type)) and hasattr(value, "__iter__"):
+                if hasattr(value, "__next__"):
+                    return map(lambda v: cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=get_namespace(namespace)), value)
+                return type(value)(map(lambda v: cls(v, base=base, int_format=int_format, repr_mode=repr_mode, namespace=get_namespace(namespace)), value))
+
+        if isinstance(value, str) and (any(value.startswith(s) and value != s for s in ("=", ":="))):
+            if value[0] == "=":
+                value = str(cls.compose(value[1:], namespace=get_namespace(namespace)))
+            else:  # it's :=
+                var_name = value[2:]
+                value = str(cls.compose(value[2:], namespace=get_namespace(namespace)))
+                if not var_name.isidentifier():
+                    raise ValueError(f"{var_name!r} is not a valid identifier")
+                get_namespace(namespace)[var_name] = cls(value)
         as_int = cls._to_int(value, base)
-        if isinstance(value, str):
+        if as_int is cls._nan or isinstance(value, str):
             as_str = value
         else:
-            if as_int is cls._nan:
-                raise TypeError(f"incorrect value for {cls.__name__}: {repr(value)}")
             if int_format == "" or base != 10:
                 if base == 10:
                     as_str = str(as_int)
@@ -299,13 +299,6 @@ class istr(str):
 
         self = super().__new__(cls, as_str)
         self._as_int = as_int
-        match repr_mode:
-            case "istr":
-                self._as_repr = f"{cls.__name__}({repr(as_str)})"
-            case "int":
-                self._as_repr = "?" if as_int is self._nan else repr(as_int)
-            case _:
-                self._as_repr = repr(as_str)
         self._this_base = base
         self._this_int_format = int_format
         self._this_repr_mode = repr_mode
@@ -334,7 +327,13 @@ class istr(str):
         return not self == other
 
     def __repr__(self):
-        return self._as_repr
+        match self._this_repr_mode:
+            case "istr":
+                return f"{self.__class__.__name__}({repr(str(self))})"
+            case "int":
+                return "?" if self._as_int is self._nan else repr(self._as_int)
+            case _:
+                return repr(str(self))
 
     def __bool__(self):
         if self.is_int():
@@ -409,7 +408,6 @@ class istr(str):
         quotient, remainder = divmod(istr.interpret_as_int(self), int(divisor))
         return istr(quotient) if remainder == 0 else fallback
 
-
     def is_prime(self):
         n = istr.interpret_as_int(self)
         if n < 1000000:
@@ -433,34 +431,33 @@ class istr(str):
         """
         returns all primes up to a given upperbound or between a given lowerbound and upperbound
         """
-        if ("primes", lb, ub) in _cache:
-            return _cache["primes", lb, ub]
+        if (cls, "primes", lb, ub) in _cache:
+            return _cache[cls, "primes", lb, ub]
+
         if ub <= 1_000_000:
             result = in_range(cls._primes_up_to_1_000_000(), lb, ub)
         else:
             result = cls._primes(lb, ub)
         if cache:
-            _cache["primes", lb, ub] = result
+            _cache[cls, "primes", lb, ub] = result
         return result
 
     @classmethod
-    def _primes(cls,lb, ub):
+    def _primes(cls, lb, ub):
         sieve = bytearray(b"\x01") * (ub + 1)
         sieve[0:2] = b"\x00\x00"
-    
+
         for i in range(2, int(ub**0.5) + 1):
             if sieve[i]:
                 sieve[i * i : ub + 1 : i] = b"\x00" * (((ub - i * i) // i) + 1)
-    
-        return list(map(cls, ([i for i, is_prime in enumerate(sieve) if is_prime and lb <= i < ub])))
 
+        return list(map(cls, ([i for i, is_prime in enumerate(sieve) if is_prime and lb <= i < ub])))
 
     @classmethod
     @functools.lru_cache
     def _primes_up_to_1_000_000(cls):
         return cls._primes(0, 1_000_000)
-    
-    
+
     @classmethod
     @functools.lru_cache
     def _primes_up_to_1_000_000_as_set(cls):
@@ -495,7 +492,7 @@ class istr(str):
             case _:
                 ...
         return n == round(n ** (1 / exponent)) ** exponent
-        
+
     @classmethod
     def squares(cls, lb_or_ub, ub=None, cache=True):
         """
@@ -508,7 +505,7 @@ class istr(str):
         return cls.power_ofs(3, lb_or_ub, ub, cache=cache)
 
     @classmethod
-    def power_ofs(cls, n, lb_or_ub, ub=None, cache=True):
+    def power_ofs(cls, exponent, lb_or_ub, ub=None, cache=True):
         """
         returns all power of n up to a given upperbound or between a given lowerbound and upperbound
         """
@@ -516,18 +513,26 @@ class istr(str):
         lb = int(lb)
         ub = int(ub)
 
-        if ("power_ofs", n, lb, ub) in _cache:
-            return _cache["power_ofs", n, lb, ub]
-        if n != 1 and (n % 2 == 0 or lb >= 0) and ub <= 1_000_000:
-            result = in_range(cls._power_ofs_up_to_1_000_000(n), lb, ub)
-        else:
-            result = cls._power_ofs(n, lb, ub)
+        if (cls, "power_ofs", exponent, lb, ub) in _cache:
+            return _cache[cls, "power_ofs", exponent, lb, ub]
+        match exponent:
+            case 0:
+                if lb <= 1 < ub:
+                    result = [istr(1)]
+                else:
+                    result = []
+            case 1:
+                result = cls(list(range(lb, ub)))
+            case _ if (exponent % 2 == 0 or lb >= 0) and ub <= 1_000_000:
+                result = in_range(cls._power_ofs_up_to_1_000_000(exponent), lb, ub)
+            case _:
+                result = cls._power_ofs(exponent, lb, ub)
         if cache:
-            _cache["power_ofs", n, lb, ub] = result
+            _cache[cls, "power_ofs", exponent, lb, ub] = result
         return result
 
     @classmethod
-    def _power_ofs(cls,n, lb, ub):
+    def _power_ofs(cls, n, lb, ub):
         if n % 2 == 0:
             lb = max(0, lb)
         match n:
@@ -548,19 +553,19 @@ class istr(str):
                     if i_n >= lb:
                         result.append(i_n)
                     i += 1
-    
+
         return list(map(cls, result))
-    
-    @classmethod    
+
+    @classmethod
     @functools.lru_cache
-    def _power_ofs_up_to_1_000_000(cls,n):
+    def _power_ofs_up_to_1_000_000(cls, n):
         return cls._power_ofs(n, 0, 1_000_000)
-    
-    @classmethod    
+
+    @classmethod
     @functools.lru_cache
-    def _power_ofs_up_to_1_000_000_as_set(cls,n):
+    def _power_ofs_up_to_1_000_000_as_set(cls, n):
         return set(map(int, cls._power_ofs_up_to_1_000_000(n)))
-        
+
     def decompose(self, letters, namespace=None):
         """
         decompose one-letter variables into global variables
@@ -597,21 +602,21 @@ class istr(str):
         return cls(s)
 
     def __or__(self, other):
-        try:
+        if isinstance(other, str):
             return self.__class__(str(self).__add__(other))
-        except TypeError:
+        else:
             raise TypeError(f"unsupported operand type(s) for |: {self._frepr(self)} and {self._frepr(other)}")
 
     def __ror__(self, other):
-        try:
+        if isinstance(other, str):
             return self.__class__(other.__add__(str(self)))
-        except TypeError:
+        else:
             raise TypeError(f"unsupported operand type(s) for |: {self._frepr(other)} and {self._frepr(self)}")
 
     def __matmul__(self, other):
         try:
             return self.__class__(super().__mul__(other))
-        except TypeError:
+        except Exception:  # TypeError:
             raise TypeError(f"unsupported operand type(s) for @: {self._frepr(self)}  and {self._frepr(other)}")
 
     def __rmatmul__(self, other):
@@ -729,8 +734,7 @@ class istr(str):
 
             cls._int_format = int_format
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._int_format = self.saved_int_format
@@ -751,8 +755,7 @@ class istr(str):
             self.saved_cls = cls
             cls._repr_mode = mode
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._repr_mode = self.saved_repr_mode
@@ -771,8 +774,7 @@ class istr(str):
             self.saved_cls = cls
             cls._base = base
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._base = self.saved_base
@@ -920,6 +922,18 @@ def in_range(lst, lb, ub):
     return lst[left:right]
 
 
+def get_namespace(namespace):
+    if namespace is None:
+        frame = sys._getframe().f_back
+        while frame:
+            module_name = frame.f_globals.get("__name__")
+            if module_name != __name__:
+                break
+            frame = frame.f_back
+        namespace = frame.f_globals
+    return namespace
+
+
 istr.type = type(istr(0))
 
 
@@ -936,4 +950,3 @@ class istrModule(types.ModuleType):
 
 if __name__ != "__main__":
     sys.modules["istr"].__class__ = istrModule
-

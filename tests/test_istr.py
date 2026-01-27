@@ -661,6 +661,12 @@ def test_edge_cases():
         istr()
     rng = istr.range(5)
     assert rng is istr(rng)
+    x = istr(5+6j)
+    assert x == '(5+6j)'
+    assert not x.is_int()
+    x = istr(min)
+    assert x == '<built-in function min>'
+    assert not x.is_int()    
 
 
 def test_unpacking():

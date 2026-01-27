@@ -2,6 +2,16 @@
 
 #### For the full documentation, see www.salabim.org/istr .
 
+#### version 1.1.24 2026-01-27
+
+-  `__new__` reorganized (now uses match/case)
+
+-  an istr can now be initialized with any expression, even if it can't be evaluated as an int, like `5 + 6j` or `min` . Or course, these istr-s can't be used as int.
+
+-  the `repr` of an istr is not set upon initialization, but rather be constructed when required, resulting in faster initialization.
+
+- getting namespace is now more reliable.
+
 #### version 1.1.23 2026-01-24
 
 - Python 3.10 is now a minimum requirement (because match/case statements are now used).
