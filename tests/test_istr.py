@@ -964,9 +964,10 @@ def test_compose():
     assert istr(":=xyz").equals(istr(123))
     assert xyz.equals(istr(123))
 
-    assert istr(":=xyz0").equals(istr(1230))
-    assert xyz0.equals(istr(1230))
-    
+    assert istr(":=xyz_000").equals(istr('123_000'))
+    assert xyz_000.equals(istr('123_000'))
+    assert xyz_000==123000
+        
     with pytest.raises(ValueError, match=re.escape(f"'0xyz' is not a valid identifier")):
         istr(":=0xyz") 
     

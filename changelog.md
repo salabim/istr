@@ -2,6 +2,10 @@
 
 #### For the full documentation, see www.salabim.org/istr .
 
+#### version 1.1.25 2026-02-17
+
+- Internal change: caller frame now assessed via the new 'standard' function real_caller_frame()
+
 #### version 1.1.24 2026-01-27
 
 -  `__new__` reorganized (now uses match/case)

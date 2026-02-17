@@ -198,6 +198,10 @@ class istr(str):
             istr('8') ==> istr('8')
         if numeric, the value will be interpreted as an int
             istr(8) ==> istr('8')
+        if str and starts with '=', the value will be retrieved from letter variables and other characters unprocessed, e.g.
+            if a=4 and b=32, istr('=ab1') will be istr'('4321')
+        if str and starts with ':=', the value will be retrieved from letter variables. And the corresponding value will be set, e.g.
+            if a=4 and b=32, istr(':=ab') will be istr'('432') and ab will be assigned that value too.
         if a dict (or subtype of dict), the same type dict will be returned with all values istr'ed
             istr({0: 0, 1: 1, 2: 4}) ==> {0: istr('0'), 1: istr('1'), 2: istr('4')}
         if an iterator, the iterator will be mapped with istr
@@ -281,9 +285,9 @@ class istr(str):
                 value = str(cls.compose(value[1:], namespace=get_namespace(namespace)))
             else:  # it's :=
                 var_name = value[2:]
-                value = str(cls.compose(value[2:], namespace=get_namespace(namespace)))
                 if not var_name.isidentifier():
                     raise ValueError(f"{var_name!r} is not a valid identifier")
+                value = str(cls.compose(var_name, namespace=get_namespace(namespace)))
                 get_namespace(namespace)[var_name] = cls(value)
         as_int = cls._to_int(value, base)
         if as_int is cls._nan or isinstance(value, str):
@@ -311,7 +315,7 @@ class istr(str):
         return hash((self.__class__, str(self)))
 
     def __eq__(self, other):
-        if isinstance(other, self.__class__):
+        if isinstance(other, istr):
             if self.is_int() and other.is_int():
                 return self._as_int == other._as_int
         if isinstance(other, str):
@@ -410,7 +414,7 @@ class istr(str):
 
     def is_prime(self):
         n = istr.interpret_as_int(self)
-        if n < 1000000:
+        if n < 1_000_000:
             return n in istr._primes_up_to_1_000_000_as_set()
 
         if not n & 1:
@@ -451,7 +455,7 @@ class istr(str):
             if sieve[i]:
                 sieve[i * i : ub + 1 : i] = b"\x00" * (((ub - i * i) // i) + 1)
 
-        return list(map(cls, ([i for i, is_prime in enumerate(sieve) if is_prime and lb <= i < ub])))
+        return list(map(cls, ([i for i, is_prime in enumerate(sieve) if is_prime and lb <= i < ub])))  # range check just to be sure
 
     @classmethod
     @functools.lru_cache
@@ -483,11 +487,11 @@ class istr(str):
                 return n == 1
             case 1:
                 return True
-            case _ if exponent < 0:
-                raise ValueError(f"exponent must be >=1; not {exponent}")
+            case x if x < 0:
+                raise ValueError(f"exponent must be >=0; not {exponent}")
             case _ if not isinstance(exponent, int):
                 raise TypeError(f"exponent must be int; not {type(exponent)}")
-            case _ if n < 1000000:
+            case _ if n < 1_000_000:
                 return n in istr._power_ofs_up_to_1_000_000_as_set(exponent)
             case _:
                 ...
@@ -523,7 +527,7 @@ class istr(str):
                     result = []
             case 1:
                 result = cls(list(range(lb, ub)))
-            case _ if (exponent % 2 == 0 or lb >= 0) and ub <= 1_000_000:
+            case x if (x % 2 == 0 or lb >= 0) and ub <= 1_000_000:
                 result = in_range(cls._power_ofs_up_to_1_000_000(exponent), lb, ub)
             case _:
                 result = cls._power_ofs(exponent, lb, ub)
@@ -532,10 +536,10 @@ class istr(str):
         return result
 
     @classmethod
-    def _power_ofs(cls, n, lb, ub):
-        if n % 2 == 0:
+    def _power_ofs(cls, exponent, lb, ub):
+        if exponent % 2 == 0:
             lb = max(0, lb)
-        match n:
+        match exponent:
             case 0:
                 if lb <= 1 < ub:
                     result = [1]
@@ -546,11 +550,11 @@ class istr(str):
             case _:
                 result = []
                 if lb < 0:  # can't be the case for even n (because of above limiting)
-                    i = -int((-lb) ** (1 / n))
+                    i = -int((-lb) ** (1 / exponent))
                 else:
-                    i = int(lb ** (1 / n))
-                while (i_n := i**n) < ub:
-                    if i_n >= lb:
+                    i = int(lb ** (1 / exponent))
+                while (i_n := i**exponent) < ub:
+                    if i_n >= lb:  # just to be sure
                         result.append(i_n)
                     i += 1
 
@@ -573,8 +577,7 @@ class istr(str):
         same one-letter variables represent the the same character
         the istr must have the same length as the letters
         """
-        if namespace is None:
-            namespace = inspect.currentframe().f_back.f_globals
+        namespace = get_namespace(namespace)
 
         lookup = {}
         for letter, ch in zip(letters, self):
@@ -592,12 +595,11 @@ class istr(str):
         """
         compose an istr from individual letter variables
         """
-        if namespace is None:
-            namespace = inspect.currentframe().f_back.f_globals
-        namespace |= {ch: ch for ch in "0123456789"}
+        namespace = get_namespace(namespace) | {ch: ch for ch in "0123456789_"}
         for letter in letters:
-            if letter not in namespace:
-                raise ValueError(f"variable {repr(letter)} not defined")
+            if letter.isidentifier():
+                if letter not in namespace:
+                    raise ValueError(f"variable {repr(letter)} not defined")
         s = "".join(str(namespace[letter]) for letter in letters)
         return cls(s)
 
@@ -924,14 +926,20 @@ def in_range(lst, lb, ub):
 
 def get_namespace(namespace):
     if namespace is None:
-        frame = sys._getframe().f_back
-        while frame:
-            module_name = frame.f_globals.get("__name__")
-            if module_name != __name__:
-                break
-            frame = frame.f_back
+        frame = real_caller_frame()
         namespace = frame.f_globals
     return namespace
+
+
+def real_caller_frame():
+    # this will return the frame of the first frame on the stack that does not belong to this module,
+    # so in the 'user' space
+    frame = inspect.currentframe()
+    frame_name = frame.f_globals.get("__name__")
+    frame = frame.f_back
+    while frame is not None and frame_name == frame.f_globals.get("__name__"):
+        frame = frame.f_back
+    return frame
 
 
 istr.type = type(istr(0))
