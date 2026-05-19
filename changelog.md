@@ -2,6 +2,120 @@
 
 #### For the full documentation, see www.salabim.org/istr .
 
+#### version 1.1.30 2026-05-19
+
+- Introduced `istr.ceil` to find he smallest integer, divisible by a given number (divisible_by), greater than or equal to the value. 
+  This can be useful to step through all multiples of n, >= m, like:
+
+  ```
+  for i in istr.range(istr(1000/3, 10000, 3)) ==> # 1002, 1005, ... 9999
+  for i in istr.count(int(istr,ceil(1000/3)), 3))  ==> 1002, 1005, ...
+  ```
+  Examples:
+
+  ```
+  istr(1000).ceil() ==> 1000 # divisible_by is 1 by default
+  istr(1000).ceil(2) ==> 1000
+  istr(1000).ceil(3) ==> 1002
+  ```
+
+  It is also possible to use the ceil method for floats or ints:
+
+  ```
+  istr.ceil(1000.2) ==> 1001
+  istr.ceil(1000.2, 2)  ==> 1002
+  istr.ceil(1000.2, 3 ==> 1002
+  ```
+
+- Introduced  `istr.floor`to find the largest integer, divisible by a given number (divisible_by), smaller than or equal to the value.
+
+  Examples:
+
+  ```
+  istr(1000).floor() ==> 1000 # divisible_by is 1 by default
+  istr(1000).floor(2) ==> 1000
+  istr(1000).floor(3) ==> 999
+  ```
+
+  It is also possible to use the ceil method for floats or ints:
+
+  ```
+  istr.floor(1000.2) ==> 1000
+  istr.floor(1000.2, 2)  ==> 1000
+  istr.floor(1000.2, 3 ==> 999
+  ```
+
+#### 
+
+#### version 1.1.29 2026-05-17
+
+- `istr.compose` now correctly handles strings that contain letters that can't be identifiers. These letters are left as is in the resulting string.
+  So:
+  
+  ```
+  x = 1
+  y = 0
+  _ = "_"
+  istr.compose("xy") ==> istr("10")
+  istr.compose("10=(xy)") ==> istr("10=(10)")
+  istr.compose("x_000)") ==> istr("1_000")
+  istr.compose("z") ==> ValueError
+  
+  istr("=xy") ==> istr("10")
+  istr("=10=(xy)") ==> istr("10=(10)")
+  istr("=x_000)") ==> istr("1_000")
+  istr("=z") ==> ValueError
+  ```
+  
+
+#### version 1.1.28 2026-03-22
+
+- Introduced `istr.is_increasing()`, `istr.is_decreasing()`, `istr.is_non_increasing()` and `istr.is_non_decreasing()`
+  So:
+  
+  ```
+  istr(1223).is_increasing() ==> False
+  istr(1223).is_non_decreasing() ==> True
+  istr(3221).is_decreasing() ==> False
+  istr(3221).is_non_increasing ==> True
+  ```
+  It is also possible to test for 'increasingness' and friends for anything that can be converted to a str:
+  ```
+  istr.is_increasing(123) ==> True  
+  ```
+
+#### version 1.1.27 2026-03-12
+- In contrast to the readme, `istr.count` did not work on istr, but instead used always the itertools count.
+  This has been fixed. So, now it is possible to do:
+  
+  ```
+  istr(100).count(0) ==> 2
+  istr(100).count(0, 1) ==>2
+  istr(100).count("a") ==> 0
+  ```
+  If called like `istr.count()`, the itertools version is used:
+  ```
+  istr.count() ==> istr('0'), istr('1'), istr('2'), ...
+  istr.count(10) ==> istr('10'), istr('11'), istr('12'), ...
+  istr.count(10,3) ==> istr('10'), istr('13'), istr('16'), ...
+  ```
+  Note that `istr.count(istr(10))` results in `istr('10'), istr('11'), istr('12'), ...`, but
+  `istr.count(istr(10),1)` is in fact the str version and thus returns `1`.
+
+#### version 1.1.26 2026-03-08
+- Introduced `istr.is_palindrome()` to check whether an istr is palindromic:
+```
+istr(12321).is_palindrome() ==> True
+istr('aba').is_palindrome() ==> True
+istr(123).is_palindrome() ==> False
+```
+It is also possible to test for a palindrome for anything that can be converted to a str:
+```
+istr.is_palindrome(121) ==> True
+istr.is_palindrome('no devil lived on') ==> True
+istr.is_palindrome(min) ==> False
+```
+
 #### version 1.1.25 2026-02-17
 
 - Internal change: caller frame now assessed via the new 'standard' function real_caller_frame()

@@ -322,7 +322,7 @@ several other types:
   ```
     istr([0, 1, 4]) ==> [istr('0'), istr('1'), istr('4')]
     istr((0, 1, 4)) ==> (istr('0'), istr('1'), istr('4'))
-    istr({0, 1, 4}) ==> `{istr('4'), istr('0'), istr('1')}  # or similar  
+    istr({0, 1, 4}) ==> {istr('4'), istr('0'), istr('1')}  # or similar  
   ```
 
 - if a range, an istr.range instance will be returned
@@ -366,6 +366,36 @@ It is also possible to test for even/odd of an ordinary int:
 istr.is_even(4) ==> True
 istr.is_odd(5) ==> True
 ```
+
+#### test for palindrome
+
+It is possible to test whether an istr is palindromic, like 
+```
+istr(12321).is_palindrome() ==> True
+istr('aba').is_palindrome() ==> True
+istr(123).is_palindrome() ==> False
+```
+It is also possible to test for a palindrome for anything that can be converted to a str:
+```
+istr.is_palindrome(121) ==> True
+istr.is_palindrome('no devil lived on') ==> True
+istr.is_palindrome(min) ==> False
+```
+
+#### test for increasing, decreasing, non-decreasing and non-increasing
+
+It is possible to test whether the characters of an istr are increasing, decreasing, non-decreasing or non-increasing, like 
+ ```
+istr(1223).is_increasing() ==> False
+istr(1223).is_non_decreasing() ==> True
+istr(3221).is_decreasing() ==> False
+istr(3221).is_non_increasing ==> True
+ ```
+It is also possible to test for 'increasingness' and friends for anything that can be converted to a str:
+```
+istr.is_increasing(123) ==> True  
+```
+
 #### test for divisibility
 
 It is possible to test whether an istr is divisible by a given value with the `is_divisible_by method,` e.g.
@@ -387,7 +417,7 @@ unless the *fallback* (last argument) is given, in which case *fallback* will be
 istr(18).divided_by(3) ==> 6 (actually istr("6"))
 istr(18).divided_by(istr(3)) ==> 6
 istr(19).divided_by(3) ==> None
-istr(19).divided_by(3, 0) ==> 
+istr(19).divided_by(3, 0) ==> 0
 istr(19).divided_by(3) ==> None
 istr(19).divided_by(istr(3)) ==> None
 istr.divided_by(18, 3) ==>  6
@@ -418,7 +448,7 @@ istr(28).is_cube()) ==> False
 It is also possible to test for cube of an ordinary int:
 ```
 istr.is_cube(27) ==> True
-istr.is_cube(28 ==> False
+istr.is_cube(28) ==> False
 ```
 
 #### test for power of
@@ -501,8 +531,49 @@ istr('0456')[::-1] ==> istr('6540')
 > It is possible to reverse a negative istr, but the result can't be interpreted as an int anymore.
 >
 > ```
+> istr(-456).reversed() ==> istr('654-')
 > istr(-456).reversed() + 3 ==> TypeError
 > ```
+
+
+#### ceil
+
+The `istr.ceil` method can be used to find the smallest integer, divisible by a given number (divisible_by), greater than or equal to the value.
+This can be useful to step through all multiples of n, >= m, like:
+
+```
+for i in istr.range(istr(1000/3, 10000, 3)) ==> # 1002, 1005, ... 9999
+for i in istr.count(int(istr,ceil(1000/3)), 3))  ==> 1002, 1005, ...
+```
+Examples:
+```
+istr(1000).ceil() ==> 1000 # divisible_by is 1 by default
+istr(1000).ceil(2) ==> 1000
+istr(1000).ceil(3) ==> 1002
+```
+It is also possible to use the ceil method for floats or ints:
+```
+istr.ceil(1000.2) ==> 1001
+istr.ceil(1000.2, 2)  ==> 1002
+istr.ceil(1000.2, 3 ==> 1002
+```
+
+#### floor
+
+The `istr.floor` method can be used to find the largest integer, divisible by a given number (divisible_by), smaller than or equal to the value.
+
+Examples:
+```
+istr(1000).floor() ==> 1000 # divisible_by is 1 by default
+istr(1000).floor(2) ==> 1000
+istr(1000).floor(3) ==> 999
+```
+It is also possible to use the ceil method for floats or ints:
+```
+istr.floor(1000.2) ==> 1000
+istr.floor(1000.2, 2)  ==> 1000
+istr.floor(1000.2, 3 ==> 999
+```
 
 #### enumerate with istrs
 
@@ -580,6 +651,18 @@ results in
 (istr('1'), istr('2'), istr('0'))
 (istr('2'), istr('0'), istr('1'))
 (istr('2'), istr('1'), istr('0'))
+```
+
+Note that the count method is also used like `istr(100).find(0)` , using the count method of strings. The context defines which version is used:
+
+```
+istr(100).count(0) ==> 2
+istr(100).count(0, 1) ==>2
+istr(100).count("a") ==> 0
+
+istr.count() ==> istr('0'), istr('1'), istr('2'), ...
+istr.count(10) ==> istr('10'), istr('11'), istr('12'), ...
+istr.count(10,3) ==> istr('10'), istr('13'), istr('16'), ...
 ```
 
 #### concatenate an iterable
@@ -682,7 +765,7 @@ To decompose an istr into individual variables, it is arguably easier and safer 
 a, b, c = istr(485)
 ```
 
-With `istr.compose()`, an istr can be constructed from individual (global) variables and digits.
+With `istr.compose()`, an istr can be constructed from individual (global) variables and letters that can't be identifiers.
 E.g.
 
 ```
@@ -691,17 +774,19 @@ y = 9
 z = 6
 test1 = istr.compose("xyz")
 test2 = istr.compose("xyz0")
+test3 = istr.compose("(xyz)")
 ```
-Now, `test1` will be `istr(396)` and `test2` will be `istr(3960)`.
+Now, `test1` will be `istr(396)`, `test2` will be `istr(3960)` and `test3` will be `istr("(396)")`.
 
-Composing can also be done by prefixing a string with '=', like:
+Composing can also be done by prefixing a string with `=`, like:
 
 ```
 test1 = istr("=xyz")
 test2 = istr("=xyz0")
-
-Now, `test1` will be `istr(396)` and `test2` will be `istr(3960)`.
+test3 = istr("=(xyz)")
 ```
+Now, `test1` will be `istr(396)`, `test2` will be `istr(3960)` and `test3` will be `istr("(396)")`.
+
 Note that `str(istr("="))` is "=".
 
 Composing and assignment can be done by prefixing a string with ':=', like:
@@ -892,28 +977,29 @@ operator/function   int  str   Example
 +                    x         istr(20) + 3 ==> istr('23')
 _                    x         istr(20) - 3 ==> istr('17')
 *                    x         istr(20) * 3 ==> istr('60')
-                     /                    x         istr(20) / 3 ==> istr('6')
-                     //                   x         istr(20) // 3 ==> istr('6')
-                     %                    x         istr(20) % 3 ==> istr('2')
-                     divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
-                     **                   x         istr(2) ** 3 ==> istr('8')
-                     <=, <, >, >=         x         istr('100') > istr('2') ==> True
-                     abs                  x         abs(istr(-20)) ==> istr('20')
-                     int                  x         int(istr("20")) ==> 20
-                     float                x         float(istr("20")) ==> 20.0
-                     complex              x         complex(istr("20")) ==> (20+0j)
-                     ==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
-                     bool                 x    x *) bool(istr(' 0 ')) ==> False | bool(istr('')) ==> False
-                     @                         x    istr(20) @ 3 ==> istr('202020')
-                     |                         x    istr(20) | '5' ==> istr('205')
-                     slicing                   x    istr(12345)[1:3] ==> istr('23')
-                     iterate                   x    [x for x in istr(20)] ==> [istr('2'), istr('0')]
-                     len                       x    len(istr(' 20 ')) ==> 4
-                     count                     x    istr(100).count('0') ==> 2
-                     index                     x    istr(' 100 ').index('0') ==> 2
-                     split                     x    istr('1 2').split() ==> (istr('1'), istr('2'))
-                     string format             x    f"|{istr(1234):6}|" ==> '|1234  |'
-                     other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
+/                    x         istr(20) / 3 ==> istr('6')
+//                   x         istr(20) // 3 ==> istr('6')
+%                    x         istr(20) % 3 ==> istr('2')
+divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
+**                   x         istr(2) ** 3 ==> istr('8')
+<=, <, >, >=         x         istr('100') > istr('2') ==> True
+abs                  x         abs(istr(-20)) ==> istr('20')
+int                  x         int(istr("20")) ==> 20
+float                x         float(istr("20")) ==> 20.0
+complex              x         complex(istr("20")) ==> (20+0j)
+==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
+bool                 x    x *) bool(istr(' 0 ')) ==> False | bool(istr('')) ==> False
+@                         x    istr(20) @ 3 ==> istr('202020')
+|                         x    istr(20) | '5' ==> istr('205')
+slicing                   x    istr(12345)[1:3] ==> istr('23')
+iterate                   x    [x for x in istr(20)] ==> [istr('2'), istr('0')]
+len                       x    len(istr(' 20 ')) ==> 4
+count                     x    istr(100).count(0) ==> 2
+                               istr.count(100) ==> istr('100'), istr('101'). istr('102'), ...
+index                     x    istr(' 100 ').index('0') ==> 2
+split                     x    istr('1 2').split() ==> (istr('1'), istr('2'))
+string format             x    f"|{istr(1234):6}|" ==> '|1234  |'
+other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
                                istr('aAbBcC').islower() ==> False
                                istr('  abc   ').strip() ==> istr('abc')
                                ...

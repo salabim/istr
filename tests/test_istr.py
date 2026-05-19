@@ -254,13 +254,26 @@ def test_index():
         one_to_twelve.index("13")
 
 
-def test_count():
-    assert one_to_twelve.count(2) == 1
-    assert one_to_twelve.count(two) == 1
-    assert one_to_twelve.count("2") == 1
-    assert one_to_twelve.count(13) == 0
-    assert one_to_twelve.count(thirteen) == 0
-    assert one_to_twelve.count("13") == 0
+def test_str_count():
+    assert istr("100").count("0") == 2
+    assert istr("100").count("0", 0) == 2
+    assert istr("100").count("0", 1) == 2
+    assert istr("100").count("0", 2) == 1
+    assert istr("100").count("0", 0, 1) == 0
+    assert istr("100").count(0) == 2
+    assert istr("100").count(10) == 1
+    assert istr("100").count(100) == 1
+    assert istr("1000").count(100) == 1
+    assert isinstance(istr("100").count(), map)  # this is in fact the itertools version
+
+
+def test_itertools_count():
+    assert list(itertools.islice(istr.count(), 3)) == [istr("0"), istr("1"), istr("2")]
+    assert list(istr.islice(istr.count(10), 3)) == [istr("10"), istr("11"), istr("12")]
+    assert list(istr.islice(istr.count(istr(10)), 3)) == [istr("10"), istr("11"), istr("12")]
+    assert list(istr.islice(istr.count(10, 3), 3)) == [istr("10"), istr("13"), istr("16")]
+
+    assert istr.count(istr(10), 1) == 1  # this is in fact the istr version
 
 
 def test_hash():
@@ -332,6 +345,43 @@ def test_even_odd():
     assert istr.is_odd(11111111)
 
 
+def test_is_palindrome():
+    assert istr(121).is_palindrome()
+    assert istr(1234321).is_palindrome()
+    assert not istr(123).is_palindrome()
+    assert istr("aba").is_palindrome()
+    assert not istr("abc").is_palindrome()
+    assert istr("").is_palindrome()
+    assert istr.is_palindrome("121")
+    assert istr.is_palindrome(121)
+
+
+def test_is_increasing_and_friends():
+    assert istr(123).is_increasing()
+    assert not istr(222).is_increasing()
+    assert not istr(321).is_increasing()
+
+    assert not istr(123).is_decreasing()
+    assert not istr(222).is_decreasing()
+    assert istr(321).is_decreasing()
+
+    assert istr(123).is_non_decreasing()
+    assert istr(222).is_non_decreasing()
+    assert not istr(321).is_non_decreasing()
+
+    assert not istr(123).is_non_increasing()
+    assert istr(222).is_non_increasing()
+    assert istr(321).is_non_increasing()
+
+    assert istr(1).is_increasing()
+    assert istr("").is_increasing()
+
+    assert not istr.is_increasing(222)
+    assert not istr.is_decreasing(222)
+    assert istr.is_non_decreasing(222)
+    assert istr.is_non_increasing(222)
+
+
 def test_is_divisible_by():
     assert istr(18).is_divisible_by(3)
     assert istr(18).is_divisible_by(istr(3))
@@ -353,9 +403,9 @@ def test_divided_by():
     assert istr.divided_by(18, 3).equals(istr(6))
     assert istr.divided_by(19, 3) is None
     assert istr.divided_by(18, 3, 0).equals(istr(6))
-    assert istr.divided_by(19, 3, 0)==0
-    assert istr.divided_by(4,0) is None
-    assert istr.divided_by(4,0,0) == 0
+    assert istr.divided_by(19, 3, 0) == 0
+    assert istr.divided_by(4, 0) is None
+    assert istr.divided_by(4, 0, 0) == 0
 
 
 def test_is_square():
@@ -404,7 +454,7 @@ def test_is_power_of():
     assert not istr(-1).is_power_of(4)
     assert istr(-1).is_power_of(5)
     assert istr(12345**3).is_power_of(3)
-    assert istr(-12345**3).is_power_of(3)
+    assert istr(-(12345**3)).is_power_of(3)
     assert istr(0).is_power_of(3)
     assert istr(1).is_power_of(3)
     assert not istr(2).is_power_of(3)
@@ -469,10 +519,10 @@ def test_cubes():
 def test_power_ofs():
     assert istr.power_ofs(0, 1, 5) == [istr("1")]
     assert istr.power_ofs(0, 1) == []
-    assert istr.power_ofs(1, -1, 5) == [istr("-1"),istr("0"), istr("1"), istr("2"), istr("3"), istr("4")]
+    assert istr.power_ofs(1, -1, 5) == [istr("-1"), istr("0"), istr("1"), istr("2"), istr("3"), istr("4")]
     assert istr.power_ofs(2, -10, 10) == [istr("0"), istr("1"), istr("4"), istr("9")]
-    assert istr.power_ofs(3, -10, 10) == [istr("-8"), istr("-1"), istr("0"), istr("1"),istr("8")]
-    assert istr.power_ofs(3, -10, 9) == [istr("-8"), istr("-1"), istr("0"), istr("1"),istr("8")]
+    assert istr.power_ofs(3, -10, 10) == [istr("-8"), istr("-1"), istr("0"), istr("1"), istr("8")]
+    assert istr.power_ofs(3, -10, 9) == [istr("-8"), istr("-1"), istr("0"), istr("1"), istr("8")]
     assert istr.power_ofs(3, -10, 8) == [istr("-8"), istr("-1"), istr("0"), istr("1")]
     assert istr.power_ofs(4, -10, 10) == [istr("0"), istr("1")]
     assert istr.power_ofs(2, 10, 0) == []
@@ -482,16 +532,18 @@ def test_power_ofs():
     assert id(istr.power_ofs(3, 2000)) != id(istr.cubes(3, 2000))  # test caching
     assert id(istr.power_ofs(3, 1000, cache=False)) != id(istr.cubes(3, 1000, cache=False))  # test caching
 
+
 def test_in_range():
-    primes1000=istr.primes(1000)
-    n=len(primes1000)
-    assert len(primes1000)==n
-    assert istr.in_range(primes1000,0,5)==[istr('2'), istr('3')]
-    assert istr.in_range(primes1000,0,6)==[istr('2'), istr('3'),istr('5')]
-    assert istr.in_range(primes1000,3,6)==[istr('3'),istr('5')]
-    assert len(istr.in_range(primes1000,0,998))==n
-    assert len(istr.in_range(primes1000,0,997))==n-1
-    assert len(istr.in_range(primes1000,3,997))==n-2
+    primes1000 = istr.primes(1000)
+    n = len(primes1000)
+    assert len(primes1000) == n
+    assert istr.in_range(primes1000, 0, 5) == [istr("2"), istr("3")]
+    assert istr.in_range(primes1000, 0, 6) == [istr("2"), istr("3"), istr("5")]
+    assert istr.in_range(primes1000, 3, 6) == [istr("3"), istr("5")]
+    assert len(istr.in_range(primes1000, 0, 998)) == n
+    assert len(istr.in_range(primes1000, 0, 997)) == n - 1
+    assert len(istr.in_range(primes1000, 3, 997)) == n - 2
+
 
 def test_join():
     s = "".join(istr(("4", "5", "6")))
@@ -661,12 +713,12 @@ def test_edge_cases():
         istr()
     rng = istr.range(5)
     assert rng is istr(rng)
-    x = istr(5+6j)
-    assert x == '(5+6j)'
+    x = istr(5 + 6j)
+    assert x == "(5+6j)"
     assert not x.is_int()
     x = istr(min)
-    assert x == '<built-in function min>'
-    assert not x.is_int()    
+    assert x == "<built-in function min>"
+    assert not x.is_int()
 
 
 def test_unpacking():
@@ -903,8 +955,7 @@ def test_sumprod():
 
 
 def test_subclassing():
-    class jstr(istr.type):
-        ...
+    class jstr(istr.type): ...
 
     assert jstr(5).equals(jstr(5))
     assert repr(jstr(*range(3))) == "(jstr('0'), jstr('1'), jstr('2'))"
@@ -936,13 +987,29 @@ def test_decompose():
     with pytest.raises(ValueError):
         istr(123).decompose("xy1")
 
+def test_ceil():
+    assert istr(1000).ceil()==1000
+    assert istr(1000).ceil(1)==1000
+    assert istr(1000).ceil(2)==1000
+    assert istr(1000).ceil(3)==1002
+    assert istr.ceil(1000)==1000
+    assert istr.ceil(1000,1)==1000
+    assert istr.ceil(1000.2,1).equals(istr(1001))
 
+def test_floor():
+    assert istr(1000).floor()==1000
+    assert istr(1000).floor(1)==1000
+    assert istr(1000).floor(2)==1000
+    assert istr(1000).floor(3)==999
+    assert istr.floor(1000)==1000
+    assert istr.floor(1000,1)==1000
+    assert istr.floor(1000.2,1).equals(istr(1000))
+ 
 def test_compose():
+    global x, y, z, _
     x = 1
     y = "2"
     z = istr(3)
-
-    assert istr.compose("xyz").equals(istr(123))
     with pytest.raises(ValueError):
         istr.compose("wxyz")  # w is not defined
     assert istr.compose("xyz", namespace=dict(x=3, y=istr(4), z="5")).equals(istr(345))
@@ -950,10 +1017,10 @@ def test_compose():
     assert istr("=xyz").equals(istr(123))
     assert istr("=xyz", "=x") == (istr(123), istr(1))
     assert istr("=") == "="
-    
-    assert istr('=09').equals(istr('09'))
-    assert istr('=x09z').equals(istr('1093'))
-    
+
+    assert istr("=09").equals(istr("09"))
+    assert istr("=x09z").equals(istr("1093"))
+
     assert istr(["=xyz", "=y"]) == [istr(123), istr(2)]
 
     assert istr(dict(xyz="=xyz", y="=y")) == {"xyz": istr(123), "y": istr(2)}
@@ -964,17 +1031,19 @@ def test_compose():
     assert istr(":=xyz").equals(istr(123))
     assert xyz.equals(istr(123))
 
-    assert istr(":=xyz_000").equals(istr('123_000'))
-    assert xyz_000.equals(istr('123_000'))
-    assert xyz_000==123000
-        
+    with pytest.raises(ValueError):
+        istr("=123_000")
+    _ = "_"
+    xyz_000 = istr("=123_000")
+    assert xyz_000.equals(istr("123_000"))
+    assert xyz_000 == 123000
+
     with pytest.raises(ValueError, match=re.escape(f"'0xyz' is not a valid identifier")):
-        istr(":=0xyz") 
-    
+        istr(":=0xyz")
+
     assert istr(":=") == ":="
     assert istr("=") == "="
 
 
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
-

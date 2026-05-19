@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.24"
+__version__ = "1.1.30"
 import functools
 import itertools
 import types
@@ -17,7 +17,7 @@ import copy
 import bisect
 
 """
-Note: the changelog is now in changelog.md
+Note: the changelog is in changelog.md
 
 You can view the changelog on www.salabim.org/istr/changelog
 
@@ -403,6 +403,26 @@ class istr(str):
     def is_odd(self):
         return not istr.is_divisible_by(self, 2)
 
+    def is_palindrome(self):
+        self_as_str = str(self)
+        return self_as_str == self_as_str[::-1]
+
+    def is_non_decreasing(self):
+        self_as_str = str(self)
+        return all(i0 <= i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
+
+    def is_non_increasing(self):
+        self_as_str = str(self)
+        return all(i0 >= i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
+
+    def is_increasing(self):
+        self_as_str = str(self)
+        return all(i0 < i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
+
+    def is_decreasing(self):
+        self_as_str = str(self)
+        return all(i0 > i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
+
     def is_divisible_by(self, divisor):
         return istr.divided_by(self, divisor) is not None
 
@@ -580,14 +600,16 @@ class istr(str):
         namespace = get_namespace(namespace)
 
         lookup = {}
+
+        if len(letters) != len(self):
+            raise ValueError(f"incorrect number of variables {len(letters)}; should be {len(self)}")
+
         for letter, ch in zip(letters, self):
             if letter in lookup and lookup[letter] != ch:
                 raise ValueError(f"multiple values found for variable {letter}")
             if not letter.isidentifier():
                 raise ValueError(f"{repr(letter)} cannot be used as a variable")
             lookup[str(letter)] = ch
-        if len(letters) != len(self):
-            raise ValueError(f"incorrect number of variables {len(letters)}; should be {len(self)}")
         namespace.update(lookup)
 
     @classmethod
@@ -595,13 +617,16 @@ class istr(str):
         """
         compose an istr from individual letter variables
         """
-        namespace = get_namespace(namespace) | {ch: ch for ch in "0123456789_"}
+        namespace = get_namespace(namespace)        
+        result=[]
         for letter in letters:
             if letter.isidentifier():
                 if letter not in namespace:
                     raise ValueError(f"variable {repr(letter)} not defined")
-        s = "".join(str(namespace[letter]) for letter in letters)
-        return cls(s)
+                result.append(str(namespace[letter]))
+            else:
+                result.append(letter)
+        return cls("".join(result))
 
     def __or__(self, other):
         if isinstance(other, str):
@@ -652,6 +677,22 @@ class istr(str):
 
     def reversed(self):
         return self[::-1]
+    
+    def ceil(self, divisible_by=1):
+        if divisible_by<=0:
+            raise ValueError(f"step has to be >0, not {divisible_by}")
+        if divisible_by!=int(divisible_by):
+            raise ValueError(f"step has to be an integer value, not {divisible_by}")
+        n = istr.interpret_as_float(self)
+        return istr((math.ceil(n/divisible_by))*divisible_by)
+
+    def floor(self, divisible_by=1):
+        if divisible_by<=0:
+            raise ValueError(f"step has to be >0, not {divisible_by}")
+        if divisible_by!=int(divisible_by):
+            raise ValueError(f"step has to be an integer value, not {divisible_by}")
+        return istr((math.floor(self/divisible_by))*divisible_by)
+
 
     def interpret_as_int(self):
         if isinstance(self, istr):
@@ -660,6 +701,16 @@ class istr(str):
             n = self._as_int
         else:
             n = int(self)
+        return n
+
+
+    def interpret_as_float(self):
+        if isinstance(self, istr):
+            if not self.is_int():
+                raise TypeError(f"not interpretable as float: {self._frepr(self)}")
+            n = self._as_int
+        else:
+            n = float(self)
         return n
 
     def _str_method(self, name, *args, **kwargs):
@@ -676,11 +727,17 @@ class istr(str):
         return cls(getattr(itertools, name)(*args, **kwargs))
 
     for name in dir(itertools):
-        if not name.startswith("__"):
+        if not name.startswith("__") and not name == "count":  # count has its own method
             if name in ("groupby", "tee"):
                 locals()[name] = getattr(itertools, name)
             else:
                 locals()[name] = functools.partialmethod(_itertools_method, name)
+
+    def count(*args):
+        if len(args) >= 2 and isinstance(args[0], istr):
+            return str(args[0]).count(str(args[1]), *map(int, args[2:]))
+        else:
+            return istr(itertools.count(*args))
 
     def is_int(self):
         return self._as_int is not self._nan
@@ -736,7 +793,8 @@ class istr(str):
 
             cls._int_format = int_format
 
-        def __enter__(self): ...
+        def __enter__(self):
+            ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._int_format = self.saved_int_format
@@ -757,7 +815,8 @@ class istr(str):
             self.saved_cls = cls
             cls._repr_mode = mode
 
-        def __enter__(self): ...
+        def __enter__(self):
+            ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._repr_mode = self.saved_repr_mode
@@ -776,7 +835,8 @@ class istr(str):
             self.saved_cls = cls
             cls._base = base
 
-        def __enter__(self): ...
+        def __enter__(self):
+            ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._base = self.saved_base
@@ -958,3 +1018,4 @@ class istrModule(types.ModuleType):
 
 if __name__ != "__main__":
     sys.modules["istr"].__class__ = istrModule
+
