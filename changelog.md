@@ -2,6 +2,17 @@
 
 #### For the full documentation, see www.salabim.org/istr .
 
+#### version 1.1.31 2026-05-20
+
+- `istr.is_odd`, `istr.is_even`, `istr.is_divisible_by`, `istr.is_square`, `istr.is_cube`,  `istr.is_power_of`, `is_triangular`, `is_palindrome`, `is_increasing`, `is_non_decreasing`, `is_decreasing` and is_non_increasing` now also accepts an iterable, which is joined prior to the test.
+   This is particularly useful to filter tuples yielded from permutations, combinations and products.
+   So, now we can do
+   
+   ```
+   map(istr.join,filter(istr.prime, istr.combinations(range(10),2)))
+       ==> istr('02'), istr('03'), ... istr('89')
+   ```
+   
 #### version 1.1.30 2026-05-19
 
 - Introduced `istr.ceil` to find he smallest integer, divisible by a given number (divisible_by), greater than or equal to the value. 

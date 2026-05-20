@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.30"
+__version__ = "1.1.31"
 import functools
 import itertools
 import types
@@ -15,7 +15,7 @@ import math
 import operator
 import copy
 import bisect
-
+import collections
 """
 Note: the changelog is in changelog.md
 
@@ -404,23 +404,23 @@ class istr(str):
         return not istr.is_divisible_by(self, 2)
 
     def is_palindrome(self):
-        self_as_str = str(self)
+        self_as_str = istr.interpret_as_str(self)
         return self_as_str == self_as_str[::-1]
 
     def is_non_decreasing(self):
-        self_as_str = str(self)
+        self_as_str = istr.interpret_as_str(self)        
         return all(i0 <= i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
 
     def is_non_increasing(self):
-        self_as_str = str(self)
+        self_as_str = istr.interpret_as_str(self)
         return all(i0 >= i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
 
     def is_increasing(self):
-        self_as_str = str(self)
+        self_as_str = istr.interpret_as_str(self)
         return all(i0 < i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
 
     def is_decreasing(self):
-        self_as_str = str(self)
+        self_as_str = istr.interpret_as_str(self)
         return all(i0 > i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
 
     def is_divisible_by(self, divisor):
@@ -698,20 +698,29 @@ class istr(str):
         if isinstance(self, istr):
             if not self.is_int():
                 raise TypeError(f"not interpretable as int: {self._frepr(self)}")
-            n = self._as_int
-        else:
-            n = int(self)
-        return n
+            return self._as_int
+        if isinstance(self, collections.abc.Iterable) and not isinstance(self,str):
+            return int(istr.join(self))
+        
+        return int(self)
 
 
     def interpret_as_float(self):
         if isinstance(self, istr):
             if not self.is_int():
                 raise TypeError(f"not interpretable as float: {self._frepr(self)}")
-            n = self._as_int
-        else:
-            n = float(self)
-        return n
+            return self._as_int
+        if isinstance(self, collections.abc.Iterable) and not isinstance(self,str):
+            return float(istr.join(self))
+        
+        return float(self)
+
+    def interpret_as_str(self):
+
+        if isinstance(self, collections.abc.Iterable) and not isinstance(self,str):
+            return istr.join(self)
+        
+        return str(self)
 
     def _str_method(self, name, *args, **kwargs):
         return self.__class__(getattr(super(), name)(*args, **kwargs))

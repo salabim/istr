@@ -987,24 +987,53 @@ def test_decompose():
     with pytest.raises(ValueError):
         istr(123).decompose("xy1")
 
+
 def test_ceil():
-    assert istr(1000).ceil()==1000
-    assert istr(1000).ceil(1)==1000
-    assert istr(1000).ceil(2)==1000
-    assert istr(1000).ceil(3)==1002
-    assert istr.ceil(1000)==1000
-    assert istr.ceil(1000,1)==1000
-    assert istr.ceil(1000.2,1).equals(istr(1001))
+    assert istr(1000).ceil() == 1000
+    assert istr(1000).ceil(1) == 1000
+    assert istr(1000).ceil(2) == 1000
+    assert istr(1000).ceil(3) == 1002
+    assert istr.ceil(1000) == 1000
+    assert istr.ceil(1000, 1) == 1000
+    assert istr.ceil(1000.2, 1).equals(istr(1001))
+
 
 def test_floor():
-    assert istr(1000).floor()==1000
-    assert istr(1000).floor(1)==1000
-    assert istr(1000).floor(2)==1000
-    assert istr(1000).floor(3)==999
-    assert istr.floor(1000)==1000
-    assert istr.floor(1000,1)==1000
-    assert istr.floor(1000.2,1).equals(istr(1000))
- 
+    assert istr(1000).floor() == 1000
+    assert istr(1000).floor(1) == 1000
+    assert istr(1000).floor(2) == 1000
+    assert istr(1000).floor(3) == 999
+    assert istr.floor(1000) == 1000
+    assert istr.floor(1000, 1) == 1000
+    assert istr.floor(1000.2, 1).equals(istr(1000))
+
+
+def test_tuple_join():
+    assert istr.is_prime(istr(1, 3))
+    assert istr.is_square(istr(6, 4))
+    assert istr.is_cube(istr(6, 4))
+    assert istr.is_power_of(istr(3, 2), 5)
+    assert istr.is_odd(istr(1, 3))
+    assert istr.is_even(istr(1, 2))
+    assert istr.is_triangular(istr(1, 0))
+    assert istr.is_increasing(istr(1, 2))
+    assert istr.is_non_decreasing(istr(1, 2, 2, 3))
+    assert istr.is_decreasing(istr(2, 1))
+    assert istr.is_non_increasing(istr(3, 2, 2, 1))
+
+    assert not istr.is_prime(istr(1, 4))
+    assert not istr.is_square(istr(6, 5))
+    assert not istr.is_cube(istr(6, 5))
+    assert not istr.is_power_of(istr(3, 3), 5)
+    assert not istr.is_odd(istr(1, 4))
+    assert not istr.is_even(istr(1, 3))
+    assert not istr.is_triangular(istr(1, 1))
+    assert not istr.is_increasing(istr(1, 1))
+    assert not istr.is_non_decreasing(istr(1, 2, 2, 1))
+    assert not istr.is_decreasing(istr(2, 2))
+    assert not istr.is_non_increasing(istr(3, 2, 2, 4))
+
+
 def test_compose():
     global x, y, z, _
     x = 1
