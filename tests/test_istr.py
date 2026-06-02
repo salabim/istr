@@ -881,6 +881,15 @@ def test_digits_cache():
         assert id(d) == id(istr.digits())
     assert int(d) == 4886718345
 
+def test_zip():
+    assert list(istr.zip("12","34"))==[(istr("1"), istr("3")),(istr("2"), istr("4"))]
+    assert list(istr.zip("12","345"))==[(istr("1"), istr("3")),(istr("2"), istr("4"))]
+    assert list(istr.zip("12","34", join=True))==[istr("13"),istr("24")]
+    assert list(istr.zip("12","345", join=True))==[istr("13"),istr("24")]
+    with pytest.raises(ValueError):
+        list(istr.zip("12","345",strict=True))
+    with pytest.raises(ValueError):
+        list(istr.zip("12","345",join=True,strict=True))
 
 def test_itertools():
     def list100(it):
@@ -890,7 +899,9 @@ def test_itertools():
     assert list(istr.accumulate((1, 3, 4))) == [istr("1"), istr("4"), istr("8")]
     assert list(istr.chain(range(2), range(2, 5))) == [istr("0"), istr("1"), istr("2"), istr("3"), istr("4")]
     assert list(istr.combinations(range(5), r=3)) == list(istr(itertools.combinations(range(5), r=3)))
+    assert list(istr.combinations(range(5), r=3,join=True)) == list(map(istr.join,istr(itertools.combinations(range(5), r=3))) )   
     assert list(istr.combinations_with_replacement(range(5), r=3)) == list(istr(itertools.combinations_with_replacement(range(5), r=3)))
+    assert list(istr.combinations_with_replacement(range(5), r=3,join=True)) == list(map(istr.join,istr(itertools.combinations_with_replacement(range(5), r=3))))
     assert list(istr.compress("123456", [1, 0, 1, 0, 1, 1])) == [istr("1"), istr("3"), istr("5"), istr("6")]
     assert list100(istr.count()) == list100(istr(itertools.count()))
     assert list100(istr.cycle(range(10))) == list100(istr(itertools.cycle(range(10))))
@@ -898,16 +909,21 @@ def test_itertools():
     assert list(istr.filterfalse(lambda x: x % 2, range(10))) == [istr("0"), istr("2"), istr("4"), istr("6"), istr("8")]
     assert list(istr.islice("123456", 2)) == [istr("1"), istr("2")]
     assert list(istr.permutations(range(5), 3)) == list(istr(itertools.permutations(range(5), 3)))
+    assert list(istr.permutations(range(5), 3, join=True)) == list(map(istr.join,istr(itertools.permutations(range(5), 3))))
     assert list(istr.product(range(5), range(4))) == list(istr(itertools.product(range(5), range(4))))
+    assert list(istr.product(range(5), range(4),join=True)) == list(map(istr.join,istr(itertools.product(range(5), range(4)))) )   
     assert list100(istr.repeat(10)) == list100(istr(itertools.repeat(10)))
     assert list(istr.starmap(pow, [(2, 5), (3, 2), (10, 3)])) == [istr("32"), istr("9"), istr("1000")]
     assert list(istr.takewhile(lambda x: x < 5, [1, 4, 6, 3, 8])) == [istr("1"), istr("4")]
     assert list(istr.zip_longest("123", "56", fillvalue="0")) == [(istr("1"), istr("5")), (istr("2"), istr("6")), (istr("3"), istr("0"))]
-    if sys.version_info >= (3, 10):
-        assert list(istr.pairwise("1234")) == [(istr("1"), istr("2")), (istr("2"), istr("3")), (istr("3"), istr("4"))]
-    if sys.version_info >= (3, 12):
-        assert list(istr.batched("12345", n=2)) == [(istr("1"), istr("2")), (istr("3"), istr("4")), (istr("5"),)]
-
+    assert list(istr.zip_longest("123", "56", fillvalue="0",join=True)) == [istr("15"),istr("26"), istr("30")]
+    assert list(istr.pairwise("1234")) == [(istr("1"), istr("2")), (istr("2"), istr("3")), (istr("3"), istr("4"))]
+    assert list(istr.pairwise("1234",join=True)) == [istr("12"), istr("23"), istr("34")]
+    assert list(istr.batched("12345", n=2)) == [(istr("1"), istr("2")), (istr("3"), istr("4")), (istr("5"),)]
+    assert list(istr.batched("12345", n=2,join=True)) == [istr("12"), istr("34"), istr("5")]
+    assert list(istr.batched("1234", n=2,strict=True)) == [(istr("1"), istr("2")), (istr("3"), istr("4"))]
+    with pytest.raises(ValueError):
+        list(istr.batched("12345", n=2,strict=True))
 
 def test_all_distinct():
     assert istr("abcdef").all_distinct()
@@ -1015,7 +1031,9 @@ def test_tuple_join():
     assert istr.is_power_of(istr(3, 2), 5)
     assert istr.is_odd(istr(1, 3))
     assert istr.is_even(istr(1, 2))
+    assert istr.is_divisible_by(istr(1, 2), 3)
     assert istr.is_triangular(istr(1, 0))
+    assert istr.is_consecutive(istr(1,2,3))
     assert istr.is_increasing(istr(1, 2))
     assert istr.is_non_decreasing(istr(1, 2, 2, 3))
     assert istr.is_decreasing(istr(2, 1))
@@ -1027,7 +1045,9 @@ def test_tuple_join():
     assert not istr.is_power_of(istr(3, 3), 5)
     assert not istr.is_odd(istr(1, 4))
     assert not istr.is_even(istr(1, 3))
+    assert not istr.is_divisible_by(istr(1, 2), 5)
     assert not istr.is_triangular(istr(1, 1))
+    assert not istr.is_consecutive(istr(1,2,4))
     assert not istr.is_increasing(istr(1, 1))
     assert not istr.is_non_decreasing(istr(1, 2, 2, 1))
     assert not istr.is_decreasing(istr(2, 2))

@@ -2,9 +2,50 @@
 
 #### For the full documentation, see www.salabim.org/istr .
 
+#### version 1.1.32 2026-06-02
+
+- `istr.is_consecutive` now also accepts an iterable, which is joined prior to the test (see 1.1.31).
+- `istr.permutations`, `istr.combinations`, `istr.combinations_with_replacement`, `istr.product`, `istr.pairwise`, `istr.zip_longest` and `istr.batched` now have a keyword argument `join`, which is False by default. If False, the methods just produce an iterable returning tuples. If True, the tuples are joined to make an istr. E.g.
+  ```
+  for s in istr.product('12', '34'):
+      print(s)
+  ```
+  results in
+  ```
+  (istr('1'), istr('3'))
+  (istr('1'), istr('4'))
+  (istr('2'), istr('3'))
+  (istr('2'), istr('4'))
+  ```
+  , whereas
+  ```
+  for s in istr.product('12','34', join=True):
+      print(s)
+  ```
+  results in
+  ```
+  istr('13')
+  istr('14')
+  istr('23')
+  istr('24')
+  ```
+- `istr.batched` is now available for Python < 3.12. And under Python 3.12 `istr.batched` now also supports the strict flag. 
+- Introduced `istr.zip`, which is the equivalent of the zip builtin, but applies istr to each element. `istr.zip` also supports the join parameter:
+  ```
+  print(list(istr.zip('12', '345')))
+  print(list(istr.zip('12', '345', join=True)))
+  print(list(istr.zip('12', '345', strict=True)))
+  ```
+  results in
+  ```
+  [(istr('1'), istr('3')), (istr('2'), istr('4'))]
+  [istr('13'), istr('24')]
+  ValueError: zip() argument 2 is longer than argument 1
+  ```
+
 #### version 1.1.31 2026-05-20
 
-- `istr.is_odd`, `istr.is_even`, `istr.is_divisible_by`, `istr.is_square`, `istr.is_cube`,  `istr.is_power_of`, `is_triangular`, `is_palindrome`, `is_increasing`, `is_non_decreasing`, `is_decreasing` and is_non_increasing` now also accepts an iterable, which is joined prior to the test.
+- `istr.is_odd`, `istr.is_even`, `istr.is_divisible_by`, `istr.is_square`, `istr.is_cube`,  `istr.is_power_of`, `istr.is_triangular`, `istr.is_palindrome`, `istr.is_increasing`, `istr.is_non_decreasing`, `istr.is_decreasing` and `istr.is_non_increasing` now also accepts an iterable, which is joined prior to the test.
    This is particularly useful to filter tuples yielded from permutations, combinations and products.
    So, now we can do
    
@@ -55,8 +96,6 @@
   istr.floor(1000.2, 2)  ==> 1000
   istr.floor(1000.2, 3 ==> 999
   ```
-
-#### 
 
 #### version 1.1.29 2026-05-17
 

@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.31"
+__version__ = "1.1.32"
 import functools
 import itertools
 import types
@@ -16,6 +16,7 @@ import operator
 import copy
 import bisect
 import collections
+
 """
 Note: the changelog is in changelog.md
 
@@ -408,7 +409,7 @@ class istr(str):
         return self_as_str == self_as_str[::-1]
 
     def is_non_decreasing(self):
-        self_as_str = istr.interpret_as_str(self)        
+        self_as_str = istr.interpret_as_str(self)
         return all(i0 <= i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
 
     def is_non_increasing(self):
@@ -617,8 +618,8 @@ class istr(str):
         """
         compose an istr from individual letter variables
         """
-        namespace = get_namespace(namespace)        
-        result=[]
+        namespace = get_namespace(namespace)
+        result = []
         for letter in letters:
             if letter.isidentifier():
                 if letter not in namespace:
@@ -659,7 +660,7 @@ class istr(str):
         return len(self) == len(set(self))
 
     def is_consecutive(self):
-        s = str(self)
+        s = istr.interpret_as_str(self)
         if len(s) <= 1:
             return False
         c0 = s[0]
@@ -677,49 +678,46 @@ class istr(str):
 
     def reversed(self):
         return self[::-1]
-    
+
     def ceil(self, divisible_by=1):
-        if divisible_by<=0:
+        if divisible_by <= 0:
             raise ValueError(f"step has to be >0, not {divisible_by}")
-        if divisible_by!=int(divisible_by):
+        if divisible_by != int(divisible_by):
             raise ValueError(f"step has to be an integer value, not {divisible_by}")
         n = istr.interpret_as_float(self)
-        return istr((math.ceil(n/divisible_by))*divisible_by)
+        return istr((math.ceil(n / divisible_by)) * divisible_by)
 
     def floor(self, divisible_by=1):
-        if divisible_by<=0:
+        if divisible_by <= 0:
             raise ValueError(f"step has to be >0, not {divisible_by}")
-        if divisible_by!=int(divisible_by):
+        if divisible_by != int(divisible_by):
             raise ValueError(f"step has to be an integer value, not {divisible_by}")
-        return istr((math.floor(self/divisible_by))*divisible_by)
-
+        return istr((math.floor(self / divisible_by)) * divisible_by)
 
     def interpret_as_int(self):
         if isinstance(self, istr):
             if not self.is_int():
                 raise TypeError(f"not interpretable as int: {self._frepr(self)}")
             return self._as_int
-        if isinstance(self, collections.abc.Iterable) and not isinstance(self,str):
+        if isinstance(self, collections.abc.Iterable) and not isinstance(self, str):
             return int(istr.join(self))
-        
-        return int(self)
 
+        return int(self)
 
     def interpret_as_float(self):
         if isinstance(self, istr):
             if not self.is_int():
                 raise TypeError(f"not interpretable as float: {self._frepr(self)}")
             return self._as_int
-        if isinstance(self, collections.abc.Iterable) and not isinstance(self,str):
+        if isinstance(self, collections.abc.Iterable) and not isinstance(self, str):
             return float(istr.join(self))
-        
+
         return float(self)
 
     def interpret_as_str(self):
-
-        if isinstance(self, collections.abc.Iterable) and not isinstance(self,str):
+        if isinstance(self, collections.abc.Iterable) and not isinstance(self, str):
             return istr.join(self)
-        
+
         return str(self)
 
     def _str_method(self, name, *args, **kwargs):
@@ -730,17 +728,48 @@ class istr(str):
         "removesuffix replace rjust rpartition rsplit rstrip split strip swapcase title translate upper zfill"
     ).split():
         locals()[name] = functools.partialmethod(_str_method, name)
+        
+    @classmethod
+    def zip(cls, *iterables, strict=False,join=False):
+        if join:
+            return cls.concat(map(cls, zip(*iterables, strict=strict)))
+        else:
+            return map(cls, zip(*iterables, strict=strict))
+        
+    @classmethod
+    def batched(cls,iterable, n, *, strict=False,join=False):
+        print("*** batched internal")
+        if n < 1:
+            raise ValueError('n must be at least one')
+        iterator = iter(iterable)
+        while batch := tuple(itertools.islice(iterator, n)):
+            if strict and len(batch) != n:
+                raise ValueError('batched(): incomplete batch')
+            if join:
+                yield cls.join(istr(batch))
+            else:
+                yield istr(batch)
 
     @classmethod
     def _itertools_method(cls, name, *args, **kwargs):
         return cls(getattr(itertools, name)(*args, **kwargs))
 
+    @classmethod
+    def _itertools_join_method(cls, name, *args, join=False, **kwargs):
+        res = cls(getattr(itertools, name)(*args, **kwargs))
+        return map(cls.join, res) if join else res
+
     for name in dir(itertools):
-        if not name.startswith("__") and not name == "count":  # count has its own method
-            if name in ("groupby", "tee"):
-                locals()[name] = getattr(itertools, name)
-            else:
-                locals()[name] = functools.partialmethod(_itertools_method, name)
+        if not name.startswith("_") and not name == "count":  # count has its own method
+            match name:
+                case "groupby" | "tee":
+                    locals()[name] = getattr(itertools, name)
+                case "permutations" | "combinations" | "combinations_with_replacement" | "product"|"batched"|"pairwise"|"zip_longest":
+                    if name=="batched" and sys.version_info[:2] == (3, 12):
+                        continue # version 3.12 does not support the strict parameter, so, we don't use the itertools method
+                    locals()[name] = functools.partialmethod(_itertools_join_method, name)
+                case _:
+                    locals()[name] = functools.partialmethod(_itertools_method, name)
 
     def count(*args):
         if len(args) >= 2 and isinstance(args[0], istr):
@@ -762,7 +791,7 @@ class istr(str):
 
     @classmethod
     def concat(cls, iterable):
-        return map(lambda x: cls("").join(x), cls(iterable))
+        return map(cls.join, cls(iterable))        
 
     def prod(self, *, start=1):
         return math.prod(self, start=istr(start))

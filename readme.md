@@ -513,6 +513,19 @@ istr(7).is_triangular() ==> False
 
 Note that this method can also be used for non-istr-s, like `istr.is_triangular(6) ==> True`.
 
+#### calling test methods with an iterable
+
+The test functions`istr.is_odd`, `istr.is_even`, `istr.is_divisible_by`, `istr.is_square`, `istr.is_cube`,  `istr.is_power_of`, `istr.is_triangular`, `istr.is_palindrome`, ``istr.is_consecutive`, `istr.is_increasing`, `istr.is_non_decreasing`, `istr.is_decreasing` and `istr.is_non_increasing` also accepts an iterable, which is joined prior to the test.
+This is particularly useful to filter tuples yielded from permutations, combinations, combinations_with_replacement and product.
+So, we can do
+
+```
+map(istr.join,filter(istr.prime, istr.combinations(range(10),2)))
+    ==> istr('02'), istr('03'), ... istr('89')
+```
+
+#### version 1.1.30 2026-05-19
+
 
 #### reverse an istr
 
@@ -628,7 +641,7 @@ The following class methods are supported (provided their counterpart exists in 
 
 This can be handy as these methods don't have to be imported from itertools anymore.
 
-All methods have exactly the same (optional) parameters as their itertools counterpart.
+All methods have exactly the same (optional) parameters as their itertools counterpart, apart from `istr.permutations`, `istr.combinations`, `istr.combinations_with_replacement`, `istr.product`, `istr.batched`, `istr.pairwise` and `istr.zip_longest` which have an extra optional keyword parameter join (see below).
 
 For example:
 
@@ -653,6 +666,23 @@ results in
 (istr('2'), istr('1'), istr('0'))
 ```
 
+The methods `istr.permutations`, `istr.combinations`, `istr.combinations_with_replacement`, `istr.product`, `istr.batched`, `istr.pairwise` and `istr.zip_longest` have an extra optional keyword parameter join, that is False by default.
+If False, the methods just produce an iterable returning tuples. If True, the tuples are joined to make an istr. So,
+
+```
+for t in istr.permutations(range(3), join=True):
+    print(repr(t))
+```
+results in
+```
+istr('012')
+istr('021')
+istr('102')
+istr('120')
+istr('201')
+istr('210')
+```
+
 Note that the count method is also used like `istr(100).find(0)` , using the count method of strings. The context defines which version is used:
 
 ```
@@ -665,6 +695,20 @@ istr.count(10) ==> istr('10'), istr('11'), istr('12'), ...
 istr.count(10,3) ==> istr('10'), istr('13'), istr('16'), ...
 ```
 
+#### istr.zip
+
+The class method `istr.zip` is the equivalent of the zip builtin, but applies istr to each element. `istr.zip` also supports the join parameter:
+  ```
+  print(list(istr.zip('12', '345')))
+  print(list(istr.zip('12', '345', join=True)))
+  print(list(istr.zip('12', '345', strict=True)))
+  ```
+  results in
+  ```
+  [(istr('1'), istr('3')), (istr('2'), istr('4'))]
+  [istr('13'), istr('24')]
+  ValueError: zip() argument 2 is longer than argument 1
+  ```
 #### concatenate an iterable
 
 The `istr.concat` method can be useful to map all items of an iterable
@@ -682,7 +726,7 @@ list(istr.concat(istr.permutations(range(3),2))) ==>
 
 The method `prod` can be used to return the product of an iterable (including an istr), like `math.prod`, but as istr. 
 Thus, `istr.prod(range(1,5))` is `istr(24)`
-And `istr("123", start=4)` is also `istr(24)`.
+And `istr.prod("123", start=4)` is also `istr(24)`.
 
 It is also possible to apply `prod` on an istr:
 `istr(1234).prod()` is `istr(24)`
