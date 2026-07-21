@@ -5,7 +5,7 @@
 #    |_||___/ \__||_|
 # strings you can count on
 
-__version__ = "1.1.40"
+__version__ = "1.1.33"
 import functools
 import itertools
 import types
@@ -261,8 +261,6 @@ class istr(str):
             raise TypeError("no parameter given")
 
         match value:
-            case None:
-                return None
             case range():
                 return cls.range(value.start, value.stop, value.step, base=base, int_format=int_format, repr_mode=repr_mode)
             case _range():
@@ -426,52 +424,13 @@ class istr(str):
         return all(i0 > i1 for i0, i1 in zip(self_as_str, self_as_str[1:]))
 
     def is_divisible_by(self, divisor):
-        return istr.divided_by(self, divisor, None) is not None
+        return istr.divided_by(self, divisor) is not None
 
-    def divided_by(self, divisor, fallback="0"):
-        if fallback is not None:
-            fallback = istr(fallback)
+    def divided_by(self, divisor, fallback=None):
         if divisor == 0:
-            return istr(fallback)
+            return fallback
         quotient, remainder = divmod(istr.interpret_as_int(self), int(divisor))
-        if remainder == 0:
-            return istr(quotient)
-        else:
-            return istr(fallback)
-
-    def divisors(self, sorted=True):
-        n = istr.interpret_as_int(self)
-        if n <= 0:
-            raise ValueError(f"must be >=0, not {n}")
-        tail = []
-        for d in range(1, math.isqrt(n) + 1):
-            q, r = divmod(n, d)
-            if r == 0:
-                yield istr(d)
-                if q != d:
-                    if sorted:
-                        tail.append(istr(q))
-                    else:
-                        yield istr(q)
-        if sorted:
-            yield from reversed(tail)
-
-    def sqrt(self, fallback=0):
-        return istr.nth_root(self, 2, fallback)
-
-    def cbrt(self, fallback=0):
-        return istr.nth_root(self, 3, fallback)
-
-    def nth_root(self, nth, fallback=0):
-        n = istr.interpret_as_int(self)
-        if nth < 1 or int(nth) != nth:
-            raise ValueError(f"nth should be integer >=1, not {nth}")
-        if n < 0:
-            raise ValueError(f"value should be integer >=0, not {n}")
-        result = round(n ** (1 / nth))
-        if result**nth != n:
-            result = fallback
-        return istr(result)
+        return istr(quotient) if remainder == 0 else fallback
 
     def is_prime(self):
         n = istr.interpret_as_int(self)
@@ -531,10 +490,8 @@ class istr(str):
     def is_cube(self):
         return istr.is_power_of(self, 3)
 
-    def is_power_of(self, exponent=None):
+    def is_power_of(self, exponent):
         n = istr.interpret_as_int(self)
-        if exponent is None:
-            return (n == 1) or any(istr(n).is_power_of(exponent) for exponent in range(2, int(math.log2(abs(n)) + 1)))
         exponent = check_integer(exponent, "exponent")
         if n < 0:
             if exponent % 2 == 0:
@@ -631,12 +588,6 @@ class istr(str):
     @functools.lru_cache
     def _power_ofs_up_to_1_000_000_as_set(cls, n):
         return set(map(int, cls._power_ofs_up_to_1_000_000(n)))
-
-    def getitem(self, index, fallback=""):
-        try:
-            return istr(istr.interpret_as_str(self)[int(index)])
-        except IndexError:
-            return istr(fallback)
 
     def decompose(self, letters, namespace=None):
         """
@@ -842,9 +793,6 @@ class istr(str):
     def prod(self, *, start=1):
         return math.prod(self, start=istr(start))
 
-    def sum(self, /, start=0):
-        return sum(istr(self), start=int(start))
-
     @classmethod
     def sumprod(cls, p, q, /, strict=True):
         if "sumprod" in math.__dict__ and strict:
@@ -856,156 +804,6 @@ class istr(str):
         for i, value in enumerate(iterable, int(start)):
             yield cls(i), value
 
-    def long_sqrt(self, as_str=False):
-        """
-        this function does long squre root and returns all the lines to be written.
-        (modified from a ChatGPT code suggestion)
-        returns root, number and the lines below the number, all istr-ed
-        if as_str is True, a formatted output will be returned
-        """
-
-        number = istr(istr.interpret_as_str(self))
-
-        lines = []
-        if len(number)%2==1:            
-            pairs=istr.chain(number[0],istr.batched(number[1:],2,join=True))
-        else:       
-            pairs=istr.batched(number,2,join=True)
-            
-        root = istr(0)
-        remainder = 0
-
-        for pair in pairs:
-            dividend = remainder * 100 + pair
-
-            x = 0
-            for d in range(10):
-                if (20 * root + d) * d <= dividend:
-                    x = d
-                else:
-                    break
-
-            trial = (20 * root + x) * x
-            remainder = dividend - trial
-
-            root = root * 10 + x
-            lines.append(dividend)
-            lines.append(trial)
-
-        lines.append(remainder)
-        lines = [root] + [number] + lines[1:]
-        if as_str:
-            result = []
-            extra = len(number)%2==0
-            result.append(f"  {extra*' '}{' '.join(lines[0])}")
-            result.append(f"  {len(lines[1])*'-'}")
-            result.append(f"\/{lines[1]}")
-
-            last_len=len(lines[2])
-            for i, line in enumerate(lines):
-
-                if i >= 2:
-                    if i == len(lines) - 1:
-                        n = i - 2 + extra
-                    else:
-                        n = i + extra
-
-                    if i % 2 == 0:
-                        result.append(f" {line:>{n}}")
-                        result.append(f" {last_len*'-':>{n}}")
-                    else:
-                        result.append(f" {line:>{n+1}}")
-                        last_len=len(line)
-            return "\n".join(result)
-        else:
-            return lines
-            
-    def long_multiplication(self, number,as_str=False):
-        number0 = istr(istr.interpret_as_str(self))        
-        number1=istr(number)
-        lines=[number0,number1]
-        for i in number1.reversed():
-            lines.append(number0*i)
-        lines.append(number0*number1)
-        if as_str:
-            result=[]
-            n=len(lines[-1])
-            result.append(f'{lines[0]:>{n}}')
-            result.append(f'{lines[1]:>{n}}')      
-            result.append(f"{n*'-'} x")    
-            for i,line in enumerate(lines[2:-1]):
-                result.append(f"{line:>{n-i}}")
-            result.append(f"{n*'-'}")             
-            result.append(lines[-1])
-            return '\n'.join(result)
-        else:
-            return lines
-        
-    def long_division(self, divisor, as_str=False):
-        dividend = istr(istr.interpret_as_str(self))
-        divisor = istr(divisor)
-    
-        if dividend < 0:
-            raise ValueError("dividend must be non-negative.")
-    
-        if divisor <= 0:
-            raise ValueError("divisor must be positive.")
-    
-        dividend_start = len(divisor) + 3
-        total_width = dividend_start + len(dividend)
-    
-        quotient_characters = [" "] * len(dividend)
-    
-        remainder = 0
-        division_started = False
-        lines=[]
-    
-        for digit_index, digit_character in enumerate(dividend):
-            current = remainder * 10 + digit_character
-            quotient_digit = current // divisor
-    
-            if quotient_digit != 0 or division_started:
-                division_started = True
-    
-            if digit_index == len(dividend) - 1:
-                division_started = True
-    
-            if not division_started:
-                remainder = current
-                continue
-    
-            quotient_characters[digit_index] = quotient_digit
-    
-            product = quotient_digit * divisor
-            remainder = current - product
-    
-            if as_str:
-                end_column = dividend_start + digit_index
-                current_start = end_column - len(current) + 1
-                product_start = end_column - len(product) + 1   
-                bar_start = min(current_start, product_start)
-                bar_length = end_column - bar_start + 1
-                lines.append(" " * current_start | current)
-                lines.append(" " * product_start | product)
-                lines.append(" " * bar_start + "-" * bar_length)
-        
-            else:
-                lines.append(current)
-                lines.append(product)
-    
-        quotient = istr.join(quotient_characters).rstrip()
-        if as_str:
-            remainder_start = total_width - len(remainder)
-            lines.append(" " * remainder_start | remainder)
-            lines=[" " * dividend_start | quotient," " * dividend_start + "-" * len(dividend),f"{divisor} ) {dividend}",*lines[1:]]
-            return "\n".join(lines)
-    
-        else:
-            lines.append(remainder)
-            lines=[istr(quotient),divisor,dividend,*lines[1:]]
-            return lines        
-            
-    
     def this_base(self):
         return self._this_base
 
@@ -1030,8 +828,7 @@ class istr(str):
 
             cls._int_format = int_format
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._int_format = self.saved_int_format
@@ -1052,8 +849,7 @@ class istr(str):
             self.saved_cls = cls
             cls._repr_mode = mode
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._repr_mode = self.saved_repr_mode
@@ -1072,8 +868,7 @@ class istr(str):
             self.saved_cls = cls
             cls._base = base
 
-        def __enter__(self):
-            ...
+        def __enter__(self): ...
 
         def __exit__(self, exc_type, exc_value, exc_tb):
             self.saved_cls._base = self.saved_base
@@ -1222,6 +1017,7 @@ def in_range(lst, start, stop):
 
 
 def check_integer(value, value_description):
+
     if not isinstance(value, numbers.Number):
         try:
             return int(value)
@@ -1260,7 +1056,7 @@ def get_namespace(namespace):
 
 
 def real_caller_frame():
-    # this will return the first frame on the stack that does not belong to this module,
+    # this will return the frame of the first frame on the stack that does not belong to this module,
     # so in the 'user' space
     frame = inspect.currentframe()
     frame_name = frame.f_globals.get("__name__")
@@ -1286,4 +1082,3 @@ class istrModule(types.ModuleType):
 
 if __name__ != "__main__":
     sys.modules["istr"].__class__ = istrModule
-

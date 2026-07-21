@@ -2,6 +2,192 @@
 
 #### For the full documentation, see www.salabim.org/istr .
 
+#### version 1.1.40 2026-07-21
+
+- Introduced the method `long_multiplication`, which gives a list of all lines to do a long multiplication.
+
+  E.g. `print(istr.long_multiplication(1234,567)` will print 
+
+  `[istr('1234'), istr('567'), istr('8638'), istr('7404'), istr('6170'), istr('699678')]`
+  
+  The method has an optional parameter `as_str`, that can be used t0 get a nice representation of the long multiplication lines.
+  
+  E.g. `print(istr.long_multiplication(1234,567, as_str=True)` will print
+  ```
+    1234
+     567
+  ------ x
+    8638
+   7404
+  6170
+  ------
+  699678  
+  ```
+  
+- Introduced the method `long_division`, which gives a list of all lines to do a long division (note that the divisor and dividend count as separate lines).
+
+  E.g. `print(istr.long_division(1395, 45)` will print 
+
+  [istr('31'), istr('45'), istr('1395'), istr('135'), istr('45'), istr('45'), istr('0')]
+  
+  The method has an optional parameter `as_str`, that can be used to get a nice representation of the long division lines.
+  
+  E.g. `print(istr.long_division(1395, 45, as_str=True)` will print 
+  ```
+         31
+       ----
+  45 ) 1395
+       135
+       ---
+         45
+         45
+         --
+          0
+  ```
+  
+  ```
+  
+  ```
+
+#### version 1.1.39 2026-07-19
+
+- The method `long_sqrt`, does not insert a trailing 0 anymore.
+
+- The method `long_sqrt`, now has an optional parameter `as_str`, that can be used to get a nice string representation of the long square root lines.
+  
+  E.g. `print(istr.long_sqrt(123 ** 2, as_str=True))` will print
+  ```
+    1 2 3
+    -----
+  \/15129
+    1
+    -
+     51
+     44
+     --
+      729
+      729
+      ---
+        0 
+  ```
+  
+#### version 1.1.38 2026-07-18
+
+- Introduced the method `long_sqrt`, which is gives a list of  the lines of a long square root. Both the result (root) and the original number, possibly with a trailing 0 are returned, along with the calculated values.
+  E.g. `istr.long_sqrt(123 ** 2)` results in
+  
+  `[istr('123'), istr('15129'), istr('1'), istr('51'), istr('44'), istr('729'), istr('729'), istr('0')]`
+  
+#### version 1.1.37 2026-07-13
+
+- Introduced the method `sum`, which is equivalent to the builtin sum function. It is primarily used to be similar to the `prod` method.
+  ```
+  istr(1234).sum() ==> istr('10')
+  istr.sum(1234) ==> istr('10')
+  istr.sum('1234') ==> istr('10')
+  ```
+
+#### version 1.1.36 2026-06-29
+
+- Introduced the methods `sqrt`, `cbrt`, `nth_root` to provide the square root, cubic root and nth root of an istr. If there is no integer root, the fallback value (default `istr('0')` will be returned.
+
+  ```
+  istr(64).sqrt() ==> istr('8')
+  istr(65).sqrt() ==> istr('0')
+  istr(1234**3).cbrt() ==> istr('1234')
+  istr(1234**3+1).cbrt() ==> istr('0')
+  istr(1234**5).nth_root(5) ==> istr('1234')
+  istr(1234**5+1).nth_root(5) ==> istr('0')
+  istr(1234**5+1).nth_root(5, 1) ==> istr('1')
+  istr(1234**5+1).nth_root(5, None) ==> None
+  
+  istr.sqrt(64) ==> istr('8')
+  ```
+	- `istr(None)` is now `None` (was: `istr('None')) 
+
+#### version 1.1.35 2026-06-28
+
+- The fallback value for `divided_by` is now `istr('0')`, instead of `istr('')`.
+
+- `is_power_of` can now also be called without an exponent. In that case, True will be returned if the given value is a perfect power, False otherwise.
+  
+  ```
+  istr(2**10).is_power_of() ==> True
+  istr(-3**3).is_power_of() ==> True
+  istr(34).is_power_of() ==> False
+  ```
+  
+- Introduced `divisors`, which will generate all divisors of a number.
+  Normally, the divisors are sorted, but if the sorted flag is False, the order is not necessarily maintained (this is slightly more efficient).
+  ```
+  istr(18).divisors() ==> [istr('1'), istr('2'), istr('3'), istr('6'), istr('9'), istr('18')]
+  istr(19).divisors() ==> [istr('1'), istr('19')]  
+  istr(18).divisors(sorted=False) ==> [istr('1'), istr('18'), istr('2'), istr('9'), istr('3'), istr('6')]  
+  ```
+  This method can also be used with an int. E.g.:  
+  ```
+  istr.divisors(18) ==> [istr('1'), istr('2'), istr('3'), istr('6'), istr('9'), istr('18')]
+  istr.divisors(19) ==> [istr('1'), istr('19')]  
+  istr.divisors(18, False) ==> [istr('1'), istr('18'), istr('2'), istr('9'), istr('3'), istr('6')]  
+  ```
+
+#### version 1.1.34 2026-06-20
+
+- Introduced `istr.getitem`, which is essentially, a safe version of indexing an istr.
+  If the index is within the bounds of the istr, `getitem` just works like indexing. Otherwise, where normally an IndexError would be raised, the fallback value (default istr('')) will be returned.
+  Note that the result will always be istr-ed, except when fallback is None.
+  
+  Examples:
+  ```
+  istr(1234).getitem(2) ==> istr('3')
+  istr(1234).getitem(-2) ==> istr('3')
+  istr(1234).getitem(5) ==> istr('')
+  istr(1234).getitem(5, '0') ==> istr('0')
+  istr(1234).getitem(5, None) ==> None
+  ```
+  This method can also be used with a str. E.g.:
+  ```
+  istr.getitem('1234', 2) ==> istr('3')
+  istr.getitem('1234', -2) ==> istr('3')
+  istr.getitem('1234', 5) ==> istr('')
+  istr.getitem('1234',5, '0') ==> istr('0')
+  istr.getitem('1234',5, None) ==> None
+  ```
+  Note that this method has also the advantage that it can accept an istr as index, in contrast to normal indexing.
+
+- The fallback value for `divided_by` is now `istr('')`, instead of `None`. Also the result is always istr-ed, except for None.
+
+#### version 1.1.33 2026-06-13
+
+- `istr.primes`, `istr.squares`, `istr.cubes` and `istr.power_ofs` now have a keyword only parameter `length`, that can be used instead of of bound(s). E.g.
+  ```
+  print(*istr.squares(length=2))
+  print(*istr.cubes(length=2) )
+  print(*istr.power_ofs(5,length=4)   )
+  print(*istr.primes(length=2))
+  ```
+  will print
+  ```
+  16 25 36 49 64 81
+  27 64
+  1024 3125 7776
+  11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97  
+  ```
+  It is not allowed to specifiy both bound(s) and length.
+  
+- `istr.primes`, `istr.squares`, `istr.cubes` and `istr.power_ofs now check more aggresively if parameters are correct.
+
+- `istr.range` now also support a keyword only parameter `length`, that can be used instead of bound(s):
+  
+  ```
+  print(*istr.range(length=2))
+  ```
+  will print
+  ```
+  10 11 12 13 ... 98 99
+  ```
+  It is not allowed to specify both bound(s) and length.
+
 #### version 1.1.32 2026-06-02
 
 - `istr.is_consecutive` now also accepts an iterable, which is joined prior to the test (see 1.1.31).

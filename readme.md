@@ -299,6 +299,7 @@ is
 Apart from with numeric (to be interpreted as an int) or str, istr can be initialized with
 several other types:
 
+- if `None`, `None` will be returned.
 
 - if a dict (or subtype of dict), the same type dict will be returned with all *values* istr'ed
 ```
@@ -354,7 +355,49 @@ to unpack multiple values, e.g.
 a, b, c = istr(5, 6, 7) ==> a=istr('5') , b=istr('6'), c=istr('7') 
 a, b, c = istr(*range(3)) ==> a=istr('0') , b=istr('1'), c=istr('2') 
   ```
+#### Alternative way of range specification
+
+Instead of `istr(range(..))` it is possible to use `istr,range(..)` instead, like
+
+`list(istr.range(3,6))` ==> `[istr('3'), istr('4'), istr('5')]`
+
+In contrast to the builtin `range`, `istr.range` supports a non keyword parameter `length`:
+
+`list(istr.range(length=3))` is equivalent to `istr.range(100, 1000)`
+
+#### square root, cubic root and nth root
+The methods `sqrt`, `cbrt`, `nth_root`provide the square root, cubic root and nth root of an istr. If there is no integer root, the fallback value (default `istr('0')` will be returned.
+```
+istr(64).sqrt() ==> istr('8')
+istr(65).sqrt() ==> istr('0')
+istr(1234**3).cbrt() ==> istr('1234')
+istr(1234**3+1).cbrt() ==> istr('0')
+istr(1234**5).nth_root(5) ==> istr('1234')
+istr(1234**5+1).nth_root(5) ==> istr('0')
+istr(1234**5+1).nth_root(5, 1) ==> istr('1')
+istr(1234**5+1).nth_root(5, None) ==> None
+
+istr.sqrt(64) ==> istr('8')
+```
+
+#### integer division
+The method `divided_by` not only tests divisibility, but also returns the result of the division. If not possible, `istr('0')` will be returned, unless the *fallback* (last argument) is given, in which case *fallback* will be returned.
+
+The result will be always istr-ed, except for None.
+```
+istr(18).divided_by(3) ==> 6 (actually istr("6"))
+istr(18).divided_by(istr(3)) ==> 6
+istr(19).divided_by(3) ==> istr('0')
+istr(19).divided_by(3, 1) ==> istr('1')
+istr(19).divided_by(3) ==> istr('0')
+istr(19).divided_by(istr(3)) ==> istr('0')
+istr.divided_by(18, 3) ==>  6
+istr.divided_by(19, 3) ==>  istr('0')
+istr.divided_by(19, 3, 1) ==>  istr('1')
+```
+
 #### test for even/odd
+
 It is possible to test for even/odd (provided the istr can be interpreted as an int) with the `is_even` and `is_odd` method, e.g.
 
 ```
@@ -385,16 +428,16 @@ istr.is_palindrome(min) ==> False
 #### test for increasing, decreasing, non-decreasing and non-increasing
 
 It is possible to test whether the characters of an istr are increasing, decreasing, non-decreasing or non-increasing, like 
- ```
+```
 istr(1223).is_increasing() ==> False
 istr(1223).is_non_decreasing() ==> True
 istr(3221).is_decreasing() ==> False
 istr(3221).is_non_increasing ==> True
- ```
+```
 It is also possible to test for 'increasingness' and friends for anything that can be converted to a str:
-```
+ ```
 istr.is_increasing(123) ==> True  
-```
+ ```
 
 #### test for divisibility
 
@@ -410,19 +453,6 @@ It is also possible to test for divisibility of an ordinary int:
 ```
 istr.is_divisible(18, 3) ==> True
 istr.is_divisible(19, 3) ==> False
-```
-The method `divided_by` not only tests divisibility, but also returns the result of the division. If not possible, None will be returned,
-unless the *fallback* (last argument) is given, in which case *fallback* will be returned.
-```
-istr(18).divided_by(3) ==> 6 (actually istr("6"))
-istr(18).divided_by(istr(3)) ==> 6
-istr(19).divided_by(3) ==> None
-istr(19).divided_by(3, 0) ==> 0
-istr(19).divided_by(3) ==> None
-istr(19).divided_by(istr(3)) ==> None
-istr.divided_by(18, 3) ==>  6
-istr.divided_by(19, 3) ==>  None
-istr.divided_by(19, 3, 0) ==>  0
 ```
 #### test for square
 
@@ -465,6 +495,14 @@ istr.is_power_of(81, 4) ==> True
 istr.is_power_of(82, 4) ==> False
 ```
 
+If called without an exponent, the test will be for any perfect power:
+
+```
+istr(2**10).is_power_of() ==> True
+istr(-3**3).is_power_of() ==> True
+istr(34).is_power_of() ==> False
+```
+
 #### test for prime
 
 It is possible to test whether the value is a prime number (provided the istr can be interpreted as an int) with the `is_prime` method, e.g.
@@ -478,6 +516,20 @@ It is also possible to test for prime of an ordinary int:
 ```
 istr.is_prime(4) ==> False
 istr.is_prime(5) ==> True
+```
+#### get divisors of a number
+The method `divisors` will generate all divisors of a number.
+Normally, the divisors are sorted, but if the sorted flag is False, the order is not necessarily maintained (this is slightly more efficient).
+```
+istr(18).divisors() ==> [istr('1'), istr('2'), istr('3'), istr('6'), istr('9'), istr('18')]
+istr(19).divisors() ==> [istr('1'), istr('19')]  
+istr(18).divisors(sorted=False) ==> [istr('1'), istr('18'), istr('2'), istr('9'), istr('3'), istr('6')]  
+```
+This method can also be used with an int. E.g.:  
+```
+istr.divisors(18) ==> [istr('1'), istr('2'), istr('3'), istr('6'), istr('9'), istr('18')]
+istr.divisors(19) ==> [istr('1'), istr('19')]  
+istr.divisors(18, False) ==> [istr('1'), istr('18'), istr('2'), istr('9'), istr('3'), istr('6')]  
 ```
 
 #### test whether all characters are distinct
@@ -698,11 +750,11 @@ istr.count(10,3) ==> istr('10'), istr('13'), istr('16'), ...
 #### istr.zip
 
 The class method `istr.zip` is the equivalent of the zip builtin, but applies istr to each element. `istr.zip` also supports the join parameter:
-  ```
+```
   print(list(istr.zip('12', '345')))
   print(list(istr.zip('12', '345', join=True)))
   print(list(istr.zip('12', '345', strict=True)))
-  ```
+```
   results in
   ```
   [(istr('1'), istr('3')), (istr('2'), istr('4'))]
@@ -716,11 +768,11 @@ to `istr` and then concatenate these.
 
 `
 
-```
+  ```
 list(istr.concat(((1,2),(3,4))) ==> istr([12,34])
 list(istr.concat(istr.permutations(range(3),2))) ==> 
     [istr('01'), istr('02'), istr('10'), istr('12'), istr('20'), istr('21')] 
-```
+  ```
 
 #### prod to get product of an iterable
 
@@ -732,6 +784,16 @@ It is also possible to apply `prod` on an istr:
 `istr(1234).prod()` is `istr(24)`
 `istr("123").prod(start=4)` is `istr(24)`
 
+#### sum to get sum of an iterable
+
+The method `sum` can be used to return the sum of an iterable (including an istr), very much like the builtin sum function. 
+Thus, `istr.sum(range(1,5))` is `istr('10')`
+And `istr.sum("123", start=4)` is also `istr('10')`.
+
+It is also possible to apply `sum` on an istr:
+`istr(1234).sum()` is `istr('10')`
+`istr("123").prod(start=4)` is `istr('10')`
+
 #### sumprod to get the sum of products of iterables
 
 The class method `istr.sumprod()`, is equivalent to `math.sumprod()`, but applies istr to both iterables.
@@ -741,15 +803,117 @@ In contrast to `math.sumprod()`, `istr.sumprod()` supports a `strict` parameter 
 Thus, `istr.sumprod("12", (3,4,5), strict=False)` is `istr(11)`, whereas `istr.sumprod("12", (3,4,5))` 
 raises a ValueError. 
 
-#### get all squares, cubes, power ofs or primes in a given range
+#### get all squares, cubes, power ofs or primes in a given range or with a given length
 
 The class methods `istr.squares`, `istr.cubes`, `istr.power_ofs` and `istr.primes` can be used to get a list of all squares, cubes, power_ofs or primes up to a given upperbound (non inclusive) or between a given lower bound and upper bound (non inclusive), like:
 
 `istr.squares (100)` returns a list of all squares <100
 `istr.squares(50, 100)` returns a list of all squares in the range [50, 100)
 
+Alternatively, it is possible to get a list of all squares, cubes, power_ofs or primes with a given length, like:
+
+`istr.squares (length=2)` returns a list of all squares of length 2, so between 10 and 99.
+
 Unless `cache=False` is specified, the query result is cached.
 
+#### Safe indexing (getitem)
+
+The `istr.getitem` method is essentially, a safe version of indexing an istr.
+If the index is within the bounds of the istr, `getitem` just works like indexing. Otherwise, where normally an IndexError would be raised, the istr('') will be returned unless `fallback` (last argument) is specified.
+
+Note that the result will always be istr-ed, except when the result is None.
+
+Examples:
+```
+istr(1234).getitem(2) ==> 3
+istr(1234).getitem(-2) ==> 3
+istr(1234).getitem(5) ==> istr('')
+istr(1234).getitem(5, '0') ==> istr('0')
+istr(1234).getitem(5, None) ==> None
+```
+This method can also be used with a str. E.g.:
+```
+istr.getitem('1234', 2) ==> 3
+istr.getitem('1234', -2) ==> 3
+istr.getitem('1234', 5) ==> istr('')
+istr.getitem('1234',5, '0') ==> istr('0')
+istr.getitem('1234',5, None) ==> None
+```
+Note that this method has the advantage that it can accept an istr as index, in contrast to normal indexing.
+
+#### long square root
+The method `long_sqrt` gives a list of  the lines of a long square root. Both the result (root) and the original number, possibly with a trailing 0 are returned, along with the calculated values.
+  E.g. `istr.long_sqrt(123 ** 2)` results in
+
+`[istr('123'), istr('15129'), istr('1'), istr('51'), istr('44'), istr('729'), istr('729'), istr('0')]`
+
+Note the final `istr('0')` is included to support also long square roots that are not perfect.
+
+The method `long_sqrt`has an optional parameter `as_str`, that can be used to get a nice string representation of the long square root lines.
+
+E.g. `print(istr.long_sqrt(123 ** 2, as_str=True))` will print
+```
+  1 2 3
+  -----
+\/15129
+  1
+  -
+   51
+   44
+   --
+    729
+    729
+    ---
+      0 
+```
+
+#### long multiplication
+
+The method `long_multiplication` gives a list of all lines to do a long multiplition.
+
+E.g. `print(istr.long_multiplication(1234,567)` will print 
+ 
+  `[istr('1234'), istr('567'), istr('8638'), istr('7404'), istr('6170'), istr('699678')]`
+  
+The method has an optional parameter `as_str`, that can be used t0 get a nice representation of the long multiplication lines.
+  
+E.g. `print(istr.long_multiplication(1234,567, as_str=True)` will print
+
+```
+  1234
+   567
+------ x
+  8638
+ 7404
+6170
+------
+699678  
+```
+
+#### long division
+
+The method `long_division` gives a list of all lines to do a long division (note that the divisor and dividend count as separate lines).
+
+E.g. `print(istr.long_division(1395, 45)` will print 
+
+[istr('31'), istr('45'), istr('1395'), istr('135'), istr('45'), istr('45'), istr('0')]
+  
+The method has an optional parameter `as_str`, that can be used to get a nice representation of the long multiplication lines.
+  
+E.g. `print(istr.long_division(1395, 45, as_str=True)` will print 
+
+```
+       31
+     ----
+45 ) 1395
+     135
+     ---
+       45
+       45
+       --
+        0
+```  
+  
 #### generate istr with digits
 
 The class method `digits` can be used to return an istr of digits according to a given specification.
@@ -1021,29 +1185,29 @@ operator/function   int  str   Example
 +                    x         istr(20) + 3 ==> istr('23')
 _                    x         istr(20) - 3 ==> istr('17')
 *                    x         istr(20) * 3 ==> istr('60')
-/                    x         istr(20) / 3 ==> istr('6')
-//                   x         istr(20) // 3 ==> istr('6')
-%                    x         istr(20) % 3 ==> istr('2')
-divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
-**                   x         istr(2) ** 3 ==> istr('8')
-<=, <, >, >=         x         istr('100') > istr('2') ==> True
-abs                  x         abs(istr(-20)) ==> istr('20')
-int                  x         int(istr("20")) ==> 20
-float                x         float(istr("20")) ==> 20.0
-complex              x         complex(istr("20")) ==> (20+0j)
-==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
-bool                 x    x *) bool(istr(' 0 ')) ==> False | bool(istr('')) ==> False
-@                         x    istr(20) @ 3 ==> istr('202020')
-|                         x    istr(20) | '5' ==> istr('205')
-slicing                   x    istr(12345)[1:3] ==> istr('23')
-iterate                   x    [x for x in istr(20)] ==> [istr('2'), istr('0')]
-len                       x    len(istr(' 20 ')) ==> 4
-count                     x    istr(100).count(0) ==> 2
+                     /                    x         istr(20) / 3 ==> istr('6')
+                     //                   x         istr(20) // 3 ==> istr('6')
+                     %                    x         istr(20) % 3 ==> istr('2')
+                     divmod               x         divmod(istr(20), 3) ==> (istr('6'), istr('2'))
+                     **                   x         istr(2) ** 3 ==> istr('8')
+                     <=, <, >, >=         x         istr('100') > istr('2') ==> True
+                     abs                  x         abs(istr(-20)) ==> istr('20')
+                     int                  x         int(istr("20")) ==> 20
+                     float                x         float(istr("20")) ==> 20.0
+                     complex              x         complex(istr("20")) ==> (20+0j)
+                     ==                   x    x    istr(20) == 20 ==> True | istr(20) == '20' ==> True
+                     bool                 x    x *) bool(istr(' 0 ')) ==> False | bool(istr('')) ==> False
+                     @                         x    istr(20) @ 3 ==> istr('202020')
+                     |                         x    istr(20) | '5' ==> istr('205')
+                     slicing                   x    istr(12345)[1:3] ==> istr('23')
+                     iterate                   x    [x for x in istr(20)] ==> [istr('2'), istr('0')]
+                     len                       x    len(istr(' 20 ')) ==> 4
+                     count                     x    istr(100).count(0) ==> 2
                                istr.count(100) ==> istr('100'), istr('101'). istr('102'), ...
-index                     x    istr(' 100 ').index('0') ==> 2
-split                     x    istr('1 2').split() ==> (istr('1'), istr('2'))
-string format             x    f"|{istr(1234):6}|" ==> '|1234  |'
-other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
+                     index                     x    istr(' 100 ').index('0') ==> 2
+                     split                     x    istr('1 2').split() ==> (istr('1'), istr('2'))
+                     string format             x    f"|{istr(1234):6}|" ==> '|1234  |'
+                     other string methods      x    istr('aAbBcC').lower() ==> istr('aabbcc')
                                istr('aAbBcC').islower() ==> False
                                istr('  abc   ').strip() ==> istr('abc')
                                ...

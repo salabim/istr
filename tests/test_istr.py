@@ -190,6 +190,12 @@ def test_range():
 
     assert str(list(istr.range(5, base=2, repr_mode="str"))) == "['0', '1', '10', '11', '100']"
 
+    assert list(istr.range(length=2)) == list(istr.range(10, 100))
+    with pytest.raises(ValueError, match=re.escape("length must be >=1, not 0")):
+        istr.range(length=0)
+    with pytest.raises(ValueError, match=re.escape("both bound(s) and length specified")):
+        istr.range(10, length=2)
+
 
 def test_misc():
     assert istr("") == ""
@@ -213,8 +219,16 @@ def test_iter():
     assert [x for x in istr.range(3)] == [istr(0), istr(1), istr(2)]
 
 
+def test_none():
+    assert istr(None) is None
+
+
 def test_reversed():
     assert [x for x in reversed(istr.range(3))] == [istr(2), istr(1), istr(0)]
+    a = istr(12345)
+    assert a.reversed().equals(istr(54321))
+    a = istr(-123)
+    assert a.reversed().equals(istr("321-"))
 
 
 def test_lazy():
@@ -382,6 +396,74 @@ def test_is_increasing_and_friends():
     assert istr.is_non_increasing(222)
 
 
+def test_getitem():
+    a = istr("1234")
+    assert a.getitem(0).equals(istr("1"))
+    assert a.getitem(-1).equals(istr("4"))
+    assert a.getitem(6).equals(istr(""))
+    assert a.getitem(-6).equals(istr(""))
+    assert a.getitem(0, 0).equals(istr("1"))
+    assert a.getitem(-1, 0).equals(istr("4"))
+    assert a.getitem(6, 0).equals(istr("0"))
+    assert a.getitem(-6, 0).equals(istr("0"))
+    assert a.getitem(6, None) is None
+    assert a.getitem(-6, None) is None
+
+    b = "1234"
+    assert istr.getitem(b, 0).equals(istr("1"))
+    assert istr.getitem(b, 6).equals(istr(""))
+
+
+def test_nth_power():
+    assert istr(1234).nth_root(1).equals(istr(1234))
+    assert istr(1234**5).nth_root(5).equals(istr(1234))
+    assert istr(1234**5 + 1).nth_root(5).equals(istr(0))
+    assert istr(1234**5 + 1).nth_root(5, 1).equals(istr(1))
+    assert istr(1234**5 + 1).nth_root(5, None) is None
+
+    assert istr.nth_root(1234**5, 5).equals(istr(1234))
+    assert istr.nth_root(1234**5 + 1, 5).equals(istr(0))
+    assert istr.nth_root(1234**5 + 1, 5, 1).equals(istr(1))
+    assert istr.nth_root(1234**5 + 1, 5, None) is None
+
+    with pytest.raises(ValueError):
+        istr(1234).nth_root(0)
+    with pytest.raises(ValueError):
+        istr(1234).nth_root(1.5)
+    with pytest.raises(ValueError):
+        istr(-(1234**5)).nth_root(5)
+
+
+def test_sqrt():
+    assert istr(1234**2).sqrt().equals(istr(1234))
+    assert istr(1234**2 + 1).sqrt().equals(istr(0))
+    assert istr(1234**2 + 1).sqrt(1).equals(istr(1))
+    assert istr(1234**2 + 1).sqrt(None) is None
+
+    assert istr.sqrt(1234**2).equals(istr(1234))
+    assert istr.sqrt(1234**2 + 1).equals(istr(0))
+    assert istr.sqrt(1234**2 + 1, 1).equals(istr(1))
+    assert istr.sqrt(1232**2 + 1, None) is None
+
+    with pytest.raises(ValueError):
+        istr(-125).sqrt()
+
+
+def test_cbrt():
+    assert istr(1234**3).cbrt().equals(istr(1234))
+    assert istr(1234**3 + 1).cbrt().equals(istr(0))
+    assert istr(1234**3 + 1).cbrt(1).equals(istr(1))
+    assert istr(1234**3 + 1).cbrt(None) is None
+
+    assert istr.cbrt(1234**3).equals(istr(1234))
+    assert istr.cbrt(1234**3 + 1).equals(istr(0))
+    assert istr.cbrt(1234**3 + 1, 1).equals(istr(1))
+    assert istr.cbrt(1232**3 + 1, None) is None
+
+    with pytest.raises(ValueError):
+        istr(-125).cbrt()
+
+
 def test_is_divisible_by():
     assert istr(18).is_divisible_by(3)
     assert istr(18).is_divisible_by(istr(3))
@@ -396,16 +478,18 @@ def test_is_divisible_by():
 def test_divided_by():
     assert istr(18).divided_by(3).equals(istr(6))
     assert istr(18).divided_by(istr(3)).equals(istr(6))
-    assert istr(19).divided_by(3) is None
-    assert istr(19).divided_by(istr(3)) is None
+    assert istr(19).divided_by(3).equals(istr("0"))
+    assert istr(19).divided_by(istr(3)).equals(istr("0"))
     with pytest.raises(TypeError, match=re.escape(f"not interpretable as int")):
         istr("a").divided_by(3)
     assert istr.divided_by(18, 3).equals(istr(6))
-    assert istr.divided_by(19, 3) is None
-    assert istr.divided_by(18, 3, 0).equals(istr(6))
-    assert istr.divided_by(19, 3, 0) == 0
-    assert istr.divided_by(4, 0) is None
-    assert istr.divided_by(4, 0, 0) == 0
+    assert istr.divided_by(19, 3).equals(istr("0"))
+    assert istr.divided_by(18, 3, 1).equals(istr(6))
+    assert istr.divided_by(19, 3, 1).equals(istr("1"))
+    assert istr.divided_by(18, 3, None).equals(istr(6))
+    assert istr.divided_by(19, 3, None) is None
+    assert istr.divided_by(4, 0).equals(istr("0"))
+    assert istr.divided_by(4, 0, 1).equals(istr("1"))
 
 
 def test_is_square():
@@ -468,13 +552,20 @@ def test_is_power_of():
     assert not istr.is_power_of(2, 3)
     assert istr.is_power_of(8, 3)
     assert istr.is_power_of(27, 3)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         istr(1).is_power_of(3.1)
     with pytest.raises(ValueError):
         istr(1).is_power_of(-1)
     assert istr(3**7).is_power_of(istr(7))
     assert istr(10).is_power_of(1)
     assert istr(-8).is_power_of(3)
+
+
+def test_is_power_of_no_arg():
+    assert istr(2**10).is_power_of()
+    assert not istr(2**10 + 1).is_power_of()
+    assert istr(1).is_power_of()
+    assert istr((-5) ** 3).is_power_of()
 
 
 def test_is_prime():
@@ -502,18 +593,33 @@ def test_primes():
     assert istr.primes(17) == [istr("2"), istr("3"), istr("5"), istr("7"), istr("11"), istr("13")]
     assert istr.primes(40, 50) == [istr("41"), istr("43"), istr("47")]
     assert id(istr.primes(100)) == id(istr.primes(100))  # test caching
+    assert istr.primes(length=2) == istr.primes(10, 100)
+    with pytest.raises(ValueError, match=re.escape("both bound(s) and length specified")):
+        istr.primes(12, length=2)
+    with pytest.raises(ValueError, match=re.escape("no bound(s) or length specified")):
+        istr.primes()
 
 
 def test_squares():
     assert istr.squares(50) == [istr("0"), istr("1"), istr("4"), istr("9"), istr("16"), istr("25"), istr("36"), istr("49")]
-    assert istr.squares(40, 50) == [istr("49")]
+    assert istr.squares(-27, 27) == [istr("0"), istr("1"), istr("4"), istr("9"), istr("16"), istr("25")]
     assert id(istr.squares(100)) == id(istr.squares(100))  # test caching
+    assert istr.squares(length=2) == istr.squares(10, 100)
+    with pytest.raises(ValueError, match=re.escape("both bound(s) and length specified")):
+        istr.squares(12, length=2)
+    with pytest.raises(ValueError, match=re.escape("no bound(s) or length specified")):
+        istr.squares()
 
 
 def test_cubes():
     assert istr.cubes(50) == [istr("0"), istr("1"), istr("8"), istr("27")]
-    assert istr.cubes(27, 50) == [istr("27")]
+    assert istr.cubes(-27, 27) == [istr("-27"), istr("-8"), istr("-1"), istr("0"), istr("1"), istr("8")]
     assert id(istr.cubes(100)) == id(istr.cubes(100))  # test caching
+    assert istr.cubes(length=2) == istr.cubes(10, 100)
+    with pytest.raises(ValueError, match=re.escape("both bound(s) and length specified")):
+        istr.cubes(12, length=2)
+    with pytest.raises(ValueError, match=re.escape("no bound(s) or length specified")):
+        istr.cubes()
 
 
 def test_power_ofs():
@@ -531,6 +637,20 @@ def test_power_ofs():
     assert istr.power_ofs(5, 1, 500) == [istr("1"), istr("32"), istr("243")]
     assert id(istr.power_ofs(3, 2000)) != id(istr.cubes(3, 2000))  # test caching
     assert id(istr.power_ofs(3, 1000, cache=False)) != id(istr.cubes(3, 1000, cache=False))  # test caching
+
+
+def test_divisors():
+    assert list(istr(36).divisors()) == istr([1, 2, 3, 4, 6, 9, 12, 18, 36])
+    assert list(istr(36).divisors(sorted=False)) == istr([1, 36, 2, 18, 3, 12, 4, 9, 6])
+    assert list(istr(37).divisors()) == istr([1, 37])
+    assert list(istr(1).divisors()) == istr([1])
+    with pytest.raises(ValueError, match=re.escape("must be >=0, not 0")):
+        list(istr(0).divisors())
+    with pytest.raises(ValueError, match=re.escape("must be >=0, not -1")):
+        list(istr(-1).divisors())
+    assert list(istr.divisors(36)) == istr([1, 2, 3, 4, 6, 9, 12, 18, 36])
+    assert list(istr.divisors(36, False)) == istr([1, 36, 2, 18, 3, 12, 4, 9, 6])
+    assert list(istr.divisors(37)) == istr([1, 37])
 
 
 def test_in_range():
@@ -696,13 +816,6 @@ def test_indexing():
     assert a[:2].equals(istr(12))
     assert a[::-1].equals(istr(54321))
     assert a[-2:].equals(istr(45))
-
-
-def test_reverse():
-    a = istr(12345)
-    assert a.reversed().equals(istr(54321))
-    a = istr(-123)
-    assert a.reversed().equals(istr("321-"))
 
 
 def test_edge_cases():
@@ -881,15 +994,17 @@ def test_digits_cache():
         assert id(d) == id(istr.digits())
     assert int(d) == 4886718345
 
+
 def test_zip():
-    assert list(istr.zip("12","34"))==[(istr("1"), istr("3")),(istr("2"), istr("4"))]
-    assert list(istr.zip("12","345"))==[(istr("1"), istr("3")),(istr("2"), istr("4"))]
-    assert list(istr.zip("12","34", join=True))==[istr("13"),istr("24")]
-    assert list(istr.zip("12","345", join=True))==[istr("13"),istr("24")]
+    assert list(istr.zip("12", "34")) == [(istr("1"), istr("3")), (istr("2"), istr("4"))]
+    assert list(istr.zip("12", "345")) == [(istr("1"), istr("3")), (istr("2"), istr("4"))]
+    assert list(istr.zip("12", "34", join=True)) == [istr("13"), istr("24")]
+    assert list(istr.zip("12", "345", join=True)) == [istr("13"), istr("24")]
     with pytest.raises(ValueError):
-        list(istr.zip("12","345",strict=True))
+        list(istr.zip("12", "345", strict=True))
     with pytest.raises(ValueError):
-        list(istr.zip("12","345",join=True,strict=True))
+        list(istr.zip("12", "345", join=True, strict=True))
+
 
 def test_itertools():
     def list100(it):
@@ -899,9 +1014,11 @@ def test_itertools():
     assert list(istr.accumulate((1, 3, 4))) == [istr("1"), istr("4"), istr("8")]
     assert list(istr.chain(range(2), range(2, 5))) == [istr("0"), istr("1"), istr("2"), istr("3"), istr("4")]
     assert list(istr.combinations(range(5), r=3)) == list(istr(itertools.combinations(range(5), r=3)))
-    assert list(istr.combinations(range(5), r=3,join=True)) == list(map(istr.join,istr(itertools.combinations(range(5), r=3))) )   
+    assert list(istr.combinations(range(5), r=3, join=True)) == list(map(istr.join, istr(itertools.combinations(range(5), r=3))))
     assert list(istr.combinations_with_replacement(range(5), r=3)) == list(istr(itertools.combinations_with_replacement(range(5), r=3)))
-    assert list(istr.combinations_with_replacement(range(5), r=3,join=True)) == list(map(istr.join,istr(itertools.combinations_with_replacement(range(5), r=3))))
+    assert list(istr.combinations_with_replacement(range(5), r=3, join=True)) == list(
+        map(istr.join, istr(itertools.combinations_with_replacement(range(5), r=3)))
+    )
     assert list(istr.compress("123456", [1, 0, 1, 0, 1, 1])) == [istr("1"), istr("3"), istr("5"), istr("6")]
     assert list100(istr.count()) == list100(istr(itertools.count()))
     assert list100(istr.cycle(range(10))) == list100(istr(itertools.cycle(range(10))))
@@ -909,21 +1026,22 @@ def test_itertools():
     assert list(istr.filterfalse(lambda x: x % 2, range(10))) == [istr("0"), istr("2"), istr("4"), istr("6"), istr("8")]
     assert list(istr.islice("123456", 2)) == [istr("1"), istr("2")]
     assert list(istr.permutations(range(5), 3)) == list(istr(itertools.permutations(range(5), 3)))
-    assert list(istr.permutations(range(5), 3, join=True)) == list(map(istr.join,istr(itertools.permutations(range(5), 3))))
+    assert list(istr.permutations(range(5), 3, join=True)) == list(map(istr.join, istr(itertools.permutations(range(5), 3))))
     assert list(istr.product(range(5), range(4))) == list(istr(itertools.product(range(5), range(4))))
-    assert list(istr.product(range(5), range(4),join=True)) == list(map(istr.join,istr(itertools.product(range(5), range(4)))) )   
+    assert list(istr.product(range(5), range(4), join=True)) == list(map(istr.join, istr(itertools.product(range(5), range(4)))))
     assert list100(istr.repeat(10)) == list100(istr(itertools.repeat(10)))
     assert list(istr.starmap(pow, [(2, 5), (3, 2), (10, 3)])) == [istr("32"), istr("9"), istr("1000")]
     assert list(istr.takewhile(lambda x: x < 5, [1, 4, 6, 3, 8])) == [istr("1"), istr("4")]
     assert list(istr.zip_longest("123", "56", fillvalue="0")) == [(istr("1"), istr("5")), (istr("2"), istr("6")), (istr("3"), istr("0"))]
-    assert list(istr.zip_longest("123", "56", fillvalue="0",join=True)) == [istr("15"),istr("26"), istr("30")]
+    assert list(istr.zip_longest("123", "56", fillvalue="0", join=True)) == [istr("15"), istr("26"), istr("30")]
     assert list(istr.pairwise("1234")) == [(istr("1"), istr("2")), (istr("2"), istr("3")), (istr("3"), istr("4"))]
-    assert list(istr.pairwise("1234",join=True)) == [istr("12"), istr("23"), istr("34")]
+    assert list(istr.pairwise("1234", join=True)) == [istr("12"), istr("23"), istr("34")]
     assert list(istr.batched("12345", n=2)) == [(istr("1"), istr("2")), (istr("3"), istr("4")), (istr("5"),)]
-    assert list(istr.batched("12345", n=2,join=True)) == [istr("12"), istr("34"), istr("5")]
-    assert list(istr.batched("1234", n=2,strict=True)) == [(istr("1"), istr("2")), (istr("3"), istr("4"))]
+    assert list(istr.batched("12345", n=2, join=True)) == [istr("12"), istr("34"), istr("5")]
+    assert list(istr.batched("1234", n=2, strict=True)) == [(istr("1"), istr("2")), (istr("3"), istr("4"))]
     with pytest.raises(ValueError):
-        list(istr.batched("12345", n=2,strict=True))
+        list(istr.batched("12345", n=2, strict=True))
+
 
 def test_all_distinct():
     assert istr("abcdef").all_distinct()
@@ -951,6 +1069,13 @@ def test_is_triangular():
     assert istr.is_triangular(424581)
 
 
+def test_sum():
+    assert istr(1234).sum() == istr("10")
+    assert istr.sum("1234") == istr("10")
+    assert istr.sum(1234) == istr("10")
+    assert istr.sum(1234, 5) == istr("15")
+
+
 def test_prod():
     assert istr.prod(range(1, 5)).equals(istr(24))
     assert istr.prod((1, 2, 3), start=4).equals(istr(24))
@@ -971,7 +1096,8 @@ def test_sumprod():
 
 
 def test_subclassing():
-    class jstr(istr.type): ...
+    class jstr(istr.type):
+        ...
 
     assert jstr(5).equals(jstr(5))
     assert repr(jstr(*range(3))) == "(jstr('0'), jstr('1'), jstr('2'))"
@@ -1033,7 +1159,7 @@ def test_tuple_join():
     assert istr.is_even(istr(1, 2))
     assert istr.is_divisible_by(istr(1, 2), 3)
     assert istr.is_triangular(istr(1, 0))
-    assert istr.is_consecutive(istr(1,2,3))
+    assert istr.is_consecutive(istr(1, 2, 3))
     assert istr.is_increasing(istr(1, 2))
     assert istr.is_non_decreasing(istr(1, 2, 2, 3))
     assert istr.is_decreasing(istr(2, 1))
@@ -1047,7 +1173,7 @@ def test_tuple_join():
     assert not istr.is_even(istr(1, 3))
     assert not istr.is_divisible_by(istr(1, 2), 5)
     assert not istr.is_triangular(istr(1, 1))
-    assert not istr.is_consecutive(istr(1,2,4))
+    assert not istr.is_consecutive(istr(1, 2, 4))
     assert not istr.is_increasing(istr(1, 1))
     assert not istr.is_non_decreasing(istr(1, 2, 2, 1))
     assert not istr.is_decreasing(istr(2, 2))
@@ -1094,5 +1220,95 @@ def test_compose():
     assert istr("=") == "="
 
 
+def test_long_sqrt():
+    assert istr.long_sqrt(1234**2) == [
+        istr("1234"),
+        istr("1522756"),
+        istr("1"),
+        istr("52"),
+        istr("44"),
+        istr("827"),
+        istr("729"),
+        istr("9856"),
+        istr("9856"),
+        istr("0"),
+    ]
+    assert istr.long_sqrt(1234**2 + 1) == [
+        istr("1234"),
+        istr("1522757"),
+        istr("1"),
+        istr("52"),
+        istr("44"),
+        istr("827"),
+        istr("729"),
+        istr("9857"),
+        istr("9856"),
+        istr("1"),
+    ]
+    lines = istr.long_sqrt(1234**2 + 1)
+    assert istr(1234**2).long_sqrt() == [
+        istr("1234"),
+        istr("1522756"),
+        istr("1"),
+        istr("52"),
+        istr("44"),
+        istr("827"),
+        istr("729"),
+        istr("9856"),
+        istr("9856"),
+        istr("0"),
+    ]
+    assert istr.long_sqrt(34**2) == [istr("34"), istr("1156"), istr("9"), istr("256"), istr("256"), istr("0")]
+    assert (
+        istr.long_sqrt(34**2, as_str=True)
+        == """\
+   3 4
+  ----
+\\/1156
+   9
+   -
+   256
+   256
+   ---
+     0"""
+    )
+
+
+def test_long_multiplication():
+    assert istr.long_multiplication(1234, 567) == [istr("1234"), istr("567"), istr("8638"), istr("7404"), istr("6170"), istr("699678")]
+    assert istr(1234).long_multiplication(567) == [istr("1234"), istr("567"), istr("8638"), istr("7404"), istr("6170"), istr("699678")]
+    assert (
+        istr.long_multiplication(1234, 567, as_str=True)
+        == """\
+  1234
+   567
+------ x
+  8638
+ 7404
+6170
+------
+699678"""
+    )
+
+
+def test_long_division():
+    assert istr.long_division(1395, 45) == [istr("31"), istr("45"), istr("1395"), istr("135"), istr("45"), istr("45"), istr("0")]
+    assert istr(1395).long_division(45) == [istr("31"), istr("45"), istr("1395"), istr("135"), istr("45"), istr("45"), istr("0")]
+    assert (
+        istr.long_division(1395, 45, as_str=True)
+        == """\
+       31
+     ----
+45 ) 1395
+     135
+     ---
+       45
+       45
+       --
+        0"""
+    )
+
+
 if __name__ == "__main__":
     pytest.main(["-vv", "-s", "-x", __file__])
+
